@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Login</h1>
+    {{if .Err}}<p style="color:red">{{.Err}}</p>{{end}}
+    <form method="POST" action="/web/login">
+      <input type="hidden" name="return_to" value="{{.ReturnTo}}">
+      <label>Username <input name="username" autocomplete="username"></label><br>
+      <label>Password <input type="password" name="password" autocomplete="current-password"></label><br>
+      <button type="submit">Login</button>
+    </form>
+  </body>
+</html>

@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Repository {{.Repository.Slug}}</h1>
+    <p><code>{{.Repository.Path}}</code></p>
+    {{if .Err}}<p style="color:red">{{.Err}}</p>{{end}}
+
+    <h2>Ticket Tracker</h2>
+    {{if .AssignedTracker}}
+    <p>
+      Assigned: <a href="/web/ticket-tracker/{{.AssignedTracker.Slug}}?repo={{.Repository.Slug}}">{{.AssignedTracker.Slug}}</a>
+    </p>
+    <form method="POST" action="/web/repo/{{.Repository.Slug}}/ticket-tracker">
+      <input type="hidden" name="action" value="unassign">
+      <button type="submit">Unassign tracker</button>
+    </form>
+    {{else}}
+    <p>No tracker assigned.</p>
+    {{end}}
+
+    <h3>Assign Tracker</h3>
+    {{if .Trackers}}
+    <form method="POST" action="/web/repo/{{.Repository.Slug}}/ticket-tracker">
+      <input type="hidden" name="action" value="assign">
+      <label>Tracker:
+        <select name="tracker">
+          {{range .Trackers}}
+          <option value="{{.Slug}}">{{.Slug}}</option>
+          {{end}}
+        </select>
+      </label>
+      <button type="submit">Assign</button>
+    </form>
+    {{else}}
+    <p>No ticket trackers exist yet. <a href="/web/ticket-tracker">Create one</a>.</p>
+    {{end}}
+
+    <h2>Members</h2>
+    {{if .Members}}
+    <ul>
+      {{range .Members}}
+      <li>
+        {{.Username}}
+        {{if $.CanManageMember}}
+        <form method="POST" action="/web/repo/{{$.Repository.Slug}}/member" style="display:inline">
+          <input type="hidden" name="action" value="remove" />
+          <input type="hidden" name="username" value="{{.Username}}" />
+          <button type="submit">Remove</button>
+        </form>
+        {{end}}
+      </li>
+      {{end}}
+    </ul>
+    {{else}}
+    <p>No members.</p>
+    {{end}}
+
+    {{if .CanManageMember}}
+    <h3>Add Member</h3>
+    <form method="POST" action="/web/repo/{{.Repository.Slug}}/member">
+      <input type="hidden" name="action" value="add" />
+      <label>Username:
+        <input type="text" name="username" required />
+      </label>
+      <button type="submit">Add</button>
+    </form>
+    {{end}}
+
+    <p><a href="/web/repo">Repositories</a> | <a href="/web/admin">Admin home</a></p>
+  </body>
+</html>

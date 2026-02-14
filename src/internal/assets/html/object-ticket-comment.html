@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Ticket Comment {{.Slug}}</h1>
+    <p><strong>ID:</strong> <a href="{{.ActorID}}">{{.ActorID}}</a></p>
+    {{if .InReplyTo}}<p><strong>In Reply To:</strong> <a href="{{.InReplyTo}}">{{.InReplyToLabel}}</a></p>{{end}}
+    {{if .AttributedTo}}<p><strong>Attributed To:</strong> <a href="{{.AttributedTo}}">{{.AttributedTo}}</a></p>{{end}}
+    {{if .To}}<p><strong>To:</strong> <a href="{{.To}}">{{.To}}</a></p>{{end}}
+    {{if .Published}}<p><strong>Published:</strong> {{.Published}}</p>{{end}}
+    {{if .Content}}<div><strong>Content:</strong> <div style="white-space: pre-wrap">{{.Content}}</div></div>{{end}}
+    <p><a href="{{.WebURL}}">Open ticket page</a></p>
+    <h2>Object JSON</h2>
+    <pre style="white-space: pre-wrap">{{.ObjectJSON}}</pre>
+  </body>
+</html>

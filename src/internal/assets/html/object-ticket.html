@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Ticket Object {{.TicketSlug}}</h1>
+    <p><strong>ID:</strong> <a href="{{.ActorID}}">{{.ActorID}}</a></p>
+    <p><strong>Tracker:</strong> <a href="{{.TrackerActorID}}">{{.TrackerSlug}}</a></p>
+    <p><strong>Repository:</strong> <a href="{{.RepositoryActorID}}">{{.RepositorySlug}}</a></p>
+    {{if .Summary}}<p><strong>Summary:</strong> {{.Summary}}</p>{{end}}
+    {{if .Content}}<div><strong>Content:</strong> <div style="white-space: pre-wrap">{{.Content}}</div></div>{{end}}
+    {{if .Published}}<p><strong>Published:</strong> {{.Published}}</p>{{end}}
+    {{if .AttributedTo}}<p><strong>Attributed To:</strong> <a href="{{.AttributedTo}}">{{.AttributedTo}}</a></p>{{end}}
+    {{if .Err}}<p style="color:red">{{.Err}}</p>{{end}}
+
+    <h2>Assignees</h2>
+    {{if .Assignees}}
+    <ul>
+      {{range .Assignees}}
+      <li>
+        <a href="{{.ActorID}}">{{.Username}}</a>
+        <form method="POST" action="{{$.AssigneeActionURL}}" style="display:inline">
+          <input type="hidden" name="action" value="remove" />
+          <input type="hidden" name="username" value="{{.Username}}" />
+          <button type="submit">Unassign</button>
+        </form>
+      </li>
+      {{end}}
+    </ul>
+    {{else}}
+    <p>No assignees.</p>
+    {{end}}
+
+    <h3>Assign User</h3>
+    <form method="POST" action="{{.AssigneeActionURL}}">
+      <input type="hidden" name="action" value="add" />
+      <label>Username: <input type="text" name="username" required /></label>
+      <button type="submit">Assign</button>
+    </form>
+
+    <h2>Add Comment</h2>
+    <form method="POST" action="{{.CommentPostURL}}">
+      <label>Content</label><br />
+      <textarea name="content" rows="4" cols="72"></textarea><br />
+      <button type="submit">Comment</button>
+    </form>
+
+    <h2>Comments</h2>
+    {{if .Comments}}
+      {{range .Comments}}
+      <article id="comment-{{.Slug}}" style="border: 1px solid #ccc; padding: 0.75rem; margin-bottom: 0.75rem;">
+        <p>
+          <strong>{{.Slug}}</strong>
+          <a href="/ticket-tracker/{{$.TrackerSlug}}/ticket/{{$.TicketSlug}}/comment/{{.Slug}}">canonical</a>
+        </p>
+        <p><strong>ID:</strong> <a href="{{.ActorID}}">{{.ActorID}}</a></p>
+        <p><strong>In Reply To:</strong> <a href="{{.InReplyTo}}">{{.InReplyToLabel}}</a></p>
+        {{if .AttributedTo}}<p><strong>Attributed To:</strong> <a href="{{.AttributedTo}}">{{.AttributedTo}}</a></p>{{end}}
+        {{if .Published}}<p><strong>Published:</strong> {{.Published}}</p>{{end}}
+        {{if .Content}}<div><strong>Content:</strong> <div style="white-space: pre-wrap">{{.Content}}</div></div>{{end}}
+        <form method="POST" action="{{.CommentActionURL}}">
+          <input type="hidden" name="in_reply_to" value="{{.ActorID}}" />
+          <label>Reply</label><br />
+          <textarea name="content" rows="3" cols="64"></textarea><br />
+          <button type="submit">Reply</button>
+        </form>
+      </article>
+      {{end}}
+    {{else}}
+      <p>No comments yet.</p>
+    {{end}}
+
+    <p><a href="{{.WebURL}}">Open tracker admin page</a></p>
+    <h2>Object JSON</h2>
+    <pre style="white-space: pre-wrap">{{.ObjectJSON}}</pre>
+  </body>
+</html>

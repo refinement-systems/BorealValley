@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Notifications</h1>
+    {{if .Err}}<p style="color:red">{{.Err}}</p>{{end}}
+
+    <form method="POST" action="/web/notification/clear" style="display:inline">
+      <button type="submit">Mark all read</button>
+    </form>
+    <form method="POST" action="/web/notification/reset" style="display:inline">
+      <button type="submit">Mark all unread</button>
+    </form>
+
+    {{if .Notifications}}
+    <table border="1" cellpadding="6" cellspacing="0" style="margin-top: 1rem;">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Ticket</th>
+          <th>Assigned By</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Notifications}}
+        <tr>
+          <td>{{.ID}}</td>
+          <td>{{.Type}}</td>
+          <td>{{if .Unread}}unread{{else}}read{{end}}</td>
+          <td><a href="{{.TicketActorID}}">{{.TrackerSlug}}/{{.TicketSlug}}</a> ({{.RepositorySlug}})</td>
+          <td>
+            {{if .Account.ActorID}}<a href="{{.Account.ActorID}}">{{.Account.Username}}</a>{{else}}(unknown){{end}}
+          </td>
+          <td>{{.CreatedAt}}</td>
+          <td>
+            <form method="POST" action="/web/notification/{{.ID}}" style="display:inline">
+              <input type="hidden" name="unread" value="false" />
+              <button type="submit">Read</button>
+            </form>
+            <form method="POST" action="/web/notification/{{.ID}}" style="display:inline">
+              <input type="hidden" name="unread" value="true" />
+              <button type="submit">Unread</button>
+            </form>
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+    {{else}}
+    <p>No notifications found.</p>
+    {{end}}
+
+    {{if .NextURL}}
+    <p><a href="{{.NextURL}}">Next page</a></p>
+    {{end}}
+
+    <p><a href="/web/admin">Admin home</a></p>
+  </body>
+</html>

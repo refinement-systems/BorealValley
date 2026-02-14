@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Tickets</h1>
+    {{if .Err}}<p style="color:red">{{.Err}}</p>{{end}}
+
+    {{if .Tickets}}
+    <table border="1" cellpadding="6" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Tracker</th>
+          <th>Repository</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Tickets}}
+        <tr>
+          <td><a href="{{.ActorID}}">{{.Slug}}</a></td>
+          <td>{{.TrackerSlug}}</td>
+          <td>{{.RepositorySlug}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+    {{else}}
+    <p>No tickets found.</p>
+    {{end}}
+
+    <p><a href="/web/admin">Admin home</a></p>
+  </body>
+</html>

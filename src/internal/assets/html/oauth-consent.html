@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Authorize {{.ClientName}}</h1>
+    <p>{{if .ClientDescription}}{{.ClientDescription}}{{else}}This app is requesting access to your account.{{end}}</p>
+    {{if .Err}}<p style="color:red">{{.Err}}</p>{{end}}
+
+    <h2>Requested scopes</h2>
+    {{if .RequestedScopes}}
+    <form method="POST" action="/oauth/authorize">
+      <input type="hidden" name="query" value="{{.RawQuery}}">
+      {{range .RequestedScopes}}
+      <label>
+        <input type="checkbox" name="scope" value="{{.}}" {{if index $.PreApproved .}}checked{{end}}>
+        {{.}}
+      </label>
+      <br>
+      {{end}}
+      <br>
+      <button type="submit" name="action" value="approve">Approve</button>
+      <button type="submit" name="action" value="deny">Deny</button>
+    </form>
+    {{else}}
+    <p>No scopes were requested.</p>
+    <form method="POST" action="/oauth/authorize">
+      <input type="hidden" name="query" value="{{.RawQuery}}">
+      <button type="submit" name="action" value="deny">Deny</button>
+    </form>
+    {{end}}
+
+    <p><a href="/web/admin">Admin home</a></p>
+  </body>
+</html>

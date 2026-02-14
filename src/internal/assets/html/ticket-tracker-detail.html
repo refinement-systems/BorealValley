@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Ticket Tracker {{.Tracker.Slug}}</h1>
+    <p><strong>Name:</strong> {{.Tracker.Name}}</p>
+    {{if .Tracker.Summary}}<p>{{.Tracker.Summary}}</p>{{end}}
+    {{if .Err}}<p style="color:red">{{.Err}}</p>{{end}}
+    {{if .CreatedTicketSlug}}<p>Ticket created: <code>{{.CreatedTicketSlug}}</code></p>{{end}}
+
+    <h2>Existing Tickets</h2>
+    {{if .Tickets}}
+    <table border="1" cellpadding="6" cellspacing="0">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Repository</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Tickets}}
+        <tr>
+          <td><a href="{{.ActorID}}">{{.Slug}}</a></td>
+          <td>{{.RepositorySlug}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+    {{else}}
+    <p>No tickets exist for this tracker.</p>
+    {{end}}
+
+    <h2>Tracked Repositories</h2>
+    {{if .TrackedRepositories}}
+    <ul>
+      {{range .TrackedRepositories}}
+      <li><a href="/web/repo/{{.Slug}}">{{.Slug}}</a></li>
+      {{end}}
+    </ul>
+    {{else}}
+    <p>No repositories assigned to this tracker.</p>
+    {{end}}
+
+    <h2>Create Ticket</h2>
+    {{if .TrackedRepositories}}
+    <form method="POST" action="/web/ticket-tracker/{{.Tracker.Slug}}/ticket">
+      <label>Repository:
+        <select name="repo">
+          {{range .TrackedRepositories}}
+          <option value="{{.Slug}}" {{if eq $.SelectedRepoSlug .Slug}}selected{{end}}>{{.Slug}}</option>
+          {{end}}
+        </select>
+      </label>
+      <br>
+      <label>Summary: <input type="text" name="summary" size="80"></label>
+      <br>
+      <label>Priority: <input type="number" name="priority" min="0" value="0"></label>
+      <br>
+      <label>Content:<br><textarea name="content" rows="10" cols="80"></textarea></label>
+      <br>
+      <button type="submit">Create Ticket</button>
+    </form>
+    {{end}}
+
+    <p><a href="/web/ticket-tracker">Ticket trackers</a> | <a href="/web/admin">Admin home</a></p>
+  </body>
+</html>

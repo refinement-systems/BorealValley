@@ -1,0 +1,69 @@
+// Permission to use, copy, modify, and/or distribute this software for
+// any purpose with or without fee is hereby granted.
+//
+// THE SOFTWARE IS PROVIDED “AS IS” AND THE AUTHOR DISCLAIMS ALL
+// WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
+// OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE
+// FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY
+// DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+// AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+// OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+package common
+
+import (
+	"context"
+	"testing"
+)
+
+func TestGetLocalRepositoryObjectBySlugEmptyInput(t *testing.T) {
+	t.Parallel()
+
+	var s Store
+	record, found, err := s.GetLocalRepositoryObjectBySlug(context.Background(), "   ")
+	if err != nil {
+		t.Fatalf("expected nil error for empty input, got %v", err)
+	}
+	if found {
+		t.Fatalf("expected found=false for empty input, got record %+v", record)
+	}
+}
+
+func TestGetLocalTicketTrackerObjectBySlugEmptyInput(t *testing.T) {
+	t.Parallel()
+
+	var s Store
+	record, found, err := s.GetLocalTicketTrackerObjectBySlug(context.Background(), "\n")
+	if err != nil {
+		t.Fatalf("expected nil error for empty input, got %v", err)
+	}
+	if found {
+		t.Fatalf("expected found=false for empty input, got record %+v", record)
+	}
+}
+
+func TestGetLocalTicketObjectBySlugEmptyInput(t *testing.T) {
+	t.Parallel()
+
+	var s Store
+	record, found, err := s.GetLocalTicketObjectBySlug(context.Background(), "", "")
+	if err != nil {
+		t.Fatalf("expected nil error for empty input, got %v", err)
+	}
+	if found {
+		t.Fatalf("expected found=false for empty input, got record %+v", record)
+	}
+}
+
+func TestGetLocalTicketCommentObjectBySlugEmptyInput(t *testing.T) {
+	t.Parallel()
+
+	var s Store
+	record, found, err := s.GetLocalTicketCommentObjectBySlug(context.Background(), "", "", "")
+	if err != nil {
+		t.Fatalf("expected nil error for empty input, got %v", err)
+	}
+	if found {
+		t.Fatalf("expected found=false for empty input, got record %+v", record)
+	}
+}

@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Ticket Trackers</h1>
+    {{if .Err}}<p style="color:red">{{.Err}}</p>{{end}}
+    {{if .CreatedTicketTrackerSlug}}<p>Created tracker: <a href="/web/ticket-tracker/{{.CreatedTicketTrackerSlug}}">{{.CreatedTicketTrackerSlug}}</a></p>{{end}}
+
+    {{if .Trackers}}
+    <ul>
+      {{range .Trackers}}
+      <li><a href="/web/ticket-tracker/{{.Slug}}">{{.Slug}}</a> {{if .Summary}}<small>{{.Summary}}</small>{{end}}</li>
+      {{end}}
+    </ul>
+    {{else}}
+    <p>No ticket trackers found.</p>
+    {{end}}
+
+    <h2>Create Ticket Tracker</h2>
+    <form method="POST" action="/web/ticket-tracker">
+      <label>Name: <input type="text" name="name"></label>
+      <br>
+      <label>Summary:<br><textarea name="summary" rows="5" cols="60"></textarea></label>
+      <br>
+      <button type="submit">Create</button>
+    </form>
+
+    <p><a href="/web/admin">Admin home</a></p>
+  </body>
+</html>

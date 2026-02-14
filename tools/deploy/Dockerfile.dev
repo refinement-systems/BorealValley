@@ -1,0 +1,32 @@
+# syntax=docker/dockerfile:1
+
+FROM --platform=$BUILDPLATFORM golang:1.25 AS builder
+WORKDIR /src
+
+# Cache dependency download.
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Build binaries for the requested target platform.
+COPY . .
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -o /out/BorealValley-web ./src/cmd/web && \
+    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -o /out/BorealValley-ctl ./src/cmd/ctl
+
+# Fast dev loop target: includes Go toolchain for go run and debugging.
+FROM golang:1.25 AS dev-fast
+WORKDIR /workspace
+COPY go.mod go.sum ./
+RUN go mod download
+COPY --from=builder /out/BorealValley-web /app/BorealValley-web
+COPY --from=builder /out/BorealValley-ctl /app/BorealValley-ctl
+EXPOSE 4000
+
+# Parity target: runs the compiled binaries from the builder stage.
+FROM debian:12-slim AS dev-runtime
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends bash ca-certificates grep && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /out/BorealValley-web /app/BorealValley-web
+COPY --from=builder /out/BorealValley-ctl /app/BorealValley-ctl
+EXPOSE 4000

@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>OAuth Grants</h1>
+    {{if .Err}}<p style="color:red">{{.Err}}</p>{{end}}
+    {{if .Grants}}
+    <table>
+      <thead>
+        <tr>
+          <th>App</th>
+          <th>Client ID</th>
+          <th>Granted scopes</th>
+          <th>Created</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+      {{range .Grants}}
+        <tr>
+          <td>{{.ClientName}}</td>
+          <td><code>{{.ClientID}}</code></td>
+          <td>{{range $i, $scope := .GrantedScopes}}{{if $i}}, {{end}}<code>{{$scope}}</code>{{end}}</td>
+          <td>{{.CreatedAt}}</td>
+          <td>{{if .RevokedAt}}revoked{{else}}active{{end}}</td>
+          <td>
+            {{if not .RevokedAt}}
+            <form method="POST" action="/web/oauth/grant/{{.GrantID}}/revoke">
+              <button type="submit">Revoke</button>
+            </form>
+            {{end}}
+          </td>
+        </tr>
+      {{end}}
+      </tbody>
+    </table>
+    {{else}}
+    <p>No OAuth grants.</p>
+    {{end}}
+    <p><a href="/web/admin">Admin home</a></p>
+  </body>
+</html>

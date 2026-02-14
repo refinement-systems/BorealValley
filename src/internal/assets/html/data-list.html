@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Repositories</h1>
+    {{if .Err}}<p style="color:red">{{.Err}}</p>{{end}}
+    {{if .Repositories}}
+    <ul>
+      {{range .Repositories}}
+      <li><a href="/web/repo/{{.Slug}}">{{.Slug}}</a> <code>{{.Path}}</code></li>
+      {{end}}
+    </ul>
+    {{else}}
+    <p>No repositories found.</p>
+    {{end}}
+    <p><a href="/web/admin">Admin home</a></p>
+  </body>
+</html>

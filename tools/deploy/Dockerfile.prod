@@ -1,0 +1,25 @@
+# syntax=docker/dockerfile:1
+
+FROM --platform=$BUILDPLATFORM golang:1.25 AS builder
+WORKDIR /src
+
+# Cache dependency download.
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Build binaries for the requested target platform.
+COPY . .
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /out/BorealValley-web ./src/cmd/web && \
+    CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /out/BorealValley-ctl ./src/cmd/ctl
+
+FROM gcr.io/distroless/static-debian12:nonroot
+WORKDIR /app
+
+COPY --from=builder /out/BorealValley-web /app/BorealValley-web
+COPY --from=builder /out/BorealValley-ctl /app/BorealValley-ctl
+
+EXPOSE 4000
+ENTRYPOINT ["/app/BorealValley-web"]
+CMD ["serve", "--root", "/work", "--env", "prod"]

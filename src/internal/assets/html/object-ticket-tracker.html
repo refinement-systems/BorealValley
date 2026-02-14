@@ -1,0 +1,12 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Ticket Tracker Object {{.Slug}}</h1>
+    <p><strong>ID:</strong> <a href="{{.ActorID}}">{{.ActorID}}</a></p>
+    {{if .Name}}<p><strong>Name:</strong> {{.Name}}</p>{{end}}
+    {{if .Summary}}<p><strong>Summary:</strong> {{.Summary}}</p>{{end}}
+    <p><a href="{{.WebURL}}">Open admin page</a></p>
+    <h2>Object JSON</h2>
+    <pre style="white-space: pre-wrap">{{.ObjectJSON}}</pre>
+  </body>
+</html>

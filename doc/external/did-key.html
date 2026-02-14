@@ -1,0 +1,2044 @@
+<!DOCTYPE html><html lang="en" dir="ltr"><head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+<meta name="generator" content="ReSpec 35.6.1">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<style>
+span.example-title{text-transform:none}
+:is(aside,div).example,div.illegal-example{padding:.5em;margin:1em 0;position:relative;clear:both}
+div.illegal-example{color:red}
+div.illegal-example p{color:#000}
+aside.example div.example{border-left-width:.1em;border-color:#999;background:#fff}
+</style>
+<style>
+.issue-label{text-transform:initial}
+.warning>p:first-child{margin-top:0}
+.warning{padding:.5em;border-left-width:.5em;border-left-style:solid}
+span.warning{padding:.1em .5em .15em}
+.issue.closed span.issue-number{text-decoration:line-through}
+.issue.closed span.issue-number::after{content:" (Closed)";font-size:smaller}
+.warning{border-color:#f11;border-color:var(--warning-border,#f11);border-width:.2em;border-style:solid;background:#fbe9e9;background:var(--warning-bg,#fbe9e9);color:#000;color:var(--text,#000)}
+.warning-title:before{content:"⚠";font-size:1.3em;float:left;padding-right:.3em;margin-top:-.3em}
+li.task-list-item{list-style:none}
+input.task-list-item-checkbox{margin:0 .35em .25em -1.6em;vertical-align:middle}
+.issue a.respec-gh-label{padding:5px;margin:0 2px 0 2px;font-size:10px;text-transform:none;text-decoration:none;font-weight:700;border-radius:4px;position:relative;bottom:2px;border:none;display:inline-block}
+</style>
+<style>
+dfn{cursor:pointer}
+.dfn-panel{position:absolute;z-index:35;min-width:300px;max-width:500px;padding:.5em .75em;margin-top:.6em;font-family:"Helvetica Neue",sans-serif;font-size:small;background:#fff;background:var(--indextable-hover-bg,#fff);color:#000;color:var(--text,#000);box-shadow:0 1em 3em -.4em rgba(0,0,0,.3),0 0 1px 1px rgba(0,0,0,.05);box-shadow:0 1em 3em -.4em var(--tocsidebar-shadow,rgba(0,0,0,.3)),0 0 1px 1px var(--tocsidebar-shadow,rgba(0,0,0,.05));border-radius:2px}
+.dfn-panel:not(.docked)>.caret{position:absolute;top:-9px}
+.dfn-panel:not(.docked)>.caret::after,.dfn-panel:not(.docked)>.caret::before{content:"";position:absolute;border:10px solid transparent;border-top:0;border-bottom:10px solid #fff;border-bottom-color:var(--indextable-hover-bg,#fff);top:0}
+.dfn-panel:not(.docked)>.caret::before{border-bottom:9px solid #a2a9b1;border-bottom-color:var(--indextable-hover-bg,#a2a9b1)}
+.dfn-panel *{margin:0}
+.dfn-panel b{display:block;color:#000;color:var(--text,#000);margin-top:.25em}
+.dfn-panel ul a[href]{color:#333;color:var(--text,#333)}
+.dfn-panel>div{display:flex}
+.dfn-panel a.self-link{font-weight:700;margin-right:auto}
+.dfn-panel .marker{padding:.1em;margin-left:.5em;border-radius:.2em;text-align:center;white-space:nowrap;font-size:90%;color:#040b1c}
+.dfn-panel .marker.dfn-exported{background:#d1edfd;box-shadow:0 0 0 .125em #1ca5f940}
+.dfn-panel .marker.idl-block{background:#8ccbf2;box-shadow:0 0 0 .125em #0670b161}
+.dfn-panel a:not(:hover){text-decoration:none!important;border-bottom:none!important}
+.dfn-panel a[href]:hover{border-bottom-width:1px}
+.dfn-panel ul{padding:0}
+.dfn-panel li{margin-left:1em}
+.dfn-panel.docked{position:fixed;left:.5em;top:unset;bottom:2em;margin:0 auto;max-width:calc(100vw - .75em * 2 - .5em - .2em * 2);max-height:30vh;overflow:auto}
+</style>
+    
+<title>The did:key Method v0.9</title>
+    
+    
+    
+<style id="respec-mainstyle">
+@keyframes pop{
+0%{transform:scale(1,1)}
+25%{transform:scale(1.25,1.25);opacity:.75}
+100%{transform:scale(1,1)}
+}
+a.internalDFN{color:inherit;border-bottom:1px solid #99c;text-decoration:none}
+a.externalDFN{color:inherit;border-bottom:1px dotted #ccc;text-decoration:none}
+a.bibref{text-decoration:none}
+.respec-offending-element:target{animation:pop .25s ease-in-out 0s 1}
+.respec-offending-element,a[href].respec-offending-element{text-decoration:red wavy underline}
+@supports not (text-decoration:red wavy underline){
+.respec-offending-element:not(pre){display:inline-block}
+.respec-offending-element{background:url(data:image/gif;base64,R0lGODdhBAADAPEAANv///8AAP///wAAACwAAAAABAADAEACBZQjmIAFADs=) bottom repeat-x}
+}
+#references :target{background:#eaf3ff;animation:pop .4s ease-in-out 0s 1}
+cite .bibref{font-style:italic}
+a[href].orcid{padding-left:4px;padding-right:4px}
+a[href].orcid>svg{margin-bottom:-2px}
+ol.tof,ul.tof{list-style:none outside none}
+.caption{margin-top:.5em;font-style:italic}
+#issue-summary>ul{column-count:2}
+#issue-summary li{list-style:none;display:inline-block}
+details.respec-tests-details{margin-left:1em;display:inline-block;vertical-align:top}
+details.respec-tests-details>*{padding-right:2em}
+details.respec-tests-details[open]{z-index:999999;position:absolute;border:thin solid #cad3e2;border-radius:.3em;background-color:#fff;padding-bottom:.5em}
+details.respec-tests-details[open]>summary{border-bottom:thin solid #cad3e2;padding-left:1em;margin-bottom:1em;line-height:2em}
+details.respec-tests-details>ul{width:100%;margin-top:-.3em}
+details.respec-tests-details>li{padding-left:1em}
+.self-link:hover{opacity:1;text-decoration:none;background-color:transparent}
+aside.example .marker>a.self-link{color:inherit}
+.header-wrapper{display:flex;align-items:baseline}
+:is(h2,h3,h4,h5,h6):not(#toc>h2,#abstract>h2,#sotd>h2,.head>h2){position:relative;left:-.5em}
+:is(h2,h3,h4,h5,h6):not(#toch2)+a.self-link{color:inherit;order:-1;position:relative;left:-1.1em;font-size:1rem;opacity:.5}
+:is(h2,h3,h4,h5,h6)+a.self-link::before{content:"§";text-decoration:none;color:var(--heading-text)}
+:is(h2,h3)+a.self-link{top:-.2em}
+:is(h4,h5,h6)+a.self-link::before{color:#000}
+@media (max-width:767px){
+dd{margin-left:0}
+}
+@media print{
+.removeOnSave{display:none}
+}
+</style>
+    
+    
+    
+<style>
+
+pre .highlight {
+  font-weight: bold;
+  color: Green;
+}
+pre .subject {
+  font-weight: bold;
+  color: RoyalBlue;
+}
+pre .property {
+  font-weight: bold;
+  color: DarkGoldenrod;
+}
+pre .comment {
+  font-weight: bold;
+  color: SteelBlue;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.color-text {
+  font-weight: bold;
+  text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+}
+ol.algorithm { counter-reset:numsection; list-style-type: none; }
+ol.algorithm li { margin: 0.5em 0; }
+ol.algorithm li:before { font-weight: bold; counter-increment: numsection; content: counters(numsection, ".") ") "; }
+    
+</style>
+  
+<meta name="color-scheme" content="light">
+<meta name="description" content="Decentralized Identifiers (DIDs) are a type of identifier for verifiable,
+decentralized digital identity. These identifiers are designed to enable the
+controller of a DID to prove control over the identifier in a way that is
+independent of any centralized registry, identity provider, or certificate authority.
+These sorts of identifiers often utilize a heavy-weight registry, such as ones
+utilizing Decentralized Ledger Technologies (DLT), to create, read, update,
+and deactivate DIDs. This specification describes a non-registry based DID Method based on expanding a cryptographic public key into a DID Document. This
+approach provides the simplest possible implementation of a DID Method that
+is able to achieve many, but not all, of the benefits of utilizing DIDs.">
+<style>
+.hljs{--base:#fafafa;--mono-1:#383a42;--mono-2:#686b77;--mono-3:#717277;--hue-1:#0b76c5;--hue-2:#336ae3;--hue-3:#a626a4;--hue-4:#42803c;--hue-5:#ca4706;--hue-5-2:#c91243;--hue-6:#986801;--hue-6-2:#9a6a01}
+@media (prefers-color-scheme:dark){
+.hljs{--base:#282c34;--mono-1:#abb2bf;--mono-2:#818896;--mono-3:#5c6370;--hue-1:#56b6c2;--hue-2:#61aeee;--hue-3:#c678dd;--hue-4:#98c379;--hue-5:#e06c75;--hue-5-2:#be5046;--hue-6:#d19a66;--hue-6-2:#e6c07b}
+}
+.hljs{display:block;overflow-x:auto;padding:.5em;color:#383a42;color:var(--mono-1,#383a42);background:#fafafa;background:var(--base,#fafafa)}
+.hljs-comment,.hljs-quote{color:#717277;color:var(--mono-3,#717277);font-style:italic}
+.hljs-doctag,.hljs-formula,.hljs-keyword{color:#a626a4;color:var(--hue-3,#a626a4)}
+.hljs-deletion,.hljs-name,.hljs-section,.hljs-selector-tag,.hljs-subst{color:#ca4706;color:var(--hue-5,#ca4706);font-weight:700}
+.hljs-literal{color:#0b76c5;color:var(--hue-1,#0b76c5)}
+.hljs-addition,.hljs-attribute,.hljs-meta-string,.hljs-regexp,.hljs-string{color:#42803c;color:var(--hue-4,#42803c)}
+.hljs-built_in,.hljs-class .hljs-title{color:#9a6a01;color:var(--hue-6-2,#9a6a01)}
+.hljs-attr,.hljs-number,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-pseudo,.hljs-template-variable,.hljs-type,.hljs-variable{color:#986801;color:var(--hue-6,#986801)}
+.hljs-bullet,.hljs-link,.hljs-meta,.hljs-selector-id,.hljs-symbol,.hljs-title{color:#336ae3;color:var(--hue-2,#336ae3)}
+.hljs-emphasis{font-style:italic}
+.hljs-strong{font-weight:700}
+.hljs-link{text-decoration:underline}
+</style>
+<style>
+var:hover{text-decoration:underline;cursor:pointer}
+var.respec-hl{color:var(--color,#000);background-color:var(--bg-color);box-shadow:0 0 0 2px var(--bg-color)}
+@media (prefers-color-scheme:dark){
+var.respec-hl{filter:saturate(.9) brightness(.9)}
+}
+var.respec-hl-c1{--bg-color:#f4d200}
+var.respec-hl-c2{--bg-color:#ff87a2}
+var.respec-hl-c3{--bg-color:#96e885}
+var.respec-hl-c4{--bg-color:#3eeed2}
+var.respec-hl-c5{--bg-color:#eacfb6}
+var.respec-hl-c6{--bg-color:#82ddff}
+var.respec-hl-c7{--bg-color:#ffbcf2}
+@media print{
+var.respec-hl{background:0 0;color:#000;box-shadow:unset}
+}
+</style>
+<style>
+var{position:relative;cursor:pointer}
+var[data-type]::after,var[data-type]::before{position:absolute;left:50%;top:-6px;opacity:0;transition:opacity .4s;pointer-events:none}
+var[data-type]::before{content:"";transform:translateX(-50%);border-width:4px 6px 0 6px;border-style:solid;border-color:transparent;border-top-color:#222}
+var[data-type]::after{content:attr(data-type);transform:translateX(-50%) translateY(-100%);background:#222;text-align:center;font-family:"Dank Mono","Fira Code",monospace;font-style:normal;padding:6px;border-radius:3px;color:#daca88;text-indent:0;font-weight:400}
+var[data-type]:hover::after,var[data-type]:hover::before{opacity:1}
+</style>
+<style>
+
+.vc-tabbed {
+  overflow-x: hidden;
+  margin: 0 0;
+}
+
+.vc-tabbed [type="radio"] {
+  display: none;
+}
+
+.vc-tabs {
+  display: flex;
+  align-items: stretch;
+  list-style: none;
+  padding: 0;
+  border-bottom: 1px solid #ccc;
+}
+
+li.vc-tab {
+  margin: unset;
+}
+
+.vc-tab > label {
+  display: block;
+  margin-bottom: -1px;
+  padding: .4em .5em;
+  border: 1px solid #ccc;
+  border-top-right-radius: .4em;
+  border-top-left-radius: .4em;
+  background: #eee;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.vc-tab:hover label {
+  border-left-color: #333;
+  border-top-color: #333;
+  border-right-color: #333;
+  color: #333;
+}
+
+.vc-tab-content {
+  display: none;
+}
+.vc-tab-content > pre {
+  white-space: pre-wrap;
+}
+
+.vc-jose-cose-tabbed, .vc-jose-cose-tabbed-jwt,
+.vc-jose-cose-tabbed-sd-jwt, .vc-jose-cose-tabbed-cose,
+.sd-jwt-tabbed {
+  overflow-x: hidden;
+  margin: 0 0;
+}
+
+.vc-jose-cose-tabbed [type="radio"], .vc-jose-cose-tabbed-jwt [type="radio"],
+.vc-jose-cose-tabbed-sd-jwt [type="radio"],
+.vc-jose-cose-tabbed-cose [type="radio"],
+.sd-jwt-tabbed [type="radio"] {
+  display: none;
+}
+
+.vc-jose-cose-tabs, .vc-jose-cose-jwt-tabs, .vc-jose-cose-sd-jwt-tabs,
+.vc-jose-cose-cose-tabs,
+.sd-jwt-tabs {
+  display: flex;
+  align-items: stretch;
+  list-style: none;
+  padding: 0;
+  border-bottom: 1px solid #ccc;
+}
+
+li.vc-jose-cose-tab, li.vc-jose-cose-jwt-tab, li.vc-jose-cose-sd-jwt-tab,
+li.vc-jose-cose-cose-tab,
+li.sd-jwt-tab {
+  margin: 0 0;
+  margin-left: 8px;
+}
+
+.vc-jose-cose-tab>label, .vc-jose-cose-jwt-tab>label,
+.vc-jose-cose-sd-jwt-tab>label, .vc-jose-cose-cose-tab>label,
+.sd-jwt-tab>label {
+  display: block;
+  margin-bottom: -1px;
+  padding: .4em .5em;
+  border: 1px solid #ccc;
+  border-top-right-radius: .4em;
+  border-top-left-radius: .4em;
+  background: #eee;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.vc-jose-cose-tab:hover label, .vc-jose-cose-jwt-tab:hover label,
+.vc-jose-cose-sd-jwt-tab:hover label, .vc-jose-cose-cose-tab:hover label,
+.sd-jwt-tab:hover label {
+  border-left-color: #333;
+  border-top-color: #333;
+  border-right-color: #333;
+  color: #333;
+}
+
+.vc-jose-cose-tab-content,
+.sd-jwt-tab-content {
+  display: none;
+}
+
+.vc-tabbed [type="radio"]:nth-of-type(1):checked ~ .vc-tabs .vc-tab:nth-of-type(1) label,
+  .vc-tabbed [type="radio"]:nth-of-type(2):checked ~ .vc-tabs .vc-tab:nth-of-type(2) label,
+  .vc-tabbed [type="radio"]:nth-of-type(3):checked ~ .vc-tabs .vc-tab:nth-of-type(3) label,
+  .vc-tabbed [type="radio"]:nth-of-type(4):checked ~ .vc-tabs .vc-tab:nth-of-type(4) label,
+  .vc-tabbed [type="radio"]:nth-of-type(5):checked ~ .vc-tabs .vc-tab:nth-of-type(5) label,
+  .vc-tabbed [type="radio"]:nth-of-type(6):checked ~ .vc-tabs .vc-tab:nth-of-type(6) label,
+  .vc-tabbed [type="radio"]:nth-of-type(7):checked ~ .vc-tabs .vc-tab:nth-of-type(7) label,
+  .vc-tabbed [type="radio"]:nth-of-type(8):checked ~ .vc-tabs .vc-tab:nth-of-type(8) label,
+  .vc-tabbed [type="radio"]:nth-of-type(9):checked ~ .vc-tabs .vc-tab:nth-of-type(9) label,
+  .vc-tabbed [type="radio"]:nth-of-type(10):checked ~ .vc-tabs .vc-tab:nth-of-type(10) label {
+  border-bottom-color: #fff;
+  background: #fff;
+  color: #222;
+}
+
+.vc-tabbed [type="radio"]:nth-of-type(1):checked ~ .vc-tab-content:nth-of-type(1),
+  .vc-tabbed [type="radio"]:nth-of-type(2):checked ~ .vc-tab-content:nth-of-type(2),
+  .vc-tabbed [type="radio"]:nth-of-type(3):checked ~ .vc-tab-content:nth-of-type(3),
+  .vc-tabbed [type="radio"]:nth-of-type(4):checked ~ .vc-tab-content:nth-of-type(4),
+  .vc-tabbed [type="radio"]:nth-of-type(5):checked ~ .vc-tab-content:nth-of-type(5),
+  .vc-tabbed [type="radio"]:nth-of-type(6):checked ~ .vc-tab-content:nth-of-type(6),
+  .vc-tabbed [type="radio"]:nth-of-type(7):checked ~ .vc-tab-content:nth-of-type(7),
+  .vc-tabbed [type="radio"]:nth-of-type(8):checked ~ .vc-tab-content:nth-of-type(8),
+  .vc-tabbed [type="radio"]:nth-of-type(9):checked ~ .vc-tab-content:nth-of-type(9),
+  .vc-tabbed [type="radio"]:nth-of-type(10):checked ~ .vc-tab-content:nth-of-type(10),
+.sd-jwt-tabbed [type="radio"]:nth-of-type(1):checked ~ .sd-jwt-tab-content:nth-of-type(1),
+.sd-jwt-tabbed [type="radio"]:nth-of-type(2):checked ~ .sd-jwt-tab-content:nth-of-type(2),
+.sd-jwt-tabbed [type="radio"]:nth-of-type(3):checked ~ .sd-jwt-tab-content:nth-of-type(3) {
+  display: block;
+}
+
+.disclosure {
+  margin: 10px 0;
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 5px;
+}
+
+.disclosure h3 {
+  margin: 0;
+  font-size: 14px;
+  padding-left: 5px;
+}
+
+.disclosure .claim-name {
+  color: #333;
+}
+
+.disclosure .hash,
+.disclosure .disclosure-value,
+.disclosure .contents {
+  color: #555;
+  word-wrap: break-word;
+  display: inline;
+}
+
+.disclosure p {
+  margin: 0;
+  padding-left: 5px;
+}
+
+.disclosure pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  padding-left: 5px;
+  line-height: 1.6;
+  display: inline-block;
+}
+
+.header-value {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  padding-left: 5px;
+  line-height: 1.6;
+  font-size: 12px;
+}
+
+.cose-text, .jose-text, .vc-jose-cose-jwt .text, .vc-jose-cose-sd-jwt .text,
+ .vc-jose-cose-cose .text {
+  font-family: monospace;
+  color: green;
+}
+
+.sd-jwt-compact, .jwt-compact, .vc-jose-cose-jwt .compact, .vc-jose-cose-sd-jwt
+ .compact, .vc-jose-cose-cose .compact {
+  background-color: rgba(0,0,0,.03);
+}
+
+.sd-jwt-header, .jwt-header, .vc-jose-cose-jwt .header, .vc-jose-cose-sd-jwt
+ .header, .vc-jose-cose-cose .header {
+  color: red;
+}
+
+.sd-jwt-payload, .jwt-payload, .vc-jose-cose-jwt .payload, .vc-jose-cose-sd-jwt
+ .payload, .vc-jose-cose-cose .payload {
+  color: green;
+}
+
+.sd-jwt-signature, .jwt-signature, .vc-jose-cose-jwt .signature,
+ .vc-jose-cose-sd-jwt .signature, .vc-jose-cose-cose .signature {
+  color: blue;
+}
+
+.sd-jwt-disclosure, .vc-jose-cose-jwt .disclosure, .vc-jose-cose-sd-jwt
+ .disclosure, .vc-jose-cose-cose .disclosure {
+  color: purple;
+}
+</style>
+<script id="initialUserConfig" type="application/json">{
+  "specStatus": "CG-DRAFT",
+  "shortName": "did-key",
+  "subtitle": "A DID Method for Static Cryptographic Keys",
+  "localBiblio": {
+    "THORMARKER": {
+      "title": "On using the same key pair for Ed25519 and an X25519 based KEM",
+      "href": "https://eprint.iacr.org/2021/509.pdf",
+      "authors": [
+        "Erik Thormarker"
+      ],
+      "status": "Internet-Draft",
+      "publisher": "Cryptology ePrint Archive",
+      "id": "thormarker"
+    },
+    "OSCORE": {
+      "title": "Group OSCORE - Secure Group Communication for CoAP",
+      "href": "https://datatracker.ietf.org/doc/html/draft-ietf-core-oscore-groupcomm",
+      "authors": [
+        "M. Tiloca",
+        "G. Selander",
+        "F. Palombini",
+        "J. Mattsson",
+        "J. Park"
+      ],
+      "status": "Internet-Draft",
+      "publisher": "Internet Engineering Task Force (IETF)",
+      "id": "oscore"
+    }
+  },
+  "doJsonLd": true,
+  "github": "https://github.com/w3c-ccg/did-key-spec",
+  "includePermalinks": false,
+  "edDraftURI": "https://w3c-ccg.github.io/did-key-spec/",
+  "editors": [
+    {
+      "name": "TBD"
+    }
+  ],
+  "authors": [
+    {
+      "name": "Dave Longley",
+      "url": "https://digitalbazaar.com/",
+      "company": "Digital Bazaar",
+      "companyURL": "https://digitalbazaar.com/"
+    },
+    {
+      "name": "Dmitri Zagidulin",
+      "url": "https://www.linkedin.com/in/dzagidulin/",
+      "company": "Digital Bazaar",
+      "companyURL": "https://digitalbazaar.com/"
+    },
+    {
+      "name": "Manu Sporny",
+      "url": "https://digitalbazaar.com/",
+      "company": "Digital Bazaar",
+      "companyURL": "https://digitalbazaar.com/"
+    }
+  ],
+  "group": "credentials",
+  "wgPatentURI": "https://www.w3.org/2004/01/pp-impl/98922/status",
+  "maxTocLevel": 2,
+  "inlineCSS": true,
+  "postProcess": [
+    null
+  ],
+  "xref": [
+    "web-platform",
+    "cid",
+    "did",
+    "vc-data-model"
+  ],
+  "lint": {
+    "informative-dfn": false
+  },
+  "otherLinks": [
+    {
+      "key": "Related Documents",
+      "data": [
+        {
+          "value": "Controlled Identifiers v1.0",
+          "href": "https://www.w3.org/TR/cid/"
+        },
+        {
+          "value": "Decentralized Identifiers v1.0",
+          "href": "https://www.w3.org/TR/did/"
+        },
+        {
+          "value": "DID Use Cases and Requirements",
+          "href": "https://www.w3.org/TR/did-use-cases/"
+        },
+        {
+          "value": "DID Core Implementation Report",
+          "href": "https://w3c.github.io/did-test-suite/"
+        }
+      ]
+    }
+  ],
+  "publishISODate": "2025-11-02T00:00:00.000Z",
+  "generatedSubtitle": "Draft Community Group Report 02 November 2025"
+}</script>
+<link rel="stylesheet" href="https://www.w3.org/StyleSheets/TR/2021/cg-draft"></head>
+  <body class="h-entry" data-cite="web-platform cid did vc-data-model"><div class="head">
+    
+    <h1 id="title" class="title">The did:key Method v0.9</h1> <h2 id="subtitle" class="subtitle">A DID Method for Static Cryptographic Keys</h2>
+    <p id="w3c-state">
+      <a href="https://www.w3.org/standards/types#reports">Draft Community Group Report</a>
+      <time class="dt-published" datetime="2025-11-02">02 November 2025</time>
+    </p>
+    <dl>
+      
+      <dt>Latest published version:</dt><dd>
+              <a href="https://www.w3.org/did-key/">https://www.w3.org/did-key/</a>
+            </dd>
+      <dt>Latest editor's draft:</dt><dd><a href="https://w3c-ccg.github.io/did-key-spec/">https://w3c-ccg.github.io/did-key-spec/</a></dd>
+      
+      
+      
+      
+      <dt>Editor:</dt><dd class="editor p-author h-card vcard">
+    <span class="p-name fn">TBD</span>
+  </dd>
+      
+      <dt>Authors:</dt><dd class="editor p-author h-card vcard">
+    <a class="u-url url p-name fn" href="https://digitalbazaar.com/">Dave Longley</a> (<a class="p-org org h-org" href="https://digitalbazaar.com/">Digital Bazaar</a>)
+  </dd><dd class="editor p-author h-card vcard">
+    <a class="u-url url p-name fn" href="https://www.linkedin.com/in/dzagidulin/">Dmitri Zagidulin</a> (<a class="p-org org h-org" href="https://digitalbazaar.com/">Digital Bazaar</a>)
+  </dd><dd class="editor p-author h-card vcard">
+    <a class="u-url url p-name fn" href="https://digitalbazaar.com/">Manu Sporny</a> (<a class="p-org org h-org" href="https://digitalbazaar.com/">Digital Bazaar</a>)
+  </dd>
+      <dt>Feedback:</dt><dd>
+        <a href="https://github.com/w3c-ccg/did-key-spec/">GitHub w3c-ccg/did-key-spec</a>
+        (<a href="https://github.com/w3c-ccg/did-key-spec/pulls/">pull requests</a>,
+        <a href="https://github.com/w3c-ccg/did-key-spec/issues/new/choose">new issue</a>,
+        <a href="https://github.com/w3c-ccg/did-key-spec/issues/">open issues</a>)
+      </dd>
+      <dt>Related Documents</dt><dd>
+    <a href="https://www.w3.org/TR/cid/">Controlled Identifiers v1.0</a>
+  </dd><dd>
+    <a href="https://www.w3.org/TR/did/">Decentralized Identifiers v1.0</a>
+  </dd><dd>
+    <a href="https://www.w3.org/TR/did-use-cases/">DID Use Cases and Requirements</a>
+  </dd><dd>
+    <a href="https://w3c.github.io/did-test-suite/">DID Core Implementation Report</a>
+  </dd>
+    </dl>
+    
+    <p class="copyright">
+          <a href="https://www.w3.org/policies/#copyright">Copyright</a>
+          ©
+          2025
+          
+          the Contributors to the The did:key Method v0.9
+          Specification, published by the
+          <a href="https://www.w3.org/groups/cg/credentials">Credentials Community Group</a> under the
+          <a href="https://www.w3.org/community/about/agreements/cla/">W3C Community Contributor License Agreement (CLA)</a>. A human-readable
+                <a href="https://www.w3.org/community/about/agreements/cla-deed/">summary</a>
+                is available.
+              
+        </p>
+    <hr title="Separator for header">
+  </div>
+    <section id="abstract" class="introductory"><h2>Abstract</h2>
+      <p>
+<a data-link-type="dfn" href="https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers">Decentralized Identifiers</a> (DIDs) are a type of identifier for verifiable,
+decentralized digital identity. These identifiers are designed to enable the
+<a data-link-type="dfn" href="https://www.w3.org/TR/cid-1.0/#dfn-controller">controller</a> of a DID to prove control over the identifier in a way that is
+independent of any centralized registry, identity provider, or certificate authority.
+These sorts of identifiers often utilize a heavy-weight registry, such as ones
+utilizing Decentralized Ledger Technologies (DLT), to create, read, update,
+and deactivate DIDs. This specification describes a non-registry based <a data-link-type="dfn" href="https://www.w3.org/TR/did-core/#dfn-did-methods">DID Method</a> based on expanding a cryptographic public key into a <a data-link-type="dfn" href="https://www.w3.org/TR/did-core/#dfn-did-documents">DID Document</a>. This
+approach provides the simplest possible implementation of a DID Method that
+is able to achieve many, but not all, of the benefits of utilizing DIDs.
+      </p>
+    </section>
+
+    <section id="sotd" class="introductory"><h2>Status of This Document</h2><p>
+      This specification was published by the
+      <a href="https://www.w3.org/groups/cg/credentials">Credentials Community Group</a>. It is not a W3C Standard nor is it
+      on the W3C Standards Track.
+      
+            Please note that under the
+            <a href="https://www.w3.org/community/about/agreements/cla/">W3C Community Contributor License Agreement (CLA)</a>
+            there is a limited opt-out and other conditions apply.
+          
+      Learn more about
+      <a href="https://www.w3.org/community/">W3C Community and Business Groups</a>.
+    </p>
+
+      <p>
+Portions of the work on this specification have been funded by the
+United States Department of Homeland Security's Science and Technology
+Directorate under contract HSHQDC-17-C-00019. The content of this specification
+does not necessarily reflect the position or the policy of the U.S. Government
+and no official endorsement should be inferred.
+      </p>
+
+    <p>
+    <a href="https://github.com/w3c-ccg/did-key-spec/issues/">GitHub Issues</a> are preferred for
+          discussion of this specification.
+        
+    
+  </p></section><nav id="toc"><h2 class="introductory" id="table-of-contents">Table of Contents</h2><ol class="toc"><li class="tocline"><a class="tocxref" href="#abstract">Abstract</a></li><li class="tocline"><a class="tocxref" href="#sotd">Status of This Document</a></li><li class="tocline"><a class="tocxref" href="#introduction"><bdi class="secno">1. </bdi>Introduction</a><ol class="toc"><li class="tocline"><a class="tocxref" href="#conformance"><bdi class="secno">1.1 </bdi>Conformance</a></li></ol></li><li class="tocline"><a class="tocxref" href="#did-key-identifier-syntax"><bdi class="secno">2. </bdi>did:key Identifier Syntax</a></li><li class="tocline"><a class="tocxref" href="#operations"><bdi class="secno">3. </bdi>Operations</a><ol class="toc"><li class="tocline"><a class="tocxref" href="#create"><bdi class="secno">3.1 </bdi>Create</a><ol class="toc"></ol></li><li class="tocline"><a class="tocxref" href="#read"><bdi class="secno">3.2 </bdi>Read</a></li><li class="tocline"><a class="tocxref" href="#update"><bdi class="secno">3.3 </bdi>Update</a></li><li class="tocline"><a class="tocxref" href="#deactivate"><bdi class="secno">3.4 </bdi>Deactivate</a></li></ol></li><li class="tocline"><a class="tocxref" href="#privacy-considerations"><bdi class="secno">4. </bdi>Privacy Considerations</a><ol class="toc"><li class="tocline"><a class="tocxref" href="#identifier-correlation-risks"><bdi class="secno">4.1 </bdi>Identifier Correlation Risks</a></li><li class="tocline"><a class="tocxref" href="#no-key-rotation"><bdi class="secno">4.2 </bdi>No Key Rotation</a></li><li class="tocline"><a class="tocxref" href="#direct-public-key-exposure"><bdi class="secno">4.3 </bdi>Direct Public Key Exposure</a></li><li class="tocline"><a class="tocxref" href="#pairwise-did-limitations"><bdi class="secno">4.4 </bdi>Pairwise DID Limitations</a></li></ol></li><li class="tocline"><a class="tocxref" href="#security-considerations"><bdi class="secno">5. </bdi>Security Considerations</a><ol class="toc"><li class="tocline"><a class="tocxref" href="#key-rotation-not-supported"><bdi class="secno">5.1 </bdi>Key Rotation Not Supported</a></li><li class="tocline"><a class="tocxref" href="#deactivation-not-supported"><bdi class="secno">5.2 </bdi>Deactivation Not Supported</a></li><li class="tocline"><a class="tocxref" href="#key-derivation-lacks-proof"><bdi class="secno">5.3 </bdi>Key Derivation Lacks Proof</a></li><li class="tocline"><a class="tocxref" href="#long-term-usage-is-discouraged"><bdi class="secno">5.4 </bdi>Long Term Usage is Discouraged</a></li></ol></li><li class="tocline"><a class="tocxref" href="#test-vectors"><bdi class="secno">A. </bdi>Test Vectors</a><ol class="toc"><li class="tocline"><a class="tocxref" href="#ed25519"><bdi class="secno">A.1 </bdi>Ed25519</a></li><li class="tocline"><a class="tocxref" href="#ed25519-with-x25519"><bdi class="secno">A.2 </bdi>Ed25519 with X25519</a></li><li class="tocline"><a class="tocxref" href="#secp256k1"><bdi class="secno">A.3 </bdi>Secp256k1</a></li><li class="tocline"><a class="tocxref" href="#bls-12-381"><bdi class="secno">A.4 </bdi>BLS 12-381</a></li><li class="tocline"><a class="tocxref" href="#p-256"><bdi class="secno">A.5 </bdi>P-256</a></li><li class="tocline"><a class="tocxref" href="#p-384"><bdi class="secno">A.6 </bdi>P-384</a></li></ol></li><li class="tocline"><a class="tocxref" href="#acknowledgements"><bdi class="secno">B. </bdi>Acknowledgements</a></li><li class="tocline"><a class="tocxref" href="#references"><bdi class="secno">C. </bdi>References</a><ol class="toc"><li class="tocline"><a class="tocxref" href="#normative-references"><bdi class="secno">C.1 </bdi>Normative references</a></li><li class="tocline"><a class="tocxref" href="#informative-references"><bdi class="secno">C.2 </bdi>Informative references</a></li></ol></li></ol></nav>
+
+    <section class="informative" id="introduction"><div class="header-wrapper"><h2 id="x1-introduction"><bdi class="secno">1. </bdi>Introduction</h2><a class="self-link" href="#introduction" aria-label="Permalink for Section 1."></a></div><p><em>This section is non-normative.</em></p>
+      
+
+      <p>
+<a data-link-type="dfn" href="https://www.w3.org/TR/did-core/#dfn-decentralized-identifiers">Decentralized Identifiers</a> (DIDs) are a type of identifier for verifiable,
+decentralized digital identity. These identifiers are designed to enable the
+<a data-link-type="dfn" href="https://www.w3.org/TR/cid-1.0/#dfn-controller">controller</a> of a DID to prove control over it and to be implemented
+independently of any centralized registry, identity provider, or certificate
+authority. These sorts of identifiers often utilize a heavy-weight registry,
+such as ones utilizing Decentralized Ledger Technologies (DLT), to create, read,
+update, and deactivate DIDs.
+      </p>
+
+      <p>
+While DLT-based DID Methods have great decentralization characteristics, and
+some of the more centralized DID Methods provide strong system control
+guarantees, the general approaches tend to be expensive to setup and operate.
+Some use cases requiring DIDs do not need the guarantees provided by these
+heavy-weight systems. The <code>did:key</code> method offers a lightweight alternative that
+provides several distinct advantages in specific scenarios: immediate
+availability without network dependencies, deterministic resolution requiring no
+registry lookups, zero infrastructure costs, complete offline operation
+capability, and maximum simplicity in implementation. These characteristics make
+<code>did:key</code> particularly well-suited for ephemeral interactions, development and
+testing environments, bootstrap scenarios, and situations where the overhead of
+registry operations is not justified by the duration or value of the
+interaction.
+      </p>
+
+      <p>
+The choice to use <code>did:key</code> over a registry-based DID method is primarily driven
+by the temporal nature and risk profile of the intended use case. Registry-based
+methods excel when persistent identity, key rotation, recovery mechanisms, or
+deactivation capabilities are required—such as for long-term business
+relationships, credential issuance by established organizations, or scenarios
+involving high-value transactions. In contrast, <code>did:key</code> is optimal for
+short-lived sessions where the identifier will be used for days to weeks,
+peer-to-peer communications that do not require persistent identity, temporary
+credential presentations, or situations where the keys are protected by hardware
+security modules and can be rotated at the application layer. The deterministic
+nature of <code>did:key</code> also makes it valuable for testing and development, as the
+same key material always produces the same identifier without requiring access
+to external registries or networks.
+      </p>
+
+      <p class="advisement">
+Use of <code>did:key</code> for long-lived use cases is only recommended when accompanied
+with high confidence in hardware isolation.
+      </p>
+
+      <p>
+The rest of this document outlines the syntax for the <code>did:key</code> identifier, the
+operations supported by the <code>did:key</code> method, and some security and privacy
+considerations that implementers might want to be aware of when implementing.
+      </p>
+
+      <section id="conformance"><div class="header-wrapper"><h3 id="x1-1-conformance"><bdi class="secno">1.1 </bdi>Conformance</h3><a class="self-link" href="#conformance" aria-label="Permalink for Section 1.1"></a></div><p>As well as sections marked as non-normative, all authoring guidelines, diagrams, examples, and notes in this specification are non-normative. Everything else in this specification is normative.</p><p>
+        The key words <em class="rfc2119">MUST</em> and <em class="rfc2119">SHOULD</em> in this document
+        are to be interpreted as described in
+        <a href="https://www.rfc-editor.org/info/bcp14">BCP 14</a>
+        [<cite><a class="bibref" data-link-type="biblio" href="#bib-rfc2119" title="Key words for use in RFCs to Indicate Requirement Levels">RFC2119</a></cite>] [<cite><a class="bibref" data-link-type="biblio" href="#bib-rfc8174" title="Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words">RFC8174</a></cite>]
+        when, and only when, they appear in all
+        capitals, as shown here.
+      </p></section>
+
+    </section>
+
+    <section class="normative" id="did-key-identifier-syntax"><div class="header-wrapper"><h2 id="x2-did-key-identifier-syntax"><bdi class="secno">2. </bdi>did:key Identifier Syntax</h2><a class="self-link" href="#did-key-identifier-syntax" aria-label="Permalink for Section 2."></a></div>
+      
+
+      <p>
+The format for the <code>did:key</code> method conforms to the <cite><a data-matched-text="[[[DID]]]" href="https://www.w3.org/TR/did-core/">Decentralized Identifiers (DIDs) v1.0</a></cite> specification and
+is simple. It consists of the <code>did:key</code> prefix, followed by a <a href="https://www.w3.org/TR/cid-1.0/#Multibase">Multibase</a> base58-btc or base64-url encoded value
+that is a concatenation of the <a href="https://www.w3.org/TR/cid-1.0/#Multikey">Multikey</a>
+identifier for the public key type and the raw bytes associated with the public
+key format.
+      </p>
+
+      <p>
+The ABNF for the key format is described below:
+      </p>
+
+      <pre aria-busy="false"><code class="hljs xml">did-key-format := did:key:<span class="hljs-tag">&lt;<span class="hljs-name">mb-value</span>&gt;</span>
+mb-value       := (z[a-km-zA-HJ-NP-Z1-9]+|u[A-Za-z0-9_-]+)</code></pre>
+
+      <p>
+Alternatively, the encoding rules can also be thought of as the application
+of a series of transformation functions on the raw public key bytes:
+      </p>
+
+      <tt>
+did-key-base58-btc-format := did:key:MULTIBASE(base58-btc, MULTICODEC(public-key-type, raw-public-key-bytes))
+      </tt>
+      <br>
+      <tt>
+did-key-base64-url-format := did:key:MULTIBASE(base64url, MULTICODEC(public-key-type, raw-public-key-bytes))
+     </tt>
+
+      <p>
+A simple example of a valid Ed25519 <code>did:key</code> DID is:
+      </p>
+
+      <div class="example" id="example-a-simple-ed25519-did-key-value">
+        <div class="marker">
+    <a class="self-link" href="#example-a-simple-ed25519-did-key-value">Example<bdi> 1</bdi></a><span class="example-title">: A simple Ed25519 did:key value</span>
+  </div> <pre aria-busy="false"><code class="hljs">did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK</code></pre>
+      </div>
+
+    </section>
+
+    <section class="normative" id="operations"><div class="header-wrapper"><h2 id="x3-operations"><bdi class="secno">3. </bdi>Operations</h2><a class="self-link" href="#operations" aria-label="Permalink for Section 3."></a></div>
+      
+
+      <p>
+The following section outlines the DID operations for the <code>did:key</code>
+method. Implementers might note that this DID Method is purely generative,
+requiring no look ups in a registry. Since <code>did:key</code> values are not
+stored in any registry, they cannot be updated or deactivated.
+      </p>
+
+      <section class="normative" id="create"><div class="header-wrapper"><h3 id="x3-1-create"><bdi class="secno">3.1 </bdi>Create</h3><a class="self-link" href="#create" aria-label="Permalink for Section 3.1"></a></div>
+        
+
+        <p>
+Creating a <code>did:key</code> value consists of creating a cryptographic key pair and
+encoding the public key using the format provided in  Section
+<a href="#did-key-identifier-syntax" data-matched-text="[[[#did-key-identifier-syntax]]]" class="sec-ref"><bdi class="secno">2. </bdi>did:key Identifier Syntax</a>. The creation of a DID Document is also
+performed by taking the public key value and expanding it into DID Document. An
+example is given below that expands the ed25519 <code>did:key</code>
+<code>did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK</code> into its
+associated DID Document:
+        </p>
+
+        <div class="example" id="example-an-example-of-a-did-key-did-document">
+        <div class="marker">
+    <a class="self-link" href="#example-an-example-of-a-did-key-did-document">Example<bdi> 2</bdi></a><span class="example-title">: An example of a did:key DID Document</span>
+  </div> <pre style="font-size: 0.65em;" aria-busy="false"><code class="hljs json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"@context"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+    <span class="hljs-string">"https://www.w3.org/ns/did/v1.1"</span>
+  <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"id"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"verificationMethod"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">"id"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">"type"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"Multikey"</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">"controller"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">"publicKeyMultibase"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span>
+  <span class="hljs-punctuation">}</span><span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"authentication"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+    <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span>
+  <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"assertionMethod"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+    <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span>
+  <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"capabilityDelegation"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+    <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span>
+  <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"capabilityInvocation"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+    <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span>
+  <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"keyAgreement"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">"id"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6LSj72tK8brWgZja8NLRwPigth2T9QRiG1uH9oKZuKjdh9p"</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">"type"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"Multikey"</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">"controller"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">"publicKeyMultibase"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"z6LSj72tK8brWgZja8NLRwPigth2T9QRiG1uH9oKZuKjdh9p"</span>
+  <span class="hljs-punctuation">}</span><span class="hljs-punctuation">]</span>
+<span class="hljs-punctuation">}</span></code></pre>
+      </div>
+
+        <section class="normative" id="document-creation-algorithm"><div class="header-wrapper"><h4 id="x3-1-1-document-creation-algorithm"><bdi class="secno">3.1.1 </bdi>Document Creation Algorithm</h4><a class="self-link" href="#document-creation-algorithm" aria-label="Permalink for Section 3.1.1"></a></div>
+          
+
+          <p>
+The following algorithm can be used for expanding a did:key identifier to a DID
+Document. An <em>identifier</em> and <em>options</em> are the required inputs.
+Implementations are expected to set a reasonable default for the
+<em>options.publicKeyFormat</em> value such as <code>JsonWebKey</code> or <code>Multikey</code>.
+The <em>options.enableExperimentalPublicKeyTypes</em> value <em class="rfc2119">SHOULD</em> be set to
+<code>false</code>. The <em>options.defaultContext</em> value <em class="rfc2119">SHOULD</em> be set to an array
+where the first element is the string value <code>https://www.w3.org/ns/did/v1</code>.
+Defaults might be overridden by the caller of this algorithm. A <em>document</em>
+is the resulting output.
+          </p>
+
+          <ol class="algorithm">
+            <li>
+Initialize <em>document</em> to an empty object.
+            </li>
+            <li>
+Using a colon (<code>:</code>) as the delimiter, split the <em>identifier</em> into its
+components: a <em>scheme</em>, a <em>method</em>, a <em>version</em>, and a
+<em>multibaseValue</em>. If there are only three components set the
+<em>version</em> to the string value <code>1</code> and use the last value as the
+<em>multibaseValue</em>.
+            </li>
+            <li>
+Check the validity of the input <em>identifier</em>. The <em>scheme</em> <em class="rfc2119">MUST</em> be
+the value <code>did</code>. The <em>method</em> <em class="rfc2119">MUST</em> be the value <code>key</code>. The
+<em>version</em> <em class="rfc2119">MUST</em> be convertible to a positive integer value. The
+<em>multibaseValue</em> <em class="rfc2119">MUST</em> be a string and begin with the letter <code>z</code>. If any
+of these requirements fail, an <code>invalidDid</code> error <em class="rfc2119">MUST</em> be raised.
+            </li>
+            <li>
+Initialize the <em>signatureVerificationMethod</em> to the result of passing
+<em>identifier</em>, <em>multibaseValue</em>, and <em>options</em> to
+<a href="#signature-method-creation-algorithm" class="sec-ref"><bdi class="secno">3.1.2 </bdi>Signature Method Creation Algorithm</a>.
+            </li>
+            <li>
+Set <em>document.id</em> to <em>identifier</em>. If <em>document.id</em> is not
+a valid DID, an <code>invalidDid</code> error <em class="rfc2119">MUST</em> be raised.
+            </li>
+            <li>
+Initialize the <code>verificationMethod</code> property in <em>document</em> to an array
+where the first value is the <em>signatureVerificationMethod</em>.
+            </li>
+            <li>
+Initialize the <code>authentication</code>, <code>assertionMethod</code>, <code>capabilityInvocation</code>,
+and the <code>capabilityDelegation</code> properties in <em>document</em> to an array
+where the first item is the value of the <code>id</code> property in
+<em>signatureVerificationMethod</em>.
+            </li>
+            <li>
+If <em>options.enableEncryptionKeyDerivation</em> is set to <code>true</code>:
+              <ol class="algorithm">
+                <li>
+Initialize the <em>encryptionVerificationMethod</em> to the result of passing
+<em>identifier</em>, <em>multibaseValue</em>, and <em>options</em> to
+<a href="#encryption-method-creation-algorithm" class="sec-ref"><bdi class="secno">3.1.5 </bdi>Encryption Method Creation Algorithm</a>.
+                </li>
+                <li>
+Add the <em>encryptionVerificationMethod</em> value to the <code>verificationMethod</code>
+array.
+                </li>
+                <li>
+Initialize the <code>keyAgreement</code> property in <em>document</em> to an array where
+the first item is the value of the <code>id</code> property in
+<em>encryptionVerificationMethod</em>.
+                </li>
+              </ol>
+            </li>
+            <li>
+Initialize the <code>@context</code> property in <em>document</em> to the result of
+passing <em>document</em> and <em>options</em> to the
+<a href="#context-creation-algorithm" class="sec-ref"><bdi class="secno">3.1.7 </bdi>Context Creation Algorithm</a>.
+            </li>
+            <li>
+Return <em>document</em>.
+            </li>
+          </ol>
+          <p>
+Any alternative algorithm can be used that produces an equivalent result to the
+output from the algorithm above.
+          </p>
+        </section>
+
+        <section class="normative" id="signature-method-creation-algorithm"><div class="header-wrapper"><h4 id="x3-1-2-signature-method-creation-algorithm"><bdi class="secno">3.1.2 </bdi>Signature Method Creation Algorithm</h4><a class="self-link" href="#signature-method-creation-algorithm" aria-label="Permalink for Section 3.1.2"></a></div>
+          
+
+          <p>
+The following algorithm can be used for decoding a multibase-encoded multicodec
+value into a verification method that is suitable for verifying digital
+signatures. An <em>identifier</em>, <em>multibaseValue</em>, and
+<em>options</em> are the required inputs. A <em>verificationMethod</em> is
+the resulting output.
+          </p>
+
+          <ol class="algorithm">
+            <li>
+Initialize <em>verificationMethod</em> to an empty object.
+            </li>
+            <li>
+Set <em>multicodecValue</em> and <em>rawPublicKeyBytes</em> to the result
+of passing <em>multibaseValue</em> and <em>options</em> to
+<a href="#decode-public-key-algorithm" class="sec-ref"><bdi class="secno">3.1.3 </bdi>Decode Public Key Algorithm</a>.
+            </li>
+            <li>
+Ensure the proper key length of <em>rawPublicKeyBytes</em> based on the
+<em>multicodecValue</em> table provided below:
+              <table class="simple">
+                <thead>
+                  <tr><th>Multicodec hexadecimal value</th>
+                  <th>public key byte length</th>
+                  <th>Description</th>
+                </tr></thead>
+
+                <tbody>
+                  <tr>
+                    <td><code>0xe7</code></td>
+                    <td>33 bytes</td>
+                    <td>secp256k1-pub - Secp256k1 public key (compressed)</td>
+                  </tr>
+                  <tr>
+                    <td><code>0xec</code></td>
+                    <td>32 bytes</td>
+                    <td>x25519-pub - Curve25519 public key</td>
+                  </tr>
+                  <tr>
+                    <td><code>0xed</code></td>
+                    <td>32 bytes</td>
+                    <td>ed25519-pub - Ed25519 public key</td>
+                  </tr>
+                  <tr>
+                    <td><code>0x1200</code></td>
+                    <td>33 bytes</td>
+                    <td>p256-pub - P-256 public key (compressed)</td>
+                  </tr>
+                  <tr>
+                    <td><code>0x1201</code></td>
+                    <td>49 bytes</td>
+                    <td>p384-pub - P-384 public key (compressed)</td>
+                  </tr>
+                </tbody>
+              </table>
+If the byte length of <em>rawPublicKeyBytes</em> does not match the expected
+public key length for the associated <em>multicodecValue</em>, an
+<code>invalidPublicKeyLength</code> error <em class="rfc2119">MUST</em> be raised.
+            </li>
+            <li>
+Ensure the <em>rawPublicKeyBytes</em> are a proper encoding of the public key
+type as specified by the <em>multicodecValue</em>. This validation is often
+done by a cryptographic library when importing the public key by, for example,
+ensuring that an Elliptic Curve public key is a specific coordinate that exists
+on the elliptic curve. If an invalid public key value is detected, an
+<code>invalidPublicKey</code> error <em class="rfc2119">MUST</em> be raised.
+
+<div class="issue" id="issue-container-generatedID"><div role="heading" class="issue-title marker" id="h-issue" aria-level="5"><span>Issue</span><span class="issue-label">: Request for feedback on implementability</span></div><div class="">
+It is not clear if this particular check is implementable across all public
+key types. The group is accepting feedback on the implementability of this
+particular feature.
+</div></div>
+            </li>
+            <li>
+Set the <em>verificationMethod.id</em> value by concatenating
+<em>identifier</em>, a hash character (<code>#</code>), and the <em>multicodecValue</em>.
+If <em>verificationMethod.id</em> is not a valid DID URL, an <code>invalidDidUrl</code>
+error <em class="rfc2119">MUST</em> be raised.
+            </li>
+            <li>
+Set the <em>publicKeyFormat</em> value to the <em>options.publicKeyFormat</em>
+value.
+            </li>
+            <li>
+If <em>publicKeyFormat</em> is not known to the implementation, an
+<code>unsupportedPublicKeyType</code> error <em class="rfc2119">MUST</em> be raised.
+            </li>
+            <li>
+If <em>options.enableExperimentalPublicKeyTypes</em> is set to <code>false</code> and
+<em>publicKeyFormat</em> is not <code>Multikey</code>, <code>JsonWebKey</code>, or
+<code>Ed25519VerificationKey2020</code>, an <code>invalidPublicKeyType</code> error <em class="rfc2119">MUST</em> be raised.
+            </li>
+            <li>
+Set <em>verificationMethod.type</em> to the <em>publicKeyFormat</em> value.
+            </li>
+            <li>
+Set <em>verificationMethod.controller</em> to the <em>identifier</em> value.
+If <em>verificationMethod.controller</em> is not a valid DID, an <code>invalidDid</code>
+error <em class="rfc2119">MUST</em> be raised.
+            </li>
+            <li>
+If <em>publicKeyFormat</em> is <code>Multikey</code> or <code>Ed25519VerificationKey2020</code>,
+set the <em>verificationMethod.publicKeyMultibase</em> value to
+<em>multibaseValue</em>.
+            </li><li>
+If <em>publicKeyFormat</em> is <code>JsonWebKey</code>, set the
+<em>verificationMethod.publicKeyJwk</em> value to the result of
+passing <em>multicodecValue</em> and <em>rawPublicKeyBytes</em> to
+<a href="#encode-jwk-algorithm" class="sec-ref"><bdi class="secno">3.1.4 </bdi>Encode JWK Algorithm</a>.
+            </li>
+            <li>
+Return <em>verificationMethod</em>.
+            </li>
+          </ol>
+
+        </section>
+
+        <section class="normative" id="decode-public-key-algorithm"><div class="header-wrapper"><h4 id="x3-1-3-decode-public-key-algorithm"><bdi class="secno">3.1.3 </bdi>Decode Public Key Algorithm</h4><a class="self-link" href="#decode-public-key-algorithm" aria-label="Permalink for Section 3.1.3"></a></div>
+          
+
+          <p>
+The following algorithm can be used for expanding a multibase-encoded
+multicodec value to decoded public key components. A <em>multibaseValue</em>
+and <em>options</em> are the required inputs. A <em>decodedPublicKey</em> is
+the output.
+          </p>
+
+          <ol class="algorithm">
+            <li>
+Set <em>decodedPublicKey</em> to an empty object.
+            </li>
+            <li>
+Decode <em>multibaseValue</em> using the base58-btc multibase alphabet and set
+<em>multicodecValue</em> to the multicodec header for the decoded value.
+Implementers are cautioned to ensure that the <em>multicodecValue</em>
+is set to the result after performing varint decoding.
+            </li>
+            <li>
+Set the <em>rawPublicKeyBytes</em> to the bytes remaining after the
+multicodec header.
+            </li>
+            <li>
+Return <em>multicodecValue</em> and <em>rawPublicKeyBytes</em> as the
+<em>decodedPublicKey</em>.
+            </li>
+          </ol>
+        </section>
+
+        <section class="normative" id="encode-jwk-algorithm"><div class="header-wrapper"><h4 id="x3-1-4-encode-jwk-algorithm"><bdi class="secno">3.1.4 </bdi>Encode JWK Algorithm</h4><a class="self-link" href="#encode-jwk-algorithm" aria-label="Permalink for Section 3.1.4"></a></div>
+          
+
+          <p>
+There are 2 categories of JWK expressions for multicodec encoded public keys.
+          </p>
+
+          <p>
+Standard JWK representations can be found under the IANA registry for
+<a href="https://www.iana.org/assignments/jose/jose.xhtml">
+  JSON Object Signing and Encryption (JOSE)
+</a>.
+          </p>
+          <div class="note" role="note" id="issue-container-generatedID-0"><div role="heading" class="note-title marker" id="h-note" aria-level="5"><span>Note</span></div><div class="">
+           See also the associated RFCs:
+           <ul>
+            <li>
+              <a href="https://www.rfc-editor.org/rfc/rfc7517">RFC7515: JSON Web Key (JWK)</a>
+            </li>
+            <li>
+              <a href="https://www.rfc-editor.org/rfc/rfc8037">RFC8037:
+                CFRG Elliptic Curve Diffie-Hellman (ECDH) and Signatures
+                in JSON Object Signing and Encryption (JOSE)</a>
+            </li>
+           </ul>
+          </div></div>
+
+          <p>
+In cases where a key type has not been formally standardized yet a
+specification describing the key encoding is provided.
+          </p>
+
+          <p class="advisement">
+BLS12-381 is the only instance of such a key type in the current method specification.
+See this document tracking its proposed standardization at IETF. See
+<a href="https://datatracker.ietf.org/doc/draft-looker-cose-bls-key-representations/">
+  draft-looker-cose-bls-key-representations</a>.
+          </p>
+
+          <p>
+Implementations <em class="rfc2119">MUST</em> conform to the normative requirements of the RFCs and specifications above.
+          </p>
+
+           <p>
+The following algorithm can be used to encode a multicodec value to a
+JSON Web Key. A <em>multicodecValue</em>, <em>rawPublicKeyBytes</em>
+are the required inputs. An <em>encodedJWK</em> is the output.
+          </p>
+
+          <ol class="algorithm">
+            <li>
+Obtain the associated <code>kty</code>, <code>crv</code>, <code>n</code>,<code>e</code>
+values for the JWK representation of the key type identified by <em>multicodecValue</em>.
+            </li>
+            <li>
+              If <code>y</code> is required member of the public key,
+              perform elliptic curve expansion by applying
+<a href="https://tools.ietf.org/id/draft-jivsov-ecc-compact-05.html">decompression algorithm specified here.</a>
+to obtain <code>y</code> and <code>x</code>.
+Otherwise simply encode <code>x</code> according to the associated RFCs.
+            </li>
+            <li>
+Encode the final JWK object by including the members required for the given key type identified by <em>multicodecValue</em>,
+according to the requirements defined by the relevant RFC.
+            </li>
+            <li>
+Ensure that <code>d</code> is NOT present.
+            </li>
+          </ol>
+
+          <div class="issue" id="issue-container-number-54"><div role="heading" class="issue-title marker" id="h-issue-0" aria-level="5"><a href="https://github.com/w3c-ccg/did-key-spec/issues/54"><span class="issue-number">Issue 54</span></a><span class="issue-label">: Formalize BLS12381 Encoding of JWKs </span></div><p class="">
+Address BLS12-381 Encoding.
+          </p></div>
+        </section>
+
+        <section class="normative" id="encryption-method-creation-algorithm"><div class="header-wrapper"><h4 id="x3-1-5-encryption-method-creation-algorithm"><bdi class="secno">3.1.5 </bdi>Encryption Method Creation Algorithm</h4><a class="self-link" href="#encryption-method-creation-algorithm" aria-label="Permalink for Section 3.1.5"></a></div>
+          
+
+          <p>
+The following algorithm can be used for decoding a multibase-encoded multicodec
+value into a verification method that is suitable for verifying that
+encrypted information will be received by the intended recipient. An
+<em>identifier</em>, <em>multibaseValue</em>, and
+<em>options</em> are the required inputs. A <em>verificationMethod</em> is
+the resulting output.
+          </p>
+
+          <ol class="algorithm">
+            <li>
+Initialize <em>verificationMethod</em> to an empty object.
+            </li>
+            <li>
+Set <em>multicodecValue</em> and <em>rawPublicKeyBytes</em> to the result
+of passing <em>multibaseValue</em> and <em>options</em> to
+<a href="#derive-encryption-key-algorithm" class="sec-ref"><bdi class="secno">3.1.6 </bdi>Derive Encryption Key Algorithm</a>.
+            </li>
+            <li>
+Ensure the proper key length of <em>rawPublicKeyBytes</em> based on the
+<em>multicodecValue</em> table provided below:
+              <table class="simple">
+                <thead>
+                  <tr><th>Multicodec hexadecimal value</th>
+                  <th>public key byte length</th>
+                  <th>Description</th>
+                </tr></thead>
+                <tbody>
+                  <tr>
+                    <td><code>0xec</code></td>
+                    <td>32 bytes</td>
+                    <td>x25519-pub - Curve25519 public key</td>
+                  </tr>
+                </tbody>
+              </table>
+If the byte length of <em>rawPublicKeyBytes</em> does not match the expected
+public key length for the associated <em>multicodecValue</em>, an
+<code>invalidPublicKeyLength</code> error <em class="rfc2119">MUST</em> be raised.
+            </li>
+            <li>
+Create the <em>multibaseValue</em> by concatenating the letter 'z' and the
+base58-btc encoding of the concatenation of the <em>multicodecValue</em> and
+the <em>rawPublicKeyBytes</em>.
+            </li>
+            <li>
+Set the <em>verificationMethod.id</em> value by concatenating
+<em>identifier</em>, a hash character (<code>#</code>), and the <em>multibaseValue</em>.
+If <em>verificationMethod.id</em> is not a valid DID URL, an <code>invalidDidUrl</code>
+error <em class="rfc2119">MUST</em> be raised.
+            </li>
+            <li>
+Set the <em>publicKeyFormat</em> value to the <em>options.publicKeyFormat</em>
+value.
+            </li>
+            <li>
+If <em>publicKeyFormat</em> is not known to the implementation, an
+<code>unsupportedPublicKeyType</code> error <em class="rfc2119">MUST</em> be raised.
+            </li>
+            <li>
+If <em>options.enableExperimentalPublicKeyTypes</em> is set to <code>false</code> and
+<em>publicKeyFormat</em> is not <code>Multikey</code>, <code>JsonWebKey</code>, or
+<code>X25519KeyAgreementKey2020</code>, an <code>invalidPublicKeyType</code> error <em class="rfc2119">MUST</em> be raised.
+            </li>
+            <li>
+Set <em>verificationMethod.type</em> to the <em>publicKeyFormat</em> value.
+            </li>
+            <li>
+Set <em>verificationMethod.controller</em> to <em>identifier</em>. If
+<em>verificationMethod.controller</em> is not a valid DID, an
+<code>invalidDid</code> error <em class="rfc2119">MUST</em> be raised.
+            </li>
+            <li>
+If <em>publicKeyFormat</em> is <code>Multikey</code> or <code>X25519KeyAgreementKey2020</code>,
+set the <em>verificationMethod.publicKeyMultibase</em> value to
+<em>multibaseValue</em>.
+            </li><li>
+If <em>publicKeyFormat</em> is <code>JsonWebKey</code>, set the
+<em>verificationMethod.publicKeyJwk</em> value to the result of
+passing <em>multicodecValue</em> and <em>rawPublicKeyBytes</em> to
+<a href="#encode-jwk-algorithm" class="sec-ref"><bdi class="secno">3.1.4 </bdi>Encode JWK Algorithm</a>.
+            </li>
+            <li>
+Return <em>verificationMethod</em>.
+            </li>
+          </ol>
+
+        </section>
+
+        <section class="normative" id="derive-encryption-key-algorithm"><div class="header-wrapper"><h4 id="x3-1-6-derive-encryption-key-algorithm"><bdi class="secno">3.1.6 </bdi>Derive Encryption Key Algorithm</h4><a class="self-link" href="#derive-encryption-key-algorithm" aria-label="Permalink for Section 3.1.6"></a></div>
+          
+
+          <p>
+The following algorithm can be used to transform a multibase-encoded multicodec
+value to public encryption key components that are suitable for encrypting
+messages to a receiver. A mathematical proof elaborating on the safety of
+performing this operation is available in [<cite><a class="bibref" data-link-type="biblio" href="#bib-thormarker" title="On using the same key pair for Ed25519 and an X25519 based KEM">THORMARKER</a></cite>]. A
+<em>multibaseValue</em> and <em>options</em> are the required inputs. A
+<em>publicEncryptionKey</em> is the output.
+          </p>
+
+          <ol class="algorithm">
+            <li>
+Set <em>publicEncryptionKey</em> to an empty object.
+            </li>
+            <li>
+Decode <em>multibaseValue</em> using the base58-btc multibase alphabet and set
+<em>multicodecValue</em> to the multicodec header for the decoded value.
+Implementers are cautioned to ensure that the <em>multicodecValue</em>
+is set to the result after performing varint decoding.
+            </li>
+            <li>
+Set the <em>rawPublicKeyBytes</em> to the bytes remaining after the
+multicodec header.
+            </li>
+            <li>
+If the <em>multicodecValue</em> is <code>0xed</code>, derive a public X25519 encryption
+key by using the <em>rawPublicKeyBytes</em> and the
+algorithm defined in [<cite><a class="bibref" data-link-type="biblio" href="#bib-oscore" title="Group OSCORE - Secure Group Communication for CoAP">OSCORE</a></cite>] for Curve25519 in
+Section 2.4.2: ECDH with Montgomery Coordinates and set
+<em>generatedPublicEncryptionKeyBytes</em> to the result.
+            </li>
+            <li>
+Set <em>multicodecValue</em> in <em>publicEncryptionKey</em> to <code>0xec</code>.
+            </li>
+            <li>
+Set <em>rawPublicKeyBytes</em> in <em>publicEncryptionKey</em> to
+<em>generatedPublicEncryptionKeyBytes</em>.
+            </li>
+            <li>
+Return <em>publicEncryptionKey</em>.
+            </li>
+          </ol>
+        </section>
+
+        <section class="normative" id="context-creation-algorithm"><div class="header-wrapper"><h4 id="x3-1-7-context-creation-algorithm"><bdi class="secno">3.1.7 </bdi>Context Creation Algorithm</h4><a class="self-link" href="#context-creation-algorithm" aria-label="Permalink for Section 3.1.7"></a></div>
+          
+
+          <p>
+The following algorithm is used to generate the array for the <code>@context</code>
+property in the DID Document. A <em>document</em> and <em>options</em> are the
+required inputs. A <em>contextArray</em> is the output.
+          </p>
+
+          <ol class="algorithm">
+            <li>
+Set <em>contextArray</em> to an array that is initialized to
+<em>options.defaultContext</em>.
+            </li>
+            <li>
+For every object in every verification relationship listed in <em>document</em>,
+add a string value to the <em>contextArray</em> based on the object <code>type</code>
+value, if it doesn't already exist, according to the following table:
+              <table class="simple">
+                <thead>
+                  <tr><th><code>type</code> value</th>
+                  <th>Context URL</th>
+                </tr></thead>
+
+                <tbody>
+                  <tr>
+                    <td><code>Ed25519VerificationKey2020</code></td>
+                    <td>
+https://www.w3.org/ns/did/v1.1
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>X25519KeyAgreementKey2020</code></td>
+                    <td>
+https://www.w3.org/ns/did/v1.1
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>JsonWebKey</code></td>
+                    <td>
+https://www.w3.org/ns/did/v1.1
+                    </td>
+                  </tr>
+                  <tr>
+                    <td><code>Multikey</code></td>
+                    <td>
+https://www.w3.org/ns/did/v1.1
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </li>
+            <li>
+Return <em>contextArray</em>.
+            </li>
+          </ol>
+        </section>
+
+      </section>
+
+      <section class="normative" id="read"><div class="header-wrapper"><h3 id="x3-2-read"><bdi class="secno">3.2 </bdi>Read</h3><a class="self-link" href="#read" aria-label="Permalink for Section 3.2"></a></div>
+        
+
+        <p>
+Reading a <code>did:key</code> value is a matter of deterministically expanding  the
+value to a DID Document. This process is described in Section <a href="#create" class="sec-ref"><bdi class="secno">3.1 </bdi>Create</a>.
+        </p>
+      </section>
+
+      <section class="normative" id="update"><div class="header-wrapper"><h3 id="x3-3-update"><bdi class="secno">3.3 </bdi>Update</h3><a class="self-link" href="#update" aria-label="Permalink for Section 3.3"></a></div>
+        
+
+        <p>
+This DID Method does not support updating the DID Document.
+        </p>
+      </section>
+
+      <section class="normative" id="deactivate"><div class="header-wrapper"><h3 id="x3-4-deactivate"><bdi class="secno">3.4 </bdi>Deactivate</h3><a class="self-link" href="#deactivate" aria-label="Permalink for Section 3.4"></a></div>
+        
+
+        <p>
+This DID Method does not support deactivating the DID Document.
+        </p>
+      </section>
+
+    </section>
+
+    <section class="informative" id="privacy-considerations"><div class="header-wrapper"><h2 id="x4-privacy-considerations"><bdi class="secno">4. </bdi>Privacy Considerations</h2><a class="self-link" href="#privacy-considerations" aria-label="Permalink for Section 4."></a></div><p><em>This section is non-normative.</em></p>
+      
+
+      <p>
+This section contains a variety of privacy considerations that people using
+the <code>did:key</code> Method are advised to consider before deploying this
+technology in a production setting. Readers are urged to read the
+<a href="https://www.w3.org/TR/cid-1.0/#privacy-considerations">Privacy Considerations</a> section
+of the <cite><a data-matched-text="[[[CID]]]" href="https://www.w3.org/TR/cid-1.0/">Controlled Identifiers v1.0</a></cite> specification, as well as the
+<a href="https://www.w3.org/TR/did-core/#privacy-considerations">Privacy Considerations</a> section
+of the <cite><a data-matched-text="[[[DID]]]" href="https://www.w3.org/TR/did-core/">Decentralized Identifiers (DIDs) v1.0</a></cite> specification, before reading this section.
+      </p>
+
+      <section class="informative" id="identifier-correlation-risks"><div class="header-wrapper"><h3 id="x4-1-identifier-correlation-risks"><bdi class="secno">4.1 </bdi>Identifier Correlation Risks</h3><a class="self-link" href="#identifier-correlation-risks" aria-label="Permalink for Section 4.1"></a></div><p><em>This section is non-normative.</em></p>
+        
+
+        <p>
+The <code>did:key</code> method encodes the public key directly in the identifier itself,
+creating a deterministic relationship between the key material and the DID.
+This means that any two systems that receive the same <code>did:key</code> identifier can
+immediately recognize it as referring to the same subject, enabling correlation
+across different contexts and verifiers. Unlike registry-based DID methods
+where the identifier can be an opaque value, <code>did:key</code> identifiers are
+intrinsically tied to the cryptographic key, making the identifier both globally
+unique and globally correlatable.
+        </p>
+
+        <p>
+This correlation risk is particularly acute in scenarios where a subject might
+wish to present different personas or maintain separation between different
+interactions. If the same <code>did:key</code> is reused across multiple verifiers,
+service providers, or interactions, those parties can collude or independently
+determine that they are interacting with the same subject, potentially building
+comprehensive profiles of the subject's activities without their knowledge or consent.
+        </p>
+      </section>
+
+      <section class="informative" id="no-key-rotation"><div class="header-wrapper"><h3 id="x4-2-no-key-rotation"><bdi class="secno">4.2 </bdi>No Key Rotation</h3><a class="self-link" href="#no-key-rotation" aria-label="Permalink for Section 4.2"></a></div><p><em>This section is non-normative.</em></p>
+        
+
+        <p>
+The <code>did:key</code> method does not support key rotation because the identifier is
+derived directly from the public key material itself. Any change to the
+cryptographic key would result in an entirely different DID, effectively
+creating a new identity rather than updating an existing one. This limitation
+has significant privacy implications, as there is no mechanism to recover
+privacy after a correlation event or to refresh the identifier while maintaining
+continuity of the underlying digital identity.
+        </p>
+
+        <p>
+In long-lived relationships or scenarios where privacy requirements evolve over
+time, the inability to rotate keys without changing identifiers forces a choice
+between maintaining identifier continuity and improving privacy posture. This
+makes <code>did:key</code> particularly unsuitable for use cases where subjects might need
+to respond to correlation attacks, regulatory requirements for periodic key
+updates, or evolving privacy threat models over the lifetime of the identifier.
+        </p>
+      </section>
+
+      <section class="informative" id="direct-public-key-exposure"><div class="header-wrapper"><h3 id="x4-3-direct-public-key-exposure"><bdi class="secno">4.3 </bdi>Direct Public Key Exposure</h3><a class="self-link" href="#direct-public-key-exposure" aria-label="Permalink for Section 4.3"></a></div><p><em>This section is non-normative.</em></p>
+        
+
+        <p>
+Every <code>did:key</code> identifier directly exposes the complete public key material
+as part of the identifier string itself. This is fundamentally different from
+registry-based DID methods where the identifier is a reference that must be
+resolved to obtain the public key. With <code>did:key</code>, anyone who observes the
+identifier in any context—whether in a credential, a transaction log, a
+communication header, or any other location—immediately gains access to the
+full cryptographic public key without any additional resolution step.
+        </p>
+
+        <p>
+This constant exposure of public key material increases the attack surface for
+cryptanalysis and makes it impossible to implement selective disclosure of
+verification methods. It also means that any storage or transmission of the
+identifier itself, regardless of context, constitutes storage and transmission
+of cryptographic material, which might have implications for systems with strict
+data handling requirements or key management policies.
+        </p>
+      </section>
+
+      <section class="informative" id="pairwise-did-limitations"><div class="header-wrapper"><h3 id="x4-4-pairwise-did-limitations"><bdi class="secno">4.4 </bdi>Pairwise DID Limitations</h3><a class="self-link" href="#pairwise-did-limitations" aria-label="Permalink for Section 4.4"></a></div><p><em>This section is non-normative.</em></p>
+        
+
+        <p>
+While the <code>did:key</code> method can technically be used to create pairwise DIDs by
+generating a new cryptographic key pair for each relationship, this approach
+significantly increases the operational burden on the subject. Each new
+pairwise relationship requires generating, storing, and managing an additional
+private key, along with the associated backup and recovery procedures. For
+subjects engaged in numerous relationships, this can quickly become
+unmanageable and increase the risk of key loss.
+        </p>
+
+        <p>
+Additionally, unlike registry-based methods where a single key can be used to
+control multiple pairwise DIDs through controller relationships, <code>did:key</code>
+requires actual generation of new key material for each pairwise identifier.
+This makes it difficult to implement recovery mechanisms or delegate key
+management to trusted services, as each <code>did:key</code> represents an independent
+cryptographic identity with no hierarchical or delegated relationship to other
+identifiers controlled by the same subject.
+        </p>
+      </section>
+
+    </section>
+
+    <section class="informative" id="security-considerations"><div class="header-wrapper"><h2 id="x5-security-considerations"><bdi class="secno">5. </bdi>Security Considerations</h2><a class="self-link" href="#security-considerations" aria-label="Permalink for Section 5."></a></div><p><em>This section is non-normative.</em></p>
+      
+
+      <p>
+This section contains a variety of security considerations that people using
+the <code>did:key</code> Method are advised to consider before deploying this
+technology in a production setting. Readers are urged to read the
+<a href="https://www.w3.org/TR/cid-1.0/#security-considerations">Security Considerations</a> section
+of the <cite><a data-matched-text="[[[CID]]]" href="https://www.w3.org/TR/cid-1.0/">Controlled Identifiers v1.0</a></cite> specification, as well as the
+<a href="https://www.w3.org/TR/did-core/#security-considerations">Security Considerations</a> section
+of the <cite><a data-matched-text="[[[DID]]]" href="https://www.w3.org/TR/did-core/">Decentralized Identifiers (DIDs) v1.0</a></cite> specification, before reading this section.
+      </p>
+
+      <section class="informative" id="key-rotation-not-supported"><div class="header-wrapper"><h3 id="x5-1-key-rotation-not-supported"><bdi class="secno">5.1 </bdi>Key Rotation Not Supported</h3><a class="self-link" href="#key-rotation-not-supported" aria-label="Permalink for Section 5.1"></a></div><p><em>This section is non-normative.</em></p>
+        
+
+        <p>
+The <code>did:key</code> method is a purely generative method, which means that
+updates are not supported. This creates a security concern
+for any long-lived use of the identifier, as there is no mechanism to rotate
+cryptographic keys in response to potential compromise, suspected exposure,
+or as part of routine security hygiene practices. If a private key associated
+with a <code>did:key</code> is compromised through theft, social engineering, malware,
+side-channel attacks, or any other means, the attacker gains permanent control
+over that identity with no possibility for the legitimate controller to regain
+exclusive control by rotating to new key material.
+        </p>
+
+        <p>
+This limitation is of concern because best practices in cryptographic
+key management typically mandate periodic key rotation even in the absence of
+known compromise, as a defense-in-depth measure against undetected breaches.
+Modern security frameworks often require key rotation on regular schedules or
+after personnel changes, system migrations, or security incidents. The <code>did:key</code>
+method's inability to support these practices means that any use beyond
+short-lived, ephemeral interactions carries inherent and unmitigable risk of
+permanent compromise. To mitigate this concern, long-term use of <code>did:key</code>
+is expected to be via hardware security modules with the <code>did:key</code> value
+itself being rotated in whatever process it is used in on an acceptable
+cadence.
+        </p>
+      </section>
+
+      <section class="informative" id="deactivation-not-supported"><div class="header-wrapper"><h3 id="x5-2-deactivation-not-supported"><bdi class="secno">5.2 </bdi>Deactivation Not Supported</h3><a class="self-link" href="#deactivation-not-supported" aria-label="Permalink for Section 5.2"></a></div><p><em>This section is non-normative.</em></p>
+        
+
+        <p>
+The <code>did:key</code> method provides no mechanism for deactivating or revoking an
+identifier once it has been created and distributed. In the event of key
+compromise, loss of control, or the need to terminate an identity for security
+reasons, there is no way to signal to verifiers that the <code>did:key</code> is not to be
+trusted or accepted other than via a high-level mechanism such as the revocation
+of a <a data-link-type="dfn" href="https://www.w3.org/TR/vc-data-model-2.0/#dfn-verifiable-credential">verifiable credential</a> that is associated with the <code>did:key</code> identifier.
+        </p>
+
+        <p>
+In contrast to did:key, registry-based DID methods can publish a deactivation
+status or remove the <a data-link-type="dfn" href="https://www.w3.org/TR/did-core/#dfn-did-documents">DID Document</a> entirely, providing a clear signal to all
+verifiers that the identifier is no longer valid. Without deactivation
+support, security incident response for <code>did:key</code> is limited to out-of-band
+communication. This makes <code>did:key</code> not ideal in scenarios involving high-value
+transactions, legally binding agreements, or situations where unauthorized use
+of the identity could cause significant harm to the controller or relying
+parties.
+        </p>
+      </section>
+
+      <section class="informative" id="key-derivation-lacks-proof"><div class="header-wrapper"><h3 id="x5-3-key-derivation-lacks-proof"><bdi class="secno">5.3 </bdi>Key Derivation Lacks Proof</h3><a class="self-link" href="#key-derivation-lacks-proof" aria-label="Permalink for Section 5.3"></a></div><p><em>This section is non-normative.</em></p>
+        
+
+        <p>
+Some implementations might utilize a key derivation function when converting
+from an Ed25519 public key to a Curve25519 ECDH key for use in the
+<code>keyAgreement</code> verification method. While this conversion is supported by the
+specification and is believed to be cryptographically sound based on the
+mathematical relationship between the Edwards curve (Ed25519) and the Montgomery
+curve (Curve25519) representations of Curve25519, there is no complete
+mathematical proof that this derivation preserves the full security properties
+of the original key in all contexts. This introduces a potential security risk,
+as subtle vulnerabilities in the conversion process could potentially be
+exploited to weaken the encryption key agreement without compromising the
+signature key.
+        </p>
+
+        <p>
+The security concern is compounded by the fact that the same underlying key
+material is being used for two different cryptographic purposes—digital
+signatures and key agreement—which violates the cryptographic principle of key
+separation. While research such as [<cite><a class="bibref" data-link-type="biblio" href="#bib-thormarker" title="On using the same key pair for Ed25519 and an X25519 based KEM">THORMARKER</a></cite>] provides analysis supporting
+the safety of this practice for Ed25519/X25519 specifically, implementers are
+relying on carefully constructed mathematical relationships rather than formally
+proven security guarantees. Organizations with strict security requirements
+might prefer to use separate key pairs for signature and encryption operations,
+which would require generating and managing multiple <code>did:key</code> identifiers
+rather than relying on key derivation.
+        </p>
+      </section>
+
+      <section class="informative" id="long-term-usage-is-discouraged"><div class="header-wrapper"><h3 id="x5-4-long-term-usage-is-discouraged"><bdi class="secno">5.4 </bdi>Long Term Usage is Discouraged</h3><a class="self-link" href="#long-term-usage-is-discouraged" aria-label="Permalink for Section 5.4"></a></div><p><em>This section is non-normative.</em></p>
+        
+
+        <p>
+Since there is no support for update and deactivate for the <code>did:key</code>
+method, it is not possible to recover from a security compromise, making
+long-term use inherently risky. The security posture of a <code>did:key</code> can only
+degrade over time as the private key is exposed to an increasing number of
+potential attack vectors—including storage vulnerabilities, backup procedures,
+key usage in multiple contexts, potential cryptographic weaknesses discovered
+in the future, and the general accumulation of attack surface over extended
+periods. Any long-lived <code>did:key</code> essentially becomes a single point of
+failure where compromise at any point during its lifetime results in permanent
+and irrecoverable security breach.
+        </p>
+
+        <p>
+For this reason, using a <code>did:key</code> for interactions that last weeks to months is
+strongly discouraged unless it is coupled with a hardware security module of
+some kind. Use beyond short-lived contexts is to be carefully evaluated against
+specific threat models. The method is most appropriate for scenarios such as
+ephemeral peer-to-peer connections, short-lived authentication sessions,
+temporary delegation of capabilities, or situations where the identifier will be
+used only a small number of times with a limited set of verifiers. For any use
+case requiring persistent identity over extended periods, involving high-value
+assets, containing sensitive data, or subject to regulatory compliance
+requirements, implementers might instead consider registry-based DID methods
+that support key rotation, recovery mechanisms, and deactivation capabilities.
+        </p>
+      </section>
+
+    </section>
+
+  
+
+  <section class="appendix informative" id="test-vectors"><div class="header-wrapper"><h2 id="a-test-vectors"><bdi class="secno">A. </bdi>Test Vectors</h2><a class="self-link" href="#test-vectors" aria-label="Permalink for Appendix A."></a></div><p><em>This section is non-normative.</em></p>
+    
+
+    <p>We provide only the <code>verificationMethod</code> section of the DID Document in these examples.</p>
+
+    <section class="informative" id="ed25519"><div class="header-wrapper"><h3 id="a-1-ed25519"><bdi class="secno">A.1 </bdi>Ed25519</h3><a class="self-link" href="#ed25519" aria-label="Permalink for Appendix A.1"></a></div><p><em>This section is non-normative.</em></p>
+      
+
+      <div class="example" id="example-3">
+        <div class="marker">
+    <a class="self-link" href="#example-3">Example<bdi> 3</bdi></a>
+  </div> <pre aria-busy="false"><code class="hljs">did:key:z6Mkf5rGMoatrSj1f4CyvuHBeXJELe9RPdzo2PKGNCKVtZxP</code></pre>
+      </div>
+
+      <div class="example" id="example-an-did-key-did-document-expressing-an-ed25519-public-key-useful-with-the-eddsa">
+        <div class="marker">
+    <a class="self-link" href="#example-an-did-key-did-document-expressing-an-ed25519-public-key-useful-with-the-eddsa">Example<bdi> 4</bdi></a><span class="example-title">: An did:key DID Document expressing an Ed25519 public key useful with the EdDSA</span>
+  </div> <pre class="nohighlight did-key" data-did="did:key:z6Mkf5rGMoatrSj1f4CyvuHBeXJELe9RPdzo2PKGNCKVtZxP">{<br>  "@context": [<br>    "https://www.w3.org/ns/did/v1",<br>    "https://w3id.org/security/multikey/v1"<br>  ],<br>  "id": "did:key:z6Mkf5rGMoatrSj1f4CyvuHBeXJELe9RPdzo2PKGNCKVtZxP",<br>  "verificationMethod": [<br>    {<br>      "id": "did:key:z6Mkf5rGMoatrSj1f4CyvuHBeXJELe9RPdzo2PKGNCKVtZxP#vm,<br>      "type": "Multikey",<br>      "controller": "did:key:z6Mkf5rGMoatrSj1f4CyvuHBeXJELe9RPdzo2PKGNCKVtZxP",<br>      "publicKeyMultibase": "z6Mkf5rGMoatrSj1f4CyvuHBeXJELe9RPdzo2PKGNCKVtZxP"<br>    }<br>  ],<br>  "authentication": [<br>    "did:key:z6Mkf5rGMoatrSj1f4CyvuHBeXJELe9RPdzo2PKGNCKVtZxP#vm<br>  ],<br>  "assertionMethod": [<br>    "did:key:z6Mkf5rGMoatrSj1f4CyvuHBeXJELe9RPdzo2PKGNCKVtZxP#vm<br>  ],<br>  "capabilityDelegation": [<br>    "did:key:z6Mkf5rGMoatrSj1f4CyvuHBeXJELe9RPdzo2PKGNCKVtZxP#vm<br>  ],<br>  "capabilityInvocation": [<br>    "did:key:z6Mkf5rGMoatrSj1f4CyvuHBeXJELe9RPdzo2PKGNCKVtZxP#vm<br>  ]<br>}</pre>
+      </div>
+
+    </section>
+
+    <section class="informative" id="ed25519-with-x25519"><div class="header-wrapper"><h3 id="a-2-ed25519-with-x25519"><bdi class="secno">A.2 </bdi>Ed25519 with X25519</h3><a class="self-link" href="#ed25519-with-x25519" aria-label="Permalink for Appendix A.2"></a></div><p><em>This section is non-normative.</em></p>
+      
+
+      <p>
+It is possible to derive an X25519 key from an Ed25519 one. An X25519 key is
+useful when perform such functions as key agreement between two systems.
+      </p>
+
+      <div class="example" id="example-an-did-key-did-document-expressing-an-ed25519-public-key-and-an-x25519-public-key-useful-with-the-eddsa-and-key-agreement-protocols">
+        <div class="marker">
+    <a class="self-link" href="#example-an-did-key-did-document-expressing-an-ed25519-public-key-and-an-x25519-public-key-useful-with-the-eddsa-and-key-agreement-protocols">Example<bdi> 5</bdi></a><span class="example-title">: An did:key DID Document expressing an Ed25519 public key and an X25519 public key useful with the EdDSA and key agreement protocols</span>
+  </div> <pre aria-busy="false"><code class="hljs json"><span class="hljs-punctuation">{</span>
+<span class="hljs-attr">"@context"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+  <span class="hljs-string">"https://www.w3.org/ns/did/v1.1"</span>
+<span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+<span class="hljs-attr">"id"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span><span class="hljs-punctuation">,</span>
+<span class="hljs-attr">"verificationMethod"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"id"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"type"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"Multikey"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"controller"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"publicKeyMultibase"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span>
+<span class="hljs-punctuation">}</span><span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+<span class="hljs-attr">"authentication"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+  <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span>
+<span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+<span class="hljs-attr">"assertionMethod"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+  <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span>
+<span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+<span class="hljs-attr">"capabilityDelegation"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+  <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span>
+<span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+<span class="hljs-attr">"capabilityInvocation"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+  <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span>
+<span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span>
+<span class="hljs-attr">"keyAgreement"</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"id"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK#z6LSj72tK8brWgZja8NLRwPigth2T9QRiG1uH9oKZuKjdh9p"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"type"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"Multikey"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"controller"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"publicKeyMultibase"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"z6LSj72tK8brWgZja8NLRwPigth2T9QRiG1uH9oKZuKjdh9p"</span>
+<span class="hljs-punctuation">}</span><span class="hljs-punctuation">]</span>
+<span class="hljs-punctuation">}</span></code></pre>
+      </div>
+
+    </section>
+
+    <section class="informative" id="secp256k1"><div class="header-wrapper"><h3 id="a-3-secp256k1"><bdi class="secno">A.3 </bdi>Secp256k1</h3><a class="self-link" href="#secp256k1" aria-label="Permalink for Appendix A.3"></a></div><p><em>This section is non-normative.</em></p>
+      
+        <p>These DID always start with <code>zQ3s</code>.</p>
+      <div class="example" id="example-6">
+        <div class="marker">
+    <a class="self-link" href="#example-6">Example<bdi> 6</bdi></a>
+  </div> <pre aria-busy="false"><code class="hljs">did:key:zQ3shokFTS3brHcDQrn82RUDfCZESWL1ZdCEJwekUDPQiYBme
+did:key:zQ3shtxV1FrJfhqE1dvxYRcCknWNjHc3c5X1y3ZSoPDi2aur2
+did:key:zQ3shZc2QzApp2oymGvQbzP8eKheVshBHbU4ZYjeXqwSKEn6N</code></pre>
+      </div>
+    </section>
+
+    <section class="informative" id="bls-12-381"><div class="header-wrapper"><h3 id="a-4-bls-12-381"><bdi class="secno">A.4 </bdi>BLS 12-381</h3><a class="self-link" href="#bls-12-381" aria-label="Permalink for Appendix A.4"></a></div><p><em>This section is non-normative.</em></p>
+      
+
+      <div class="example" id="example-7">
+        <div class="marker">
+    <a class="self-link" href="#example-7">Example<bdi> 7</bdi></a>
+  </div> <pre aria-busy="false"><code class="hljs">did:key:zUC7EK3ZakmukHhuncwkbySmomv3FmrkmS36E4Ks5rsb6VQSRpoCrx6Hb8e2Nk6UvJFSdyw9NK1scFXJp21gNNYFjVWNgaqyGnkyhtagagCpQb5B7tagJu3HDbjQ8h5ypoHjwBb</code></pre>
+      </div>
+
+      <p>An example DID Document for a BLS12-381 key is shown below.</p>
+
+      <div class="example" id="example-an-did-key-did-document-expressing-a-bls12-381-g2-group-public-key-useful-with-the-bbsdsa">
+        <div class="marker">
+    <a class="self-link" href="#example-an-did-key-did-document-expressing-a-bls12-381-g2-group-public-key-useful-with-the-bbsdsa">Example<bdi> 8</bdi></a><span class="example-title">: An did:key DID Document expressing a BLS12-381 G2 group public key useful with the BBSDSA</span>
+  </div> <pre class="nohighlight did-key" data-did="did:key:zUC7EK3ZakmukHhuncwkbySmomv3FmrkmS36E4Ks5rsb6VQSRpoCrx6Hb8e2Nk6UvJFSdyw9NK1scFXJp21gNNYFjVWNgaqyGnkyhtagagCpQb5B7tagJu3HDbjQ8h5ypoHjwBb">{<br>  "@context": [<br>    "https://www.w3.org/ns/did/v1",<br>    "https://w3id.org/security/multikey/v1"<br>  ],<br>  "id": "did:key:zUC7EK3ZakmukHhuncwkbySmomv3FmrkmS36E4Ks5rsb6VQSRpoCrx6Hb8e2Nk6UvJFSdyw9NK1scFXJp21gNNYFjVWNgaqyGnkyhtagagCpQb5B7tagJu3HDbjQ8h5ypoHjwBb",<br>  "verificationMethod": [<br>    {<br>      "id": "did:key:zUC7EK3ZakmukHhuncwkbySmomv3FmrkmS36E4Ks5rsb6VQSRpoCrx6Hb8e2Nk6UvJFSdyw9NK1scFXJp21gNNYFjVWNgaqyGnkyhtagagCpQb5B7tagJu3HDbjQ8h5ypoHjwBb#vm,<br>      "type": "Multikey",<br>      "controller": "did:key:zUC7EK3ZakmukHhuncwkbySmomv3FmrkmS36E4Ks5rsb6VQSRpoCrx6Hb8e2Nk6UvJFSdyw9NK1scFXJp21gNNYFjVWNgaqyGnkyhtagagCpQb5B7tagJu3HDbjQ8h5ypoHjwBb",<br>      "publicKeyMultibase": "zUC7EK3ZakmukHhuncwkbySmomv3FmrkmS36E4Ks5rsb6VQSRpoCrx6Hb8e2Nk6UvJFSdyw9NK1scFXJp21gNNYFjVWNgaqyGnkyhtagagCpQb5B7tagJu3HDbjQ8h5ypoHjwBb"<br>    }<br>  ],<br>  "authentication": [<br>    "did:key:zUC7EK3ZakmukHhuncwkbySmomv3FmrkmS36E4Ks5rsb6VQSRpoCrx6Hb8e2Nk6UvJFSdyw9NK1scFXJp21gNNYFjVWNgaqyGnkyhtagagCpQb5B7tagJu3HDbjQ8h5ypoHjwBb#vm<br>  ],<br>  "assertionMethod": [<br>    "did:key:zUC7EK3ZakmukHhuncwkbySmomv3FmrkmS36E4Ks5rsb6VQSRpoCrx6Hb8e2Nk6UvJFSdyw9NK1scFXJp21gNNYFjVWNgaqyGnkyhtagagCpQb5B7tagJu3HDbjQ8h5ypoHjwBb#vm<br>  ],<br>  "capabilityDelegation": [<br>    "did:key:zUC7EK3ZakmukHhuncwkbySmomv3FmrkmS36E4Ks5rsb6VQSRpoCrx6Hb8e2Nk6UvJFSdyw9NK1scFXJp21gNNYFjVWNgaqyGnkyhtagagCpQb5B7tagJu3HDbjQ8h5ypoHjwBb#vm<br>  ],<br>  "capabilityInvocation": [<br>    "did:key:zUC7EK3ZakmukHhuncwkbySmomv3FmrkmS36E4Ks5rsb6VQSRpoCrx6Hb8e2Nk6UvJFSdyw9NK1scFXJp21gNNYFjVWNgaqyGnkyhtagagCpQb5B7tagJu3HDbjQ8h5ypoHjwBb#vm<br>  ]<br>}</pre>
+      </div>
+
+    </section>
+
+    <section class="informative" id="p-256"><div class="header-wrapper"><h3 id="a-5-p-256"><bdi class="secno">A.5 </bdi>P-256</h3><a class="self-link" href="#p-256" aria-label="Permalink for Appendix A.5"></a></div><p><em>This section is non-normative.</em></p>
+      
+
+      <div class="example" id="example-9">
+        <div class="marker">
+    <a class="self-link" href="#example-9">Example<bdi> 9</bdi></a>
+  </div> <pre aria-busy="false"><code class="hljs">did:key:zDnaerx9CtbPJ1q36T5Ln5wYt3MQYeGRG5ehnPAmxcf5mDZpv</code></pre>
+      </div>
+
+      <p>An example DID Document for a P-256 key is shown below.</p>
+
+      <div class="example" id="example-an-did-key-did-document-expressing-a-p-256-public-key-useful-with-the-ecdsa">
+        <div class="marker">
+    <a class="self-link" href="#example-an-did-key-did-document-expressing-a-p-256-public-key-useful-with-the-ecdsa">Example<bdi> 10</bdi></a><span class="example-title">: An did:key DID Document expressing a P-256 public key useful with the ECDSA</span>
+  </div> <pre class="nohighlight did-key" data-did="did:key:zDnaerx9CtbPJ1q36T5Ln5wYt3MQYeGRG5ehnPAmxcf5mDZpv">{<br>  "@context": [<br>    "https://www.w3.org/ns/did/v1",<br>    "https://w3id.org/security/multikey/v1"<br>  ],<br>  "id": "did:key:zDnaerx9CtbPJ1q36T5Ln5wYt3MQYeGRG5ehnPAmxcf5mDZpv",<br>  "verificationMethod": [<br>    {<br>      "id": "did:key:zDnaerx9CtbPJ1q36T5Ln5wYt3MQYeGRG5ehnPAmxcf5mDZpv#vm,<br>      "type": "Multikey",<br>      "controller": "did:key:zDnaerx9CtbPJ1q36T5Ln5wYt3MQYeGRG5ehnPAmxcf5mDZpv",<br>      "publicKeyMultibase": "zDnaerx9CtbPJ1q36T5Ln5wYt3MQYeGRG5ehnPAmxcf5mDZpv"<br>    }<br>  ],<br>  "authentication": [<br>    "did:key:zDnaerx9CtbPJ1q36T5Ln5wYt3MQYeGRG5ehnPAmxcf5mDZpv#vm<br>  ],<br>  "assertionMethod": [<br>    "did:key:zDnaerx9CtbPJ1q36T5Ln5wYt3MQYeGRG5ehnPAmxcf5mDZpv#vm<br>  ],<br>  "capabilityDelegation": [<br>    "did:key:zDnaerx9CtbPJ1q36T5Ln5wYt3MQYeGRG5ehnPAmxcf5mDZpv#vm<br>  ],<br>  "capabilityInvocation": [<br>    "did:key:zDnaerx9CtbPJ1q36T5Ln5wYt3MQYeGRG5ehnPAmxcf5mDZpv#vm<br>  ]<br>}</pre>
+      </div>
+
+    </section>
+
+    <section class="informative" id="p-384"><div class="header-wrapper"><h3 id="a-6-p-384"><bdi class="secno">A.6 </bdi>P-384</h3><a class="self-link" href="#p-384" aria-label="Permalink for Appendix A.6"></a></div><p><em>This section is non-normative.</em></p>
+      
+
+      <div class="example" id="example-11">
+        <div class="marker">
+    <a class="self-link" href="#example-11">Example<bdi> 11</bdi></a>
+  </div> <pre aria-busy="false"><code class="hljs">did:key:z82LkvCwHNreneWpsgPEbV3gu1C6NFJEBg4srfJ5gdxEsMGRJUz2sG9FE42shbn2xkZJh54</code></pre>
+      </div>
+
+      <p>An example DID Document for a P-384 key is shown below.</p>
+
+      <div class="example" id="example-an-did-key-did-document-expressing-a-p-384-public-key-useful-with-the-ecdsa">
+        <div class="marker">
+    <a class="self-link" href="#example-an-did-key-did-document-expressing-a-p-384-public-key-useful-with-the-ecdsa">Example<bdi> 12</bdi></a><span class="example-title">: An did:key DID Document expressing a P-384 public key useful with the ECDSA</span>
+  </div> <pre class="nohighlight did-key" data-did="did:key:z82LkvCwHNreneWpsgPEbV3gu1C6NFJEBg4srfJ5gdxEsMGRJUz2sG9FE42shbn2xkZJh54">{<br>  "@context": [<br>    "https://www.w3.org/ns/did/v1",<br>    "https://w3id.org/security/multikey/v1"<br>  ],<br>  "id": "did:key:z82LkvCwHNreneWpsgPEbV3gu1C6NFJEBg4srfJ5gdxEsMGRJUz2sG9FE42shbn2xkZJh54",<br>  "verificationMethod": [<br>    {<br>      "id": "did:key:z82LkvCwHNreneWpsgPEbV3gu1C6NFJEBg4srfJ5gdxEsMGRJUz2sG9FE42shbn2xkZJh54#vm,<br>      "type": "Multikey",<br>      "controller": "did:key:z82LkvCwHNreneWpsgPEbV3gu1C6NFJEBg4srfJ5gdxEsMGRJUz2sG9FE42shbn2xkZJh54",<br>      "publicKeyMultibase": "z82LkvCwHNreneWpsgPEbV3gu1C6NFJEBg4srfJ5gdxEsMGRJUz2sG9FE42shbn2xkZJh54"<br>    }<br>  ],<br>  "authentication": [<br>    "did:key:z82LkvCwHNreneWpsgPEbV3gu1C6NFJEBg4srfJ5gdxEsMGRJUz2sG9FE42shbn2xkZJh54#vm<br>  ],<br>  "assertionMethod": [<br>    "did:key:z82LkvCwHNreneWpsgPEbV3gu1C6NFJEBg4srfJ5gdxEsMGRJUz2sG9FE42shbn2xkZJh54#vm<br>  ],<br>  "capabilityDelegation": [<br>    "did:key:z82LkvCwHNreneWpsgPEbV3gu1C6NFJEBg4srfJ5gdxEsMGRJUz2sG9FE42shbn2xkZJh54#vm<br>  ],<br>  "capabilityInvocation": [<br>    "did:key:z82LkvCwHNreneWpsgPEbV3gu1C6NFJEBg4srfJ5gdxEsMGRJUz2sG9FE42shbn2xkZJh54#vm<br>  ]<br>}</pre>
+      </div>
+
+    </section>
+
+  </section>
+
+  <section class="appendix informative" id="acknowledgements"><div class="header-wrapper"><h2 id="b-acknowledgements"><bdi class="secno">B. </bdi>Acknowledgements</h2><a class="self-link" href="#acknowledgements" aria-label="Permalink for Appendix B."></a></div><p><em>This section is non-normative.</em></p>
+    
+
+    <p>
+The Working Group would like to thank the following individuals for reviewing
+and providing feedback on the specification (in alphabetical order):
+    </p>
+
+    <p>
+TBD...
+    </p>
+  </section>
+  
+
+<section id="references" class="appendix"><div class="header-wrapper"><h2 id="c-references"><bdi class="secno">C. </bdi>References</h2><a class="self-link" href="#references" aria-label="Permalink for Appendix C."></a></div><section id="normative-references"><div class="header-wrapper"><h3 id="c-1-normative-references"><bdi class="secno">C.1 </bdi>Normative references</h3><a class="self-link" href="#normative-references" aria-label="Permalink for Appendix C.1"></a></div>
+    
+    <dl class="bibliography"><dt id="bib-cid">[CID]</dt><dd>
+      <a href="https://www.w3.org/TR/cid-1.0/"><cite>Controlled Identifiers v1.0</cite></a>. Michael Jones; Manu Sporny.  W3C. 15 May 2025. W3C Recommendation. URL: <a href="https://www.w3.org/TR/cid-1.0/">https://www.w3.org/TR/cid-1.0/</a>
+    </dd><dt id="bib-did">[DID]</dt><dd>
+      <a href="https://www.w3.org/TR/did-core/"><cite>Decentralized Identifiers (DIDs) v1.0</cite></a>. Manu Sporny; Amy Guy; Markus Sabadello; Drummond Reed.  W3C. 19 July 2022. W3C Recommendation. URL: <a href="https://www.w3.org/TR/did-core/">https://www.w3.org/TR/did-core/</a>
+    </dd><dt id="bib-oscore">[OSCORE]</dt><dd>
+      <a href="https://datatracker.ietf.org/doc/html/draft-ietf-core-oscore-groupcomm"><cite>Group OSCORE - Secure Group Communication for CoAP</cite></a>. M. Tiloca; G. Selander; F. Palombini; J. Mattsson; J. Park.  Internet Engineering Task Force (IETF). Internet-Draft. URL: <a href="https://datatracker.ietf.org/doc/html/draft-ietf-core-oscore-groupcomm">https://datatracker.ietf.org/doc/html/draft-ietf-core-oscore-groupcomm</a>
+    </dd><dt id="bib-rfc2119">[RFC2119]</dt><dd>
+      <a href="https://www.rfc-editor.org/rfc/rfc2119"><cite>Key words for use in RFCs to Indicate Requirement Levels</cite></a>. S. Bradner.  IETF. March 1997. Best Current Practice. URL: <a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>
+    </dd><dt id="bib-rfc8174">[RFC8174]</dt><dd>
+      <a href="https://www.rfc-editor.org/rfc/rfc8174"><cite>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</cite></a>. B. Leiba.  IETF. May 2017. Best Current Practice. URL: <a href="https://www.rfc-editor.org/rfc/rfc8174">https://www.rfc-editor.org/rfc/rfc8174</a>
+    </dd><dt id="bib-thormarker">[THORMARKER]</dt><dd>
+      <a href="https://eprint.iacr.org/2021/509.pdf"><cite>On using the same key pair for Ed25519 and an X25519 based KEM</cite></a>. Erik Thormarker.  Cryptology ePrint Archive. Internet-Draft. URL: <a href="https://eprint.iacr.org/2021/509.pdf">https://eprint.iacr.org/2021/509.pdf</a>
+    </dd></dl>
+  </section><section id="informative-references"><div class="header-wrapper"><h3 id="c-2-informative-references"><bdi class="secno">C.2 </bdi>Informative references</h3><a class="self-link" href="#informative-references" aria-label="Permalink for Appendix C.2"></a></div>
+    
+    <dl class="bibliography"><dt id="bib-vc-data-model">[vc-data-model]</dt><dd>
+      <a href="https://www.w3.org/TR/vc-data-model-2.0/"><cite>Verifiable Credentials Data Model v2.0</cite></a>. Ivan Herman; Michael Jones; Manu Sporny; Ted Thibodeau Jr; Gabe Cohen.  W3C. 15 May 2025. W3C Recommendation. URL: <a href="https://www.w3.org/TR/vc-data-model-2.0/">https://www.w3.org/TR/vc-data-model-2.0/</a>
+    </dd></dl>
+  </section></section><p role="navigation" id="back-to-top">
+    <a href="#title"><abbr title="Back to Top">↑</abbr></a>
+  </p><script id="respec-highlight-vars">(() => {
+// @ts-check
+
+if (document.respec) {
+  document.respec.ready.then(setupVarHighlighter);
+} else {
+  setupVarHighlighter();
+}
+
+function setupVarHighlighter() {
+  document
+    .querySelectorAll("var")
+    .forEach(varElem => varElem.addEventListener("click", highlightListener));
+}
+
+function highlightListener(ev) {
+  ev.stopPropagation();
+  const { target: varElem } = ev;
+  const hightligtedElems = highlightVars(varElem);
+  const resetListener = () => {
+    const hlColor = getHighlightColor(varElem);
+    hightligtedElems.forEach(el => removeHighlight(el, hlColor));
+    [...HL_COLORS.keys()].forEach(key => HL_COLORS.set(key, true));
+  };
+  if (hightligtedElems.length) {
+    document.body.addEventListener("click", resetListener, { once: true });
+  }
+}
+
+// availability of highlight colors. colors from var.css
+const HL_COLORS = new Map([
+  ["respec-hl-c1", true],
+  ["respec-hl-c2", true],
+  ["respec-hl-c3", true],
+  ["respec-hl-c4", true],
+  ["respec-hl-c5", true],
+  ["respec-hl-c6", true],
+  ["respec-hl-c7", true],
+]);
+
+function getHighlightColor(target) {
+  // return current colors if applicable
+  const { value } = target.classList;
+  const re = /respec-hl-\w+/;
+  const activeClass = re.test(value) && value.match(re);
+  if (activeClass) return activeClass[0];
+
+  // first color preference
+  if (HL_COLORS.get("respec-hl-c1") === true) return "respec-hl-c1";
+
+  // otherwise get some other available color
+  return [...HL_COLORS.keys()].find(c => HL_COLORS.get(c)) || "respec-hl-c1";
+}
+
+function highlightVars(varElem) {
+  const textContent = norm(varElem.textContent);
+  const parent = varElem.closest(".algorithm, section");
+  const highlightColor = getHighlightColor(varElem);
+
+  const varsToHighlight = [...parent.querySelectorAll("var")].filter(
+    el =>
+      norm(el.textContent) === textContent &&
+      el.closest(".algorithm, section") === parent
+  );
+
+  // update availability of highlight color
+  const colorStatus = varsToHighlight[0].classList.contains("respec-hl");
+  HL_COLORS.set(highlightColor, colorStatus);
+
+  // highlight vars
+  if (colorStatus) {
+    varsToHighlight.forEach(el => removeHighlight(el, highlightColor));
+    return [];
+  } else {
+    varsToHighlight.forEach(el => addHighlight(el, highlightColor));
+  }
+  return varsToHighlight;
+}
+
+function removeHighlight(el, highlightColor) {
+  el.classList.remove("respec-hl", highlightColor);
+  // clean up empty class attributes so they don't come in export
+  if (!el.classList.length) el.removeAttribute("class");
+}
+
+function addHighlight(elem, highlightColor) {
+  elem.classList.add("respec-hl", highlightColor);
+}
+
+/**
+ * Same as `norm` from src/core/utils, but our build process doesn't allow
+ * imports in runtime scripts, so duplicated here.
+ * @param {string} str
+ */
+function norm(str) {
+  return str.trim().replace(/\s+/g, " ");
+}
+})()</script><script id="respec-dfn-panel">(() => {
+// @ts-check
+if (document.respec) {
+  document.respec.ready.then(setupPanel);
+} else {
+  setupPanel();
+}
+
+function setupPanel() {
+  const listener = panelListener();
+  document.body.addEventListener("keydown", listener);
+  document.body.addEventListener("click", listener);
+}
+
+function panelListener() {
+  /** @type {HTMLElement} */
+  let panel = null;
+  return event => {
+    const { target, type } = event;
+
+    if (!(target instanceof HTMLElement)) return;
+
+    // For keys, we only care about Enter key to activate the panel
+    // otherwise it's activated via a click.
+    if (type === "keydown" && event.key !== "Enter") return;
+
+    const action = deriveAction(event);
+
+    switch (action) {
+      case "show": {
+        hidePanel(panel);
+        /** @type {HTMLElement} */
+        const dfn = target.closest("dfn, .index-term");
+        panel = document.getElementById(`dfn-panel-for-${dfn.id}`);
+        const coords = deriveCoordinates(event);
+        displayPanel(dfn, panel, coords);
+        break;
+      }
+      case "dock": {
+        panel.style.left = null;
+        panel.style.top = null;
+        panel.classList.add("docked");
+        break;
+      }
+      case "hide": {
+        hidePanel(panel);
+        panel = null;
+        break;
+      }
+    }
+  };
+}
+
+/**
+ * @param {MouseEvent|KeyboardEvent} event
+ */
+function deriveCoordinates(event) {
+  const target = /** @type HTMLElement */ (event.target);
+
+  // We prevent synthetic AT clicks from putting
+  // the dialog in a weird place. The AT events sometimes
+  // lack coordinates, so they have clientX/Y = 0
+  const rect = target.getBoundingClientRect();
+  if (
+    event instanceof MouseEvent &&
+    event.clientX >= rect.left &&
+    event.clientY >= rect.top
+  ) {
+    // The event probably happened inside the bounding rect...
+    return { x: event.clientX, y: event.clientY };
+  }
+
+  // Offset to the middle of the element
+  const x = rect.x + rect.width / 2;
+  // Placed at the bottom of the element
+  const y = rect.y + rect.height;
+  return { x, y };
+}
+
+/**
+ * @param {Event} event
+ */
+function deriveAction(event) {
+  const target = /** @type {HTMLElement} */ (event.target);
+  const hitALink = !!target.closest("a");
+  if (target.closest("dfn:not([data-cite]), .index-term")) {
+    return hitALink ? "none" : "show";
+  }
+  if (target.closest(".dfn-panel")) {
+    if (hitALink) {
+      return target.classList.contains("self-link") ? "hide" : "dock";
+    }
+    const panel = target.closest(".dfn-panel");
+    return panel.classList.contains("docked") ? "hide" : "none";
+  }
+  if (document.querySelector(".dfn-panel:not([hidden])")) {
+    return "hide";
+  }
+  return "none";
+}
+
+/**
+ * @param {HTMLElement} dfn
+ * @param {HTMLElement} panel
+ * @param {{ x: number, y: number }} clickPosition
+ */
+function displayPanel(dfn, panel, { x, y }) {
+  panel.hidden = false;
+  // distance (px) between edge of panel and the pointing triangle (caret)
+  const MARGIN = 20;
+
+  const dfnRects = dfn.getClientRects();
+  // Find the `top` offset when the `dfn` can be spread across multiple lines
+  let closestTop = 0;
+  let minDiff = Infinity;
+  for (const rect of dfnRects) {
+    const { top, bottom } = rect;
+    const diffFromClickY = Math.abs((top + bottom) / 2 - y);
+    if (diffFromClickY < minDiff) {
+      minDiff = diffFromClickY;
+      closestTop = top;
+    }
+  }
+
+  const top = window.scrollY + closestTop + dfnRects[0].height;
+  const left = x - MARGIN;
+  panel.style.left = `${left}px`;
+  panel.style.top = `${top}px`;
+
+  // Find if the panel is flowing out of the window
+  const panelRect = panel.getBoundingClientRect();
+  const SCREEN_WIDTH = Math.min(window.innerWidth, window.screen.width);
+  if (panelRect.right > SCREEN_WIDTH) {
+    const newLeft = Math.max(MARGIN, x + MARGIN - panelRect.width);
+    const newCaretOffset = left - newLeft;
+    panel.style.left = `${newLeft}px`;
+    /** @type {HTMLElement} */
+    const caret = panel.querySelector(".caret");
+    caret.style.left = `${newCaretOffset}px`;
+  }
+
+  // As it's a dialog, we trap focus.
+  // TODO: when <dialog> becomes a implemented, we should really
+  // use that.
+  trapFocus(panel, dfn);
+}
+
+/**
+ * @param {HTMLElement} panel
+ * @param {HTMLElement} dfn
+ * @returns
+ */
+function trapFocus(panel, dfn) {
+  /** @type NodeListOf<HTMLAnchorElement> elements */
+  const anchors = panel.querySelectorAll("a[href]");
+  // No need to trap focus
+  if (!anchors.length) return;
+
+  // Move focus to first anchor element
+  const first = anchors.item(0);
+  first.focus();
+
+  const trapListener = createTrapListener(anchors, panel, dfn);
+  panel.addEventListener("keydown", trapListener);
+
+  // Hiding the panel releases the trap
+  const mo = new MutationObserver(records => {
+    const [record] = records;
+    const target = /** @type HTMLElement */ (record.target);
+    if (target.hidden) {
+      panel.removeEventListener("keydown", trapListener);
+      mo.disconnect();
+    }
+  });
+  mo.observe(panel, { attributes: true, attributeFilter: ["hidden"] });
+}
+
+/**
+ *
+ * @param {NodeListOf<HTMLAnchorElement>} anchors
+ * @param {HTMLElement} panel
+ * @param {HTMLElement} dfn
+ * @returns
+ */
+function createTrapListener(anchors, panel, dfn) {
+  const lastIndex = anchors.length - 1;
+  let currentIndex = 0;
+  return event => {
+    switch (event.key) {
+      // Hitting "Tab" traps us in a nice loop around elements.
+      case "Tab": {
+        event.preventDefault();
+        currentIndex += event.shiftKey ? -1 : +1;
+        if (currentIndex < 0) {
+          currentIndex = lastIndex;
+        } else if (currentIndex > lastIndex) {
+          currentIndex = 0;
+        }
+        anchors.item(currentIndex).focus();
+        break;
+      }
+
+      // Hitting "Enter" on an anchor releases the trap.
+      case "Enter":
+        hidePanel(panel);
+        break;
+
+      // Hitting "Escape" returns focus to dfn.
+      case "Escape":
+        hidePanel(panel);
+        dfn.focus();
+        return;
+    }
+  };
+}
+
+/** @param {HTMLElement} panel */
+function hidePanel(panel) {
+  if (!panel) return;
+  panel.hidden = true;
+  panel.classList.remove("docked");
+}
+})()</script><script src="https://www.w3.org/scripts/TR/2021/fixup.js"></script></body></html>
