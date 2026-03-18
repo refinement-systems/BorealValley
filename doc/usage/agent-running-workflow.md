@@ -2,7 +2,32 @@
 
 This guide covers the practical workflow for running `BorealValley-agent` against a live BorealValley web server.
 
-## 1. Prerequisites
+## 1. Standard Local Dev Restart
+
+For the repository's standard local Docker setup, bring back the existing server and database with:
+
+```bash
+cd /Users/mjm/repo/BorealValley
+just dev-docker-up ~/repo/bvroot
+```
+
+That command reuses the existing root directory and Docker PostgreSQL volume, so it is the right command when you want the same users, tickets, OAuth apps, and prior agent runs to remain available in the UI.
+
+In the standard local setup, the web origin is:
+
+```text
+https://bv.local:4000
+```
+
+To stop without deleting that state:
+
+```bash
+just dev-docker-down ~/repo/bvroot
+```
+
+Do not use `just dev-docker-reset ~/repo/bvroot` when you intend to keep the existing database state. For the full local stack guide, see `docker-dev-stack.md`.
+
+## 2. Prerequisites
 
 - A running BorealValley web server (HTTPS recommended).
 - PostgreSQL configured for the server.
@@ -11,7 +36,7 @@ This guide covers the practical workflow for running `BorealValley-agent` agains
 - Access to run `BorealValley-ctl` on the server side.
 - Access to run `BorealValley-agent` on the machine where the agent will execute.
 
-## 2. Server-Side Setup
+## 3. Server-Side Setup
 
 Create the agent user (or reuse an existing one):
 
@@ -31,14 +56,14 @@ Create an OAuth app for the agent with required scopes:
 
 The script prints `client_id` and `client_secret`. Save both values securely.
 
-## 3. Create a Fresh Test Repository and Ticket
+## 4. Create a Fresh Test Repository and Ticket
 
 On a fresh setup, the agent can only process tickets that are:
 
 - assigned to the agent user, and
 - visible to that user via repository access.
 
-### 3.1 Create and discover a local repository
+### 4.1 Create and discover a local repository
 
 Create a test repo under `$ROOT/repo`:
 
@@ -59,7 +84,7 @@ Docker dev variant:
 ./tools/deploy/docker-dev-ctl.sh resync --root /work
 ```
 
-### 3.2 Create tracker, assign repo, create ticket, assign agent
+### 4.2 Create tracker, assign repo, create ticket, assign agent
 
 In the web UI (logged in as an admin or another user with repository access):
 
@@ -77,7 +102,7 @@ Agent processing order for assigned tickets is:
 
 The agent processes exactly one eligible ticket per `run` invocation.
 
-## 4. Agent Initialization (One-Time Per State File)
+## 5. Agent Initialization (One-Time Per State File)
 
 Run init from the agent machine:
 
@@ -101,7 +126,7 @@ OAuth login flow:
 - loopback callback capture first,
 - manual paste fallback if callback is not possible.
 
-## 5. Run the Agent Once (Manual Testing)
+## 6. Run the Agent Once (Manual Testing)
 
 ```bash
 ./tools/dev/agent/run-once.sh \
@@ -120,7 +145,7 @@ Behavior:
 
 If no eligible ticket exists, the command exits successfully.
 
-## 6. Verify Expected Results
+## 7. Verify Expected Results
 
 After a run, open the processed ticket and verify:
 
@@ -129,7 +154,7 @@ After a run, open the processed ticket and verify:
 - on success, a second completion comment was posted by the agent user,
 - on failure (for example low `--max-iter`), an `agent_error` update exists on the acknowledgement comment and no completion comment exists.
 
-## 7. Useful Variants
+## 8. Useful Variants
 
 Override model for a single run:
 
@@ -143,7 +168,7 @@ Use explicit state file:
 ./tools/dev/agent/run-once.sh --workspace /path/to/workspace --state-file /secure/path/agent-state.json
 ```
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 - `oauth state mismatch`: ensure browser redirected to the same `--redirect-uri` used during init.
 - `http 401/403` on agent API calls: ensure OAuth app has scopes `profile:read ticket:read ticket:write`.
