@@ -1,15 +1,2 @@
 <!doctype html>
-<html>
-  <body>
-    <h1>Ticket Comment {{.Slug}}</h1>
-    <p><strong>ID:</strong> <a href="{{.ActorID}}">{{.ActorID}}</a></p>
-    {{if .InReplyTo}}<p><strong>In Reply To:</strong> <a href="{{.InReplyTo}}">{{.InReplyToLabel}}</a></p>{{end}}
-    {{if .AttributedTo}}<p><strong>Attributed To:</strong> <a href="{{.AttributedTo}}">{{.AttributedTo}}</a></p>{{end}}
-    {{if .To}}<p><strong>To:</strong> <a href="{{.To}}">{{.To}}</a></p>{{end}}
-    {{if .Published}}<p><strong>Published:</strong> {{.Published}}</p>{{end}}
-    {{if .Content}}<div><strong>Content:</strong> <div style="white-space: pre-wrap">{{.Content}}</div></div>{{end}}
-    <p><a href="{{.WebURL}}">Open ticket page</a></p>
-    <h2>Object JSON</h2>
-    <pre style="white-space: pre-wrap">{{.ObjectJSON}}</pre>
-  </body>
-</html>
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><link rel="stylesheet" href="/static/css/catppuccin.css" /><link rel="stylesheet" href="/static/css/app.css" /><title>Ticket Comment {{.Slug}}</title></head><body class="page page--object-ticket-comment"><main class="page-shell"><section class="page-card"><header class="page-header"><h1 class="page-title">Ticket Comment {{.Slug}}</h1></header><ul class="meta-list"><li class="meta-item"><strong>ID:</strong> <a href="{{.ActorID}}">{{.ActorID}}</a></li>{{if .InReplyTo}}<li class="meta-item"><strong>In Reply To:</strong> <a href="{{.InReplyTo}}">{{.InReplyToLabel}}</a></li>{{end}}{{if .AttributedTo}}<li class="meta-item"><strong>Attributed To:</strong> <a href="{{.AttributedTo}}">{{.AttributedTo}}</a></li>{{end}}{{if .To}}<li class="meta-item"><strong>To:</strong> <a href="{{.To}}">{{.To}}</a></li>{{end}}{{if .Published}}<li class="meta-item"><strong>Published:</strong> {{.Published}}</li>{{end}}</ul>{{if .Content}}<section class="content-card"><h2 class="section-title">Content</h2><div class="content-block" style="white-space: pre-wrap">{{.Content}}</div></section>{{end}}<nav class="link-row"><a href="{{.WebURL}}">Open ticket page</a></nav></section><section class="json-panel"><details class="json-details"><summary class="details-toggle">Object JSON</summary><pre class="json-block">{{.ObjectJSON}}</pre></details></section></main></body></html>
