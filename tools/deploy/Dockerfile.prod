@@ -1,31 +1,8 @@
 # syntax=docker/dockerfile:1
 
-FROM --platform=$TARGETPLATFORM debian:12-slim AS pijul-builder
-ENV CARGO_HOME=/root/.cargo \
-    RUSTUP_HOME=/root/.rustup \
-    PATH=/root/.cargo/bin:$PATH
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    clang \
-    curl \
-    libclang-dev \
-    libsodium-dev \
-    libssl-dev \
-    libxxhash-dev \
-    libzstd-dev \
-    make \
-    pkg-config \
-    && rm -rf /var/lib/apt/lists/*
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
-RUN cargo install pijul --version "~1.0.0-beta"
-RUN set -eux; \
-    mkdir -p /pijul-root/usr/local/bin; \
-    cp /root/.cargo/bin/pijul /pijul-root/usr/local/bin/pijul; \
-    ldd /root/.cargo/bin/pijul | awk '/=> \// {print $3} /^\// {print $1}' | sort -u > /tmp/pijul-libs.txt; \
-    while read -r lib; do \
-        mkdir -p "/pijul-root$(dirname "$lib")"; \
-        cp -L "$lib" "/pijul-root$lib"; \
-    done < /tmp/pijul-libs.txt
+ARG PIJUL_IMAGE=ghcr.io/refinement-systems/borealvalley-pijul:debian12
+
+FROM --platform=$TARGETPLATFORM ${PIJUL_IMAGE} AS pijul-runtime
 
 FROM --platform=$BUILDPLATFORM golang:1.25-bookworm AS builder
 WORKDIR /src
@@ -44,7 +21,8 @@ RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags=
 FROM debian:12-slim
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
-COPY --from=pijul-builder /pijul-root/ /
+COPY --from=pijul-runtime /pijul-root/ /pijul-root/
+RUN cp -a /pijul-root/. / && ldconfig
 COPY --from=builder /out/BorealValley-web /app/BorealValley-web
 COPY --from=builder /out/BorealValley-ctl /app/BorealValley-ctl
 

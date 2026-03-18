@@ -11,6 +11,7 @@ Options:
   --tag IMAGE_TAG       Image tag to produce (default: borealvalley-web:latest)
   --platform PLATFORM   Target platform (default: linux/amd64)
   --dockerfile PATH     Dockerfile path (default: tools/deploy/Dockerfile.prod)
+  --build-arg KEY=VALUE Build argument to pass through (repeatable)
   --no-cache            Disable Docker build cache
   -h, --help            Show this help
 
@@ -23,6 +24,7 @@ EOF
 TAG="borealvalley-web:latest"
 PLATFORM="linux/amd64"
 NO_CACHE=0
+BUILD_ARGS=()
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -40,6 +42,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --dockerfile)
       DOCKERFILE="${2:-}"
+      shift 2
+      ;;
+    --build-arg)
+      BUILD_ARGS+=("${2:-}")
       shift 2
       ;;
     --no-cache)
@@ -68,7 +74,21 @@ if [[ ! -f "$DOCKERFILE" ]]; then
   exit 2
 fi
 
+TARGETOS="${PLATFORM%%/*}"
+TARGETARCH="${PLATFORM#*/}"
+
+if [[ "$TARGETOS" == "$PLATFORM" || "$TARGETARCH" == "$PLATFORM" || "$TARGETARCH" == *"/"* ]]; then
+  echo "error: unsupported platform format: $PLATFORM" >&2
+  exit 2
+fi
+
 cmd=(docker build --platform "$PLATFORM" -f "$DOCKERFILE" -t "$TAG")
+cmd+=(--build-arg "TARGETOS=$TARGETOS" --build-arg "TARGETARCH=$TARGETARCH")
+if [[ "${#BUILD_ARGS[@]}" -gt 0 ]]; then
+  for build_arg in "${BUILD_ARGS[@]}"; do
+    cmd+=(--build-arg "$build_arg")
+  done
+fi
 if [[ "$NO_CACHE" -eq 1 ]]; then
   cmd+=(--no-cache)
 fi

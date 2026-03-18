@@ -1,0 +1,52 @@
+# syntax=docker/dockerfile:1
+
+ARG DEBIAN_IMAGE=debian:12-slim
+ARG PIJUL_VERSION=~1.0.0-beta
+
+FROM --platform=$TARGETPLATFORM ${DEBIAN_IMAGE} AS builder
+ARG PIJUL_VERSION
+ENV CARGO_HOME=/usr/local/cargo \
+    RUSTUP_HOME=/usr/local/rustup \
+    CARGO_TARGET_DIR=/usr/local/cargo-target \
+    PATH=/usr/local/cargo/bin:$PATH
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    clang \
+    curl \
+    libclang-dev \
+    libdbus-1-dev \
+    libsodium-dev \
+    libssl-dev \
+    libxxhash-dev \
+    libzstd-dev \
+    make \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+RUN --mount=type=cache,target=/usr/local/cargo/registry,sharing=locked \
+    --mount=type=cache,target=/usr/local/cargo/git/db,sharing=locked \
+    --mount=type=cache,target=/usr/local/cargo-target,sharing=locked \
+    cargo install pijul --version "${PIJUL_VERSION}"
+RUN set -eux; \
+    mkdir -p /pijul-root/usr/local/bin; \
+    mkdir -p /pijul-root/etc/ssl/certs; \
+    cp /usr/local/cargo/bin/pijul /pijul-root/usr/local/bin/pijul; \
+    cp -L /etc/ssl/certs/ca-certificates.crt /pijul-root/etc/ssl/certs/ca-certificates.crt; \
+    ldd /usr/local/cargo/bin/pijul | awk '/=> \// {print $3} /^\// {print $1}' | sort -u > /tmp/pijul-libs.txt; \
+    while read -r lib; do \
+        resolved="$(readlink -f "$lib")"; \
+        mkdir -p "/pijul-root$(dirname "$resolved")"; \
+        cp -L "$resolved" "/pijul-root$resolved"; \
+    done < /tmp/pijul-libs.txt
+
+FROM ${DEBIAN_IMAGE}
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /pijul-root/ /pijul-root/
+RUN cp -a /pijul-root/. / && ldconfig
+
+ENTRYPOINT ["/usr/local/bin/pijul"]
+CMD ["--version"]
