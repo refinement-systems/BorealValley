@@ -132,7 +132,7 @@ func newHandler(rootDir string, pgDSN string, isDev bool) (http.Handler, *common
 
 func registerRoutes(mux *http.ServeMux, app *application) {
 	// Restrict embedded assets to GET/HEAD and avoid method-pattern conflicts with root.
-	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(assets.JsFiles))))
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(assets.StaticFiles))))
 	mux.HandleFunc("/", app.root)
 	mux.HandleFunc("GET /web", app.web)
 	mux.HandleFunc("/web/login", app.login)

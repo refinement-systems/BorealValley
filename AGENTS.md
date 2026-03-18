@@ -6,8 +6,8 @@ No database migrations are necessary, implement all modifications to the databas
 
 ## Project Structure & Module Organization
 Code lives under `src/` with command entrypoints in `src/cmd/`:
-- `src/cmd/web/main.go`: primary app binary (subcommands: `serve`, `adduser`)
-- `src/cmd/ctl/main.go`: secondary CLI entrypoint
+- `src/cmd/web/main.go`: primary web app binary (`serve`)
+- `src/cmd/ctl/main.go`: secondary CLI entrypoint (`init-root`, `resync`, `adduser`, `oauth-app`)
 - `src/internal/assets/`: embedded HTML templates (`html/` + `assets.go`)
 
 Documentation is in `doc/`:
@@ -23,8 +23,11 @@ Project tooling and checks:
 - `just build`: build both binaries into `bin/`.
 - `just clean`: remove built binaries.
 - `go test ./...`: run package tests (currently no `_test.go` files, but this is the baseline CI command).
-- `go run ./src/cmd/web serve -db app.db -addr :4000 -env dev`: run web server locally.
-- `go run ./src/cmd/web adduser -db app.db -username <user> -password <pass>`: seed a local user.
+- `just dev-docker-up ~/repo/bvroot`: start or resume the standard local Docker dev stack using the existing root directory and preserved PostgreSQL volume.
+- `just dev-docker-down ~/repo/bvroot`: stop the standard local Docker dev stack without deleting state.
+- `just dev-docker-reset ~/repo/bvroot`: recreate the standard local Docker dev stack with a fresh PostgreSQL volume; do not use this when you intend to keep yesterday's tickets, users, OAuth apps, or agent runs.
+- `BV_PG_DSN='postgres://app:app_pw@127.0.0.1:5432/app_db?sslmode=disable' go run ./src/cmd/web serve --root ~/repo/bvroot --env dev`: run the web server locally against the standard development root and PostgreSQL instance.
+- `go run ./src/cmd/ctl adduser --root ~/repo/bvroot --pg-dsn "$BV_PG_DSN" <user> <pass>`: seed a local user in PostgreSQL.
 - `tools/deploy/docker-build.sh --platform linux/amd64 --tag borealvalley-web:latest`: build a production image without source code in the runtime layer.
 - `tools/deploy/docker-buildx.sh --push --tag <registry>/<image>:<tag>`: build/publish cross-platform images with Docker Buildx (default platforms: `linux/amd64,linux/arm64`).
 

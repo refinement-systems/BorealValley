@@ -1,17 +1,9 @@
 <!doctype html>
-<html>
-  <body>
-    <h1>Repositories</h1>
-    {{if .Err}}<p style="color:red">{{.Err}}</p>{{end}}
-    {{if .Repositories}}
-    <ul>
-      {{range .Repositories}}
-      <li><a href="/web/repo/{{.Slug}}">{{.Slug}}</a> <code>{{.Path}}</code></li>
-      {{end}}
-    </ul>
-    {{else}}
-    <p>No repositories found.</p>
-    {{end}}
-    <p><a href="/web/admin">Admin home</a></p>
+<html lang="en">
+  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><link rel="stylesheet" href="/static/css/catppuccin.css" /><link rel="stylesheet" href="/static/css/app.css" /><title>Repositories</title></head>
+  <body class="page page--repositories">
+    <main class="page-shell">
+      <section class="page-card"><header class="page-header"><h1 class="page-title">Repositories</h1></header>{{if .Err}}<p class="message-banner message-banner--error">{{.Err}}</p>{{end}}{{if .Repositories}}<ul class="item-list">{{range .Repositories}}<li class="list-card"><a class="repo-link" href="/web/repo/{{.Slug}}">{{.Slug}}</a> <code class="repo-path">{{.Path}}</code></li>{{end}}</ul>{{else}}<p class="muted-text">No repositories found.</p>{{end}}</section><nav class="link-row"><a href="/web/admin">Admin home</a></nav>
+    </main>
   </body>
 </html>

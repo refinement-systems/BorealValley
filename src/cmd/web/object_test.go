@@ -91,8 +91,8 @@ func TestObjectTicketTemplateRendersCommentAndReplyForms(t *testing.T) {
 	if !strings.Contains(out, `ticket/ticket-001/assignee`) {
 		t.Fatalf("expected assignee action url, got:\n%s", out)
 	}
-	if strings.Count(out, `white-space: pre-wrap`) < 2 {
-		t.Fatalf("expected pre-wrap rendering for ticket and comment content, got:\n%s", out)
+	if !strings.Contains(out, `class="content-block ticket-description"`) || !strings.Contains(out, `class="content-block comment-content"`) {
+		t.Fatalf("expected styled content blocks for ticket and comment content, got:\n%s", out)
 	}
 	if !strings.Contains(out, "line one\nline two") {
 		t.Fatalf("expected ticket content newlines to be preserved in template output, got:\n%s", out)
@@ -115,8 +115,8 @@ func TestObjectTicketCommentTemplatePreservesVisibleNewlines(t *testing.T) {
 	}
 
 	out := body.String()
-	if !strings.Contains(out, `white-space: pre-wrap`) {
-		t.Fatalf("expected pre-wrap rendering in canonical comment template, got:\n%s", out)
+	if !strings.Contains(out, `class="content-block"`) {
+		t.Fatalf("expected styled content block in canonical comment template, got:\n%s", out)
 	}
 	if !strings.Contains(out, "first line\nsecond line") {
 		t.Fatalf("expected canonical comment template to preserve newline text, got:\n%s", out)

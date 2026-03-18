@@ -1,12 +1,2 @@
 <!doctype html>
-<html>
-  <body>
-    <h1>Repository Object {{.Slug}}</h1>
-    <p><strong>ID:</strong> <a href="{{.ActorID}}">{{.ActorID}}</a></p>
-    {{if .Name}}<p><strong>Name:</strong> {{.Name}}</p>{{end}}
-    {{if .TicketTrackerActorID}}<p><strong>ticketsTrackedBy:</strong> <a href="{{.TicketTrackerActorID}}">{{.TicketTrackerActorID}}</a></p>{{end}}
-    <p><a href="{{.WebURL}}">Open admin page</a></p>
-    <h2>Object JSON</h2>
-    <pre style="white-space: pre-wrap">{{.ObjectJSON}}</pre>
-  </body>
-</html>
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><link rel="stylesheet" href="/static/css/catppuccin.css" /><link rel="stylesheet" href="/static/css/app.css" /><title>Repository Object {{.Slug}}</title></head><body class="page page--object-repo"><main class="page-shell"><section class="page-card"><header class="page-header"><h1 class="page-title">Repository Object {{.Slug}}</h1></header><ul class="meta-list"><li class="meta-item"><strong>ID:</strong> <a href="{{.ActorID}}">{{.ActorID}}</a></li>{{if .Name}}<li class="meta-item"><strong>Name:</strong> {{.Name}}</li>{{end}}{{if .TicketTrackerActorID}}<li class="meta-item"><strong>ticketsTrackedBy:</strong> <a href="{{.TicketTrackerActorID}}">{{.TicketTrackerActorID}}</a></li>{{end}}</ul><nav class="link-row"><a href="{{.WebURL}}">Open admin page</a></nav></section><section class="json-panel"><details class="json-details"><summary class="details-toggle">Object JSON</summary><pre class="json-block">{{.ObjectJSON}}</pre></details></section></main></body></html>

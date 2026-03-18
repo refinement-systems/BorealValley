@@ -1,8 +1,29 @@
 <!doctype html>
-<html>
-  <body>
-    <h1>User Actor</h1>
-    <p><strong>Username:</strong> {{.Username}}</p>
-    <pre style="white-space: pre-wrap">{{.ActorJSON}}</pre>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/static/css/catppuccin.css" />
+    <link rel="stylesheet" href="/static/css/app.css" />
+    <title>User Actor</title>
+  </head>
+  <body class="page page--user-actor">
+    <main class="page-shell">
+      <section class="page-card">
+        <header class="page-header">
+          <h1 class="page-title">User Actor</h1>
+          <p class="page-subtitle">Rendered actor details for <strong>{{.Username}}</strong>.</p>
+        </header>
+        <ul class="meta-list">
+          <li class="meta-item"><strong>Username:</strong> {{.Username}}</li>
+        </ul>
+      </section>
+      <section class="json-panel">
+        <details class="json-details">
+          <summary class="details-toggle">Actor JSON</summary>
+          <pre class="json-block">{{.ActorJSON}}</pre>
+        </details>
+      </section>
+    </main>
   </body>
 </html>

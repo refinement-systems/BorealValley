@@ -63,5 +63,5 @@ var HtmlOAuthGrantList string
 //go:embed sql/create.sql
 var SqlControlCreate string
 
-//go:embed js
-var JsFiles embed.FS
+//go:embed js css
+var StaticFiles embed.FS
