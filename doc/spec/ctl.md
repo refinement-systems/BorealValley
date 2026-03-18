@@ -21,7 +21,7 @@
 ### 2.2. `resync`
 
 - scans `$ROOT/repo` one level deep for repository directories
-- only directories containing `.git` are treated as repositories
+- only directories containing `.pijul` are treated as repositories
 - upserts local ForgeFed `Repository` objects in PostgreSQL
 - uses stable UUID marker file:
   - `.borealvalley-repo-id`

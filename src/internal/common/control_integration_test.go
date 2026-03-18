@@ -52,8 +52,8 @@ func setupControlIntegration(t *testing.T) (*Store, Repository, int64) {
 	if err := os.MkdirAll(repoDir, 0o700); err != nil {
 		t.Fatalf("MkdirAll repo: %v", err)
 	}
-	if out, err := exec.Command("git", "-C", repoDir, "init").CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v\n%s", err, out)
+	if out, err := exec.Command("pijul", "init", repoDir).CombinedOutput(); err != nil {
+		t.Fatalf("pijul init: %v\n%s", err, out)
 	}
 
 	store, err := StoreInit(integrationPostgresDSN(t), root)

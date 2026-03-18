@@ -16,18 +16,18 @@ import (
 	"testing"
 )
 
-func TestIsGitRepo(t *testing.T) {
+func TestIsPijulRepo(t *testing.T) {
 	dir := t.TempDir()
 
-	if IsGitRepo(dir) {
-		t.Fatal("expected plain dir to not be a git repo")
+	if IsPijulRepo(dir) {
+		t.Fatal("expected plain dir to not be a pijul repo")
 	}
 
-	if err := exec.Command("git", "-C", dir, "init").Run(); err != nil {
-		t.Fatalf("git init: %v", err)
+	if err := exec.Command("pijul", "init", dir).Run(); err != nil {
+		t.Fatalf("pijul init: %v", err)
 	}
 
-	if !IsGitRepo(dir) {
-		t.Fatal("expected git-init'd dir to be a git repo")
+	if !IsPijulRepo(dir) {
+		t.Fatal("expected pijul-init'd dir to be a pijul repo")
 	}
 }

@@ -16,8 +16,8 @@ import (
 	"path/filepath"
 )
 
-// IsGitRepo reports whether dir contains a git repository (i.e. has a .git entry).
-func IsGitRepo(dir string) bool {
-	_, err := os.Stat(filepath.Join(dir, ".git"))
+// IsPijulRepo reports whether dir contains a pijul repository (i.e. has a .pijul entry).
+func IsPijulRepo(dir string) bool {
+	_, err := os.Stat(filepath.Join(dir, ".pijul"))
 	return err == nil
 }

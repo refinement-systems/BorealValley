@@ -127,7 +127,7 @@ Persistence tables:
 Discovery rules:
 
 - one level of repository directories under `$ROOT/repo`
-- a repository is recognized only if `.git` exists in that directory
+- a repository is recognized only if `.pijul` exists in that directory
 
 On `ResyncFromFilesystem`:
 

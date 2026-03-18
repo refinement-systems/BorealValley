@@ -403,7 +403,7 @@ func (s *Store) ResyncFromFilesystem(ctx context.Context) error {
 			continue
 		}
 		repoDir := filepath.Join(repoPath, entry.Name())
-		if !IsGitRepo(repoDir) {
+		if !IsPijulRepo(repoDir) {
 			continue
 		}
 

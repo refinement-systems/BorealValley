@@ -69,7 +69,7 @@ Create a test repo under `$ROOT/repo`:
 
 ```bash
 mkdir -p "$ROOT/repo/demo"
-git -C "$ROOT/repo/demo" init
+pijul init "$ROOT/repo/demo"
 ```
 
 Resync repositories into BorealValley:

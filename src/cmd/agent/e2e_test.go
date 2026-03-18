@@ -250,7 +250,7 @@ func skipUnlessE2E(t *testing.T) string {
 	if adminDSN == "" {
 		t.Skip("set BV_E2E_PG_ADMIN_DSN to run e2e tests")
 	}
-	for _, tool := range []string{"rodney", "git", "go"} {
+	for _, tool := range []string{"rodney", "pijul", "go"} {
 		if _, err := exec.LookPath(tool); err != nil {
 			t.Skipf("required tool %q not available: %v", tool, err)
 		}
@@ -342,7 +342,7 @@ func createDummyRepo(t *testing.T, root, repoName string) (string, string) {
 	if err := os.WriteFile(filepath.Join(repoPath, "README.md"), []byte("# e2e repo\n"), 0o600); err != nil {
 		t.Fatalf("write repo README: %v", err)
 	}
-	runCommand(t, repoPath, "git", "init")
+	runCommand(t, repoPath, "pijul", "init")
 	return repoName, repoPath
 }
 
