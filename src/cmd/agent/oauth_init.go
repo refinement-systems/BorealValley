@@ -32,7 +32,7 @@ import (
 	"time"
 )
 
-const agentScope = "profile:read ticket:read ticket:write"
+const agentScope = "profile:read repo:read ticket:read ticket:write"
 
 type initConfig struct {
 	ServerURL     string

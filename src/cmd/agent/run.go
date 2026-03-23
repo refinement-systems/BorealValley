@@ -107,11 +107,26 @@ func runAgentOnce(cfg runConfig) error {
 		return err
 	}
 
+	repo, err := client.getRepository(context.Background(), ticket.RepositorySlug)
+	if err != nil {
+		_ = client.createTicketCommentUpdate(context.Background(), ticket.TrackerSlug, ticket.TicketSlug, ackComment.Slug, "agent_error: "+err.Error())
+		return err
+	}
+	workspace, err := prepareTicketWorkspaceForRun(cfg.Workspace, ticket, repo)
+	if err != nil {
+		_ = client.createTicketCommentUpdate(context.Background(), ticket.TrackerSlug, ticket.TicketSlug, ackComment.Slug, "agent_error: "+err.Error())
+		return err
+	}
+
 	if state.Mode == agentModeTestCounter {
 		for i := 1; i <= 3; i++ {
 			if err := client.createTicketCommentUpdate(context.Background(), ticket.TrackerSlug, ticket.TicketSlug, ackComment.Slug, fmt.Sprintf("test-step:%d", i)); err != nil {
 				return err
 			}
+		}
+		if err := finalizeTicketWorkspaceForRun(cfg.Workspace, workspace, ticket); err != nil {
+			_ = client.createTicketCommentUpdate(context.Background(), ticket.TrackerSlug, ticket.TicketSlug, ackComment.Slug, "agent_error: "+err.Error())
+			return err
 		}
 		completionMsg := fmt.Sprintf("Agent completed ticket at %s.", time.Now().UTC().Format(time.RFC3339Nano))
 		_, err := client.createTicketComment(context.Background(), ticket.TrackerSlug, ticket.TicketSlug, completionMsg, common.AgentCommentKindCompletion)
@@ -135,8 +150,12 @@ func runAgentOnce(cfg runConfig) error {
 		},
 	}
 
-	answer, err := runLMStudioTicketLoop(context.Background(), state.LMStudioURL, state.Model, cfg.Workspace, envelope, cfg.MaxIter, callbacks)
+	answer, err := runLMStudioTicketLoop(context.Background(), state.LMStudioURL, state.Model, workspace.Path, envelope, cfg.MaxIter, callbacks)
 	if err != nil {
+		_ = client.createTicketCommentUpdate(context.Background(), ticket.TrackerSlug, ticket.TicketSlug, ackComment.Slug, "agent_error: "+err.Error())
+		return err
+	}
+	if err := finalizeTicketWorkspaceForRun(cfg.Workspace, workspace, ticket); err != nil {
 		_ = client.createTicketCommentUpdate(context.Background(), ticket.TrackerSlug, ticket.TicketSlug, ackComment.Slug, "agent_error: "+err.Error())
 		return err
 	}

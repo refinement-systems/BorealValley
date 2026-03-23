@@ -72,6 +72,18 @@ func (c *apiClient) getAssignedTickets(ctx context.Context, limit int) ([]common
 	return payload.Ticket, nil
 }
 
+func (c *apiClient) getRepository(ctx context.Context, repoSlug string) (common.Repository, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.ServerURL+"/api/v1/repo/"+url.PathEscape(strings.TrimSpace(repoSlug)), nil)
+	if err != nil {
+		return common.Repository{}, err
+	}
+	var repo common.Repository
+	if err := c.doJSON(req, nil, &repo); err != nil {
+		return common.Repository{}, err
+	}
+	return repo, nil
+}
+
 func (c *apiClient) createTicketComment(ctx context.Context, trackerSlug, ticketSlug, content, agentCommentKind string) (common.TicketComment, error) {
 	body := map[string]any{
 		"content": strings.TrimSpace(content),
