@@ -5,3 +5,4 @@ bin/*
 .borealvalley-repo-id
 cert/*
 !cert/.gitkeep
+.worktrees/
