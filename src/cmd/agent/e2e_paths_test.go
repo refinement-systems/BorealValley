@@ -17,9 +17,11 @@ import (
 	"testing"
 )
 
-func TestRepoRootPathFindsLocalCert(t *testing.T) {
-	t.Parallel()
-
+func TestRepoRootPathResolvesWithinCurrentCheckout(t *testing.T) {
+	root, err := repoRootDirFromWD()
+	if err != nil {
+		t.Fatalf("repoRootDirFromWD: %v", err)
+	}
 	path, err := repoRootPath("cert/bv.local+3.pem")
 	if err != nil {
 		t.Fatalf("repoRootPath: %v", err)
@@ -27,7 +29,28 @@ func TestRepoRootPathFindsLocalCert(t *testing.T) {
 	if filepath.Base(path) != "bv.local+3.pem" {
 		t.Fatalf("unexpected path %q", path)
 	}
-	if _, err := os.Stat(path); err != nil {
-		t.Fatalf("expected repo-root cert to exist at %q: %v", path, err)
+	want := filepath.Join(root, "cert", "bv.local+3.pem")
+	if path != want {
+		t.Fatalf("repoRootPath() = %q, want %q", path, want)
+	}
+}
+
+func TestRepoRootDirFromWDFindsNearestGoMod(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "go.mod"), []byte("module example.com/test\n\ngo 1.25.0\n"), 0o600); err != nil {
+		t.Fatalf("WriteFile go.mod: %v", err)
+	}
+	nested := filepath.Join(root, "a", "b", "c")
+	if err := os.MkdirAll(nested, 0o700); err != nil {
+		t.Fatalf("MkdirAll nested: %v", err)
+	}
+	t.Chdir(nested)
+
+	got, err := repoRootDirFromWD()
+	if err != nil {
+		t.Fatalf("repoRootDirFromWD: %v", err)
+	}
+	if got != root {
+		t.Fatalf("repoRootDirFromWD() = %q, want %q", got, root)
 	}
 }
