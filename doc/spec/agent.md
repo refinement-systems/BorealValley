@@ -39,7 +39,7 @@ Behavior:
 2. Performs OAuth authorization-server discovery from:
    - `GET /.well-known/oauth-authorization-server`
 3. Runs OAuth authorization-code flow with PKCE (`S256`) using scopes:
-   - `profile:read ticket:read ticket:write`
+   - `profile:read repo:read ticket:read ticket:write`
 4. Login UX:
    - loopback callback capture first
    - manual paste fallback if callback fails/times out
@@ -63,9 +63,11 @@ Behavior per invocation:
 5. If no eligible ticket exists, exits success.
 6. If a ticket exists:
    - posts non-LLM acknowledgement root comment first
+   - fetches repository detail via `GET /api/v1/repo/{repo}` and resolves a translated checkout source path
+   - clones the repository into `--workspace/<repo-slug>/<ticket-slug>`
    - uses that created comment as the target for progress/error `Update` entries
    - posts a separate completion root comment only after successful finish
-   - then runs one LM Studio tool-calling loop for this ticket
+   - then runs one LM Studio tool-calling loop for this ticket inside that checkout
 
 One invocation processes at most one ticket.
 
@@ -87,7 +89,7 @@ LM Studio endpoint:
 
 - `POST {lmstudio-url}/v1/chat/completions`
 
-Available tools (sandboxed to `--workspace`):
+Available tools (sandboxed to the per-ticket checkout under `--workspace`):
 
 - `list_dir`
 - `read_file`
@@ -97,6 +99,12 @@ Available tools (sandboxed to `--workspace`):
 Default max iterations: `3` (`--max-iter` overrides).
 
 If the loop hits iteration limit, `agent run` returns non-zero.
+
+After a successful run, the agent finalizes the checkout locally:
+
+- when tracked or newly created files changed, it records one local Pijul change with message `<ticket-slug>: <summary>`
+- when no files changed, it skips the local commit and still posts the completion comment
+- local commit failures are published as `agent_error` updates and suppress the completion comment
 
 ## 7. Publishing Progress and Errors
 

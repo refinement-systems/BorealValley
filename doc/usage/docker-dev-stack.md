@@ -14,6 +14,7 @@ just dev-docker-up ~/repo/bvroot
 That command is the canonical "start or resume" path for the shared local setup:
 
 - it mounts `~/repo/bvroot` into the container as `/work`,
+- it translates repo API paths from `/work/...` back to `~/repo/bvroot/...` for agent checkout proof-of-concept runs,
 - it starts the web server on host port `4000`,
 - it starts PostgreSQL on host port `5432`,
 - it reuses the existing Docker PostgreSQL volume when the stack was previously stopped with `down`,
@@ -41,6 +42,13 @@ Agent-side OAuth state is separate from the server state. If you initialized the
 ```text
 ~/.local/state/BorealValley/agent/state.json
 ```
+
+For the current agent checkout proof-of-concept, the web container exports:
+
+- `BV_REPO_PATH_MAP_FROM=/work`
+- `BV_REPO_PATH_MAP_TO=<host root path passed to --root>`
+
+That makes `GET /api/v1/repo/{repo}` return host-visible repo paths that an agent running outside the container can clone locally. This is only a stopgap for the standard Docker dev mount and is not a remote checkout protocol.
 
 ## 3. Stop, Inspect, and Reset
 

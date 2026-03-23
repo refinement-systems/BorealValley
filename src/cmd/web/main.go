@@ -48,6 +48,7 @@ type application struct {
 	oauth          *commonoauth.Runtime
 	sessionManager *scs.SessionManager
 	repoRoot       string
+	repoPathMapper *repoPathMapper
 }
 
 const (
@@ -75,6 +76,11 @@ func usage() {
 }
 
 func newHandler(rootDir string, pgDSN string, isDev bool) (http.Handler, *common.Store, error) {
+	repoPathMapper, err := loadRepoPathMapperFromEnv()
+	if err != nil {
+		return nil, nil, err
+	}
+
 	store, err := common.StoreInit(pgDSN, rootDir)
 	if err != nil {
 		return nil, nil, err
@@ -120,7 +126,7 @@ func newHandler(rootDir string, pgDSN string, isDev bool) (http.Handler, *common
 		return nil, nil, err
 	}
 
-	app := &application{store: store, oauth: oauthRuntime, sessionManager: sm, repoRoot: repoRoot}
+	app := &application{store: store, oauth: oauthRuntime, sessionManager: sm, repoRoot: repoRoot, repoPathMapper: repoPathMapper}
 	mux := http.NewServeMux()
 	registerRoutes(mux, app)
 

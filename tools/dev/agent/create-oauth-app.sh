@@ -20,7 +20,7 @@ Environment:
                          If unset, runs: go run ./src/cmd/ctl
 
 Notes:
-  - Scopes are fixed to: profile:read, ticket:read, ticket:write
+  - Scopes are fixed to: profile:read, repo:read, ticket:read, ticket:write
   - The command prints client_id and client_secret (secret shown once).
 USAGE
 }
@@ -98,5 +98,6 @@ run_ctl oauth-app create \
   --description "$DESCRIPTION" \
   --redirect-uri "$REDIRECT_URI" \
   --scope profile:read \
+  --scope repo:read \
   --scope ticket:read \
   --scope ticket:write

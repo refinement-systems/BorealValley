@@ -127,6 +127,8 @@ export BV_DEV_HOST_PORT="$HOST_PORT"
 export BV_DEV_DB_PORT="$DB_PORT"
 export BV_DEV_CONTAINER_ROOT="/work"
 export BV_DEV_CONTAINER_PORT="4000"
+export BV_REPO_PATH_MAP_FROM="$BV_DEV_CONTAINER_ROOT"
+export BV_REPO_PATH_MAP_TO="$BV_DEV_ROOT_HOST"
 if [[ "$MODE" == "fast" ]]; then
   export BV_DEV_MODE="fast"
   export BV_DEV_DOCKER_TARGET="dev-fast"

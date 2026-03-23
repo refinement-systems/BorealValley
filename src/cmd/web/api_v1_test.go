@@ -17,6 +17,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/refinement-systems/BorealValley/src/internal/common"
 )
 
 func TestParseOptionalBoolQuery(t *testing.T) {
@@ -73,4 +75,61 @@ func TestAPIV1TicketAssignedListRejectsInvalidAgentCompletionPending(t *testing.
 	if !strings.Contains(rec.Body.String(), "invalid agent_completion_pending") {
 		t.Fatalf("expected invalid agent_completion_pending error, got %q", rec.Body.String())
 	}
+}
+
+func TestLoadRepoPathMapperFromEnv(t *testing.T) {
+	t.Run("unset mapper is allowed", func(t *testing.T) {
+		t.Setenv(repoPathMapFromEnv, "")
+		t.Setenv(repoPathMapToEnv, "")
+
+		mapper, err := loadRepoPathMapperFromEnv()
+		if err != nil {
+			t.Fatalf("loadRepoPathMapperFromEnv: %v", err)
+		}
+		if mapper != nil {
+			t.Fatalf("expected nil mapper when env is unset")
+		}
+	})
+
+	t.Run("half configured mapper is rejected", func(t *testing.T) {
+		t.Setenv(repoPathMapFromEnv, "/work")
+		t.Setenv(repoPathMapToEnv, "")
+
+		_, err := loadRepoPathMapperFromEnv()
+		if err == nil {
+			t.Fatalf("expected error for half-configured repo path mapper")
+		}
+		if !strings.Contains(err.Error(), repoPathMapFromEnv) || !strings.Contains(err.Error(), repoPathMapToEnv) {
+			t.Fatalf("expected env var names in error, got %v", err)
+		}
+	})
+}
+
+func TestMapRepositoryForAPI(t *testing.T) {
+	t.Parallel()
+
+	repo := common.Repository{
+		Slug: "demo",
+		Path: "/work/repo/demo",
+	}
+
+	t.Run("raw path is preserved when mapper is nil", func(t *testing.T) {
+		got := mapRepositoryForAPI(nil, repo)
+		if got.Path != repo.Path {
+			t.Fatalf("path mismatch: got %q want %q", got.Path, repo.Path)
+		}
+	})
+
+	t.Run("configured mapper translates prefix", func(t *testing.T) {
+		mapper, err := newRepoPathMapper("/work", "/Users/mjm/repo/bvroot")
+		if err != nil {
+			t.Fatalf("newRepoPathMapper: %v", err)
+		}
+
+		got := mapRepositoryForAPI(mapper, repo)
+		want := "/Users/mjm/repo/bvroot/repo/demo"
+		if got.Path != want {
+			t.Fatalf("path mismatch: got %q want %q", got.Path, want)
+		}
+	})
 }

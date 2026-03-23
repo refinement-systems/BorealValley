@@ -92,7 +92,9 @@ func runLMStudioTicketLoop(ctx context.Context, lmstudioURL, model, workspace, t
 		{
 			Role: "system",
 			Content: "You are a coding assistant operating one ticket at a time. " +
+				"The workspace is already a ticket-specific repository checkout. " +
 				"Use tools to inspect/edit workspace files before answering. " +
+				"Do not perform version-control operations yourself. " +
 				"When tool calls are needed, return tool calls only.",
 		},
 		{

@@ -56,6 +56,13 @@ Create an OAuth app for the agent with required scopes:
 
 The script prints `client_id` and `client_secret`. Save both values securely.
 
+The agent OAuth app now needs:
+
+- `profile:read`
+- `repo:read`
+- `ticket:read`
+- `ticket:write`
+
 ## 4. Create a Fresh Test Repository and Ticket
 
 On a fresh setup, the agent can only process tickets that are:
@@ -139,9 +146,12 @@ Behavior:
 1. Refreshes OAuth token if near expiry.
 2. Fetches one assigned, completion-pending ticket.
 3. Posts an acknowledgement root comment.
-4. Runs LM Studio tool-calling loop.
-5. Publishes progress/errors as `Update` entries attached to that acknowledgement comment.
-6. Posts a separate completion root comment only after the run finishes successfully.
+4. Fetches repository detail and resolves the agent-visible checkout source path from the repo API response.
+5. Clones the repository into `--workspace/<repo-slug>/<ticket-slug>`.
+6. Runs the LM Studio tool-calling loop inside that checkout.
+7. Publishes progress/errors as `Update` entries attached to that acknowledgement comment.
+8. If files changed, records one local Pijul change with message `<ticket-slug>: <summary>`.
+9. Posts a separate completion root comment only after the run finishes successfully.
 
 If no eligible ticket exists, the command exits successfully.
 
@@ -171,7 +181,9 @@ Use explicit state file:
 ## 9. Troubleshooting
 
 - `oauth state mismatch`: ensure browser redirected to the same `--redirect-uri` used during init.
-- `http 401/403` on agent API calls: ensure OAuth app has scopes `profile:read ticket:read ticket:write`.
+- `http 401/403` on agent API calls: ensure OAuth app has scopes `profile:read repo:read ticket:read ticket:write`.
+- Docker dev stopgap checkout support relies on translated repo paths from the server. It works for the standard `/work` to host-root mount and does not yet support remote/SSH repository checkout.
+- local Pijul commit failures usually mean the agent machine does not have a usable Pijul identity configured yet.
 - `assignee has no repository access`: add `agentbot` as a member of the repository before assigning the ticket.
 - `no assigned completion-pending tickets`: assign the ticket to the agent user and ensure that user has not already completed it with an agent completion comment.
 - LM Studio errors: confirm API is enabled and the model name matches the loaded model.
