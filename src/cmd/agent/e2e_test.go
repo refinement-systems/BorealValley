@@ -262,7 +262,7 @@ func skipUnlessE2E(t *testing.T) string {
 		}
 		path = resolvedPath
 		if _, err := os.Stat(path); err != nil {
-			t.Skipf("required TLS file missing: %s (%v)", path, err)
+			t.Skipf("required TLS file missing from current checkout: %s (%v)", path, err)
 		}
 	}
 	return adminDSN
