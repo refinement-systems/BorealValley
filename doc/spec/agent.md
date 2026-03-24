@@ -39,7 +39,7 @@ Behavior:
 2. Performs OAuth authorization-server discovery from:
    - `GET /.well-known/oauth-authorization-server`
 3. Runs OAuth authorization-code flow with PKCE (`S256`) using scopes:
-   - `profile:read ticket:read ticket:write`
+   - `profile:read repo:read ticket:read ticket:write`
 4. Login UX:
    - loopback callback capture first
    - manual paste fallback if callback fails/times out
@@ -63,9 +63,12 @@ Behavior per invocation:
 5. If no eligible ticket exists, exits success.
 6. If a ticket exists:
    - posts non-LLM acknowledgement root comment first
+   - fetches repository detail from `GET /api/v1/repo/{repo}`
+   - clones the repository into `--workspace/<repo-slug>/<ticket-slug>`
    - uses that created comment as the target for progress/error `Update` entries
-   - posts a separate completion root comment only after successful finish
-   - then runs one LM Studio tool-calling loop for this ticket
+    - posts a separate completion root comment only after successful finish
+   - runs one LM Studio tool-calling loop inside that checkout
+   - if files changed, records one local Pijul change using `<ticket-slug>: <summary>`
 
 One invocation processes at most one ticket.
 
@@ -97,6 +100,9 @@ Available tools (sandboxed to `--workspace`):
 Default max iterations: `3` (`--max-iter` overrides).
 
 If the loop hits iteration limit, `agent run` returns non-zero.
+
+For checkout-enabled runs, the effective sandbox root is the prepared checkout path under
+`--workspace/<repo-slug>/<ticket-slug>`, not the raw `--workspace` parent directory.
 
 ## 7. Publishing Progress and Errors
 

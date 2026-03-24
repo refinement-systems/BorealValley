@@ -28,6 +28,8 @@ services:
       BV_ROOT: ${BV_DEV_CONTAINER_ROOT:-/work}
       BV_DEV_CONTAINER_PORT: ${BV_DEV_CONTAINER_PORT:-4000}
       BV_DEV_MODE: ${BV_DEV_MODE:-parity}
+      BV_REPO_PATH_MAP_FROM: ${BV_REPO_PATH_MAP_FROM:-}
+      BV_REPO_PATH_MAP_TO: ${BV_REPO_PATH_MAP_TO:-}
     ports:
       - "${BV_DEV_HOST_PORT:-4000}:${BV_DEV_CONTAINER_PORT:-4000}"
     depends_on:

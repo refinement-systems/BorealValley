@@ -99,6 +99,7 @@ func TestE2EAgentOAuthToRunFlow(t *testing.T) {
 		"--name", "agentbot-e2e",
 		"--redirect-uri", redirectURI,
 		"--scope", "profile:read",
+		"--scope", "repo:read",
 		"--scope", "ticket:read",
 		"--scope", "ticket:write",
 	)
@@ -156,7 +157,7 @@ func TestE2EAgentOAuthToRunFlow(t *testing.T) {
 	if !found {
 		t.Fatalf("expected oauth consent grant for client %q", clientID)
 	}
-	wantScopes := []string{"profile:read", "ticket:read", "ticket:write"}
+	wantScopes := []string{"profile:read", "repo:read", "ticket:read", "ticket:write"}
 	if grant.UserID != agentID {
 		t.Fatalf("grant user mismatch: got %d want %d", grant.UserID, agentID)
 	}
@@ -262,7 +263,7 @@ func skipUnlessE2E(t *testing.T) string {
 		}
 		path = resolvedPath
 		if _, err := os.Stat(path); err != nil {
-			t.Skipf("required TLS file missing from current checkout: %s (%v)", path, err)
+			t.Skipf("required TLS file missing: %s (%v)", path, err)
 		}
 	}
 	return adminDSN
@@ -718,7 +719,7 @@ func runRodneyOAuthFlow(t *testing.T, authURL, username, password string) {
 	runRodney(t, rodneyDir, "waitload")
 	runRodney(t, rodneyDir, "waitstable")
 
-	for _, scope := range []string{"profile:read", "ticket:read", "ticket:write"} {
+	for _, scope := range []string{"profile:read", "repo:read", "ticket:read", "ticket:write"} {
 		runRodney(t, rodneyDir, "click", fmt.Sprintf("input[name='scope'][value='%s']", scope))
 	}
 	runRodney(t, rodneyDir, "click", "button[name='action'][value='approve']")

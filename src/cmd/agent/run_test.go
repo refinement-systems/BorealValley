@@ -31,12 +31,15 @@ type fakeBVServer struct {
 	mu sync.Mutex
 
 	assigned []common.AssignedTicket
+	repos    map[string]common.Repository
 	comments []fakeTicketComment
 	updates  []fakeTicketCommentUpdate
 	events   []string
 
 	assignedAuthHeader string
 	assignedQuery      string
+	repoDetailAuth     string
+	repoDetailSlugs    []string
 
 	tokenResponse  oauthTokenResponse
 	profilePayload profileState
@@ -78,6 +81,18 @@ func (f *fakeBVServer) handler(w http.ResponseWriter, r *http.Request) {
 		f.assignedQuery = r.URL.RawQuery
 		f.mu.Unlock()
 		writeJSONResponse(w, http.StatusOK, map[string]any{"ticket": f.assigned})
+		return
+	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/api/v1/repo/"):
+		repoSlug := strings.TrimPrefix(r.URL.Path, "/api/v1/repo/")
+		f.mu.Lock()
+		f.repoDetailAuth = r.Header.Get("Authorization")
+		f.repoDetailSlugs = append(f.repoDetailSlugs, repoSlug)
+		repo, ok := f.repos[repoSlug]
+		f.mu.Unlock()
+		if !ok {
+			repo = common.Repository{Slug: repoSlug, Path: "/translated/" + repoSlug}
+		}
+		writeJSONResponse(w, http.StatusOK, repo)
 		return
 	case r.Method == http.MethodPost && strings.HasPrefix(r.URL.Path, "/api/v1/ticket-tracker/") && strings.HasSuffix(r.URL.Path, "/comment"):
 		var body struct {
@@ -198,6 +213,41 @@ func newHTTPServer(t *testing.T, handler http.Handler) *httptest.Server {
 	return server
 }
 
+func stubTicketWorkspaceLifecycle(t *testing.T, files map[string]string) {
+	t.Helper()
+
+	origPrepare := prepareTicketWorkspaceForRun
+	origFinalize := finalizeTicketWorkspaceForRun
+	t.Cleanup(func() {
+		prepareTicketWorkspaceForRun = origPrepare
+		finalizeTicketWorkspaceForRun = origFinalize
+	})
+
+	prepareTicketWorkspaceForRun = func(parent string, ticket common.AssignedTicket, repo common.Repository) (ticketWorkspace, error) {
+		path := filepath.Join(parent, ticket.RepositorySlug, ticket.TicketSlug)
+		if err := os.MkdirAll(path, 0o755); err != nil {
+			return ticketWorkspace{}, err
+		}
+		for name, contents := range files {
+			fullPath := filepath.Join(path, name)
+			if err := os.MkdirAll(filepath.Dir(fullPath), 0o755); err != nil {
+				return ticketWorkspace{}, err
+			}
+			if err := os.WriteFile(fullPath, []byte(contents), 0o600); err != nil {
+				return ticketWorkspace{}, err
+			}
+		}
+		return ticketWorkspace{
+			Path:              path,
+			SourceRepoPath:    repo.Path,
+			BaselineUntracked: map[string]struct{}{},
+		}, nil
+	}
+	finalizeTicketWorkspaceForRun = func(string, ticketWorkspace, common.AssignedTicket) error {
+		return nil
+	}
+}
+
 func TestRunAgentOnceNoEligibleTickets(t *testing.T) {
 	bv := &fakeBVServer{}
 	bv.tokenResponse = oauthTokenResponse{AccessToken: "new-access", RefreshToken: "new-refresh", ExpiresIn: 3600}
@@ -244,9 +294,7 @@ func TestRunAgentOnceNoEligibleTickets(t *testing.T) {
 
 func TestRunAgentOnceAcknowledgesThenPublishesUpdates(t *testing.T) {
 	workspace := t.TempDir()
-	if err := os.WriteFile(filepath.Join(workspace, "README.txt"), []byte("hello\n"), 0o600); err != nil {
-		t.Fatalf("write workspace file: %v", err)
-	}
+	stubTicketWorkspaceLifecycle(t, map[string]string{"README.txt": "hello\n"})
 
 	bv := &fakeBVServer{
 		assigned: []common.AssignedTicket{{
@@ -337,6 +385,8 @@ func TestRunAgentOnceAcknowledgesThenPublishesUpdates(t *testing.T) {
 }
 
 func TestRunAgentOnceTestCounterPublishesDeterministicUpdates(t *testing.T) {
+	stubTicketWorkspaceLifecycle(t, nil)
+
 	bv := &fakeBVServer{
 		assigned: []common.AssignedTicket{{
 			ActorID:        "https://example.test/ticket-tracker/tracker-1/ticket/TCK-COUNTER",
@@ -399,9 +449,7 @@ func TestRunAgentOnceTestCounterPublishesDeterministicUpdates(t *testing.T) {
 
 func TestRunAgentOnceIterationLimitPostsErrorUpdate(t *testing.T) {
 	workspace := t.TempDir()
-	if err := os.WriteFile(filepath.Join(workspace, "README.txt"), []byte("hello\n"), 0o600); err != nil {
-		t.Fatalf("write workspace file: %v", err)
-	}
+	stubTicketWorkspaceLifecycle(t, map[string]string{"README.txt": "hello\n"})
 
 	bv := &fakeBVServer{
 		assigned: []common.AssignedTicket{{
@@ -583,5 +631,186 @@ func TestTicketEnvelopeIncludesCreatedAtAndPriority(t *testing.T) {
 		if !strings.Contains(env, want) {
 			t.Fatalf("ticket envelope missing %q:\n%s", want, env)
 		}
+	}
+}
+
+func TestRunAgentOnceFetchesRepoDetailAndUsesTicketCheckoutPath(t *testing.T) {
+	workspaceRoot := t.TempDir()
+	bv := &fakeBVServer{
+		assigned: []common.AssignedTicket{{
+			TrackerSlug:    "tracker-1",
+			TicketSlug:     "TCK-1",
+			RepositorySlug: "repo-1",
+			Summary:        "Fix bug",
+			Content:        "details",
+			CreatedAt:      time.Now().UTC().Add(-time.Hour),
+		}},
+		repos: map[string]common.Repository{
+			"repo-1": {Slug: "repo-1", Path: "/translated/root/repo/repo-1"},
+		},
+	}
+	bvServer := newHTTPServer(t, http.HandlerFunc(bv.handler))
+
+	statePath := writeAgentStateFile(t, agentState{
+		ServerURL:    bvServer.URL,
+		ClientID:     "client",
+		ClientSecret: "secret",
+		RedirectURI:  "http://127.0.0.1:8787/callback",
+		Mode:         agentModeTestCounter,
+		Token: oauthTokenState{
+			AccessToken: "access",
+			ExpiresAt:   time.Now().UTC().Add(30 * time.Minute),
+		},
+		Profile: profileState{UserID: 1, Username: "agent"},
+	})
+
+	origPrepare := prepareTicketWorkspaceForRun
+	origFinalize := finalizeTicketWorkspaceForRun
+	defer func() {
+		prepareTicketWorkspaceForRun = origPrepare
+		finalizeTicketWorkspaceForRun = origFinalize
+	}()
+
+	var prepared ticketWorkspace
+	prepareTicketWorkspaceForRun = func(parent string, ticket common.AssignedTicket, repo common.Repository) (ticketWorkspace, error) {
+		prepared = ticketWorkspace{
+			Path:              filepath.Join(parent, ticket.RepositorySlug, ticket.TicketSlug),
+			SourceRepoPath:    repo.Path,
+			BaselineUntracked: map[string]struct{}{},
+		}
+		return prepared, nil
+	}
+	finalizeTicketWorkspaceForRun = func(_ string, _ ticketWorkspace, _ common.AssignedTicket) error {
+		return nil
+	}
+
+	if err := runAgentOnce(runConfig{StatePath: statePath, Workspace: workspaceRoot, MaxIter: 3}); err != nil {
+		t.Fatalf("runAgentOnce: %v", err)
+	}
+
+	bv.mu.Lock()
+	defer bv.mu.Unlock()
+	if got := bv.repoDetailAuth; got != "Bearer access" {
+		t.Fatalf("repo detail auth header mismatch: got %q", got)
+	}
+	if len(bv.repoDetailSlugs) != 1 || bv.repoDetailSlugs[0] != "repo-1" {
+		t.Fatalf("unexpected repo detail slugs: %v", bv.repoDetailSlugs)
+	}
+	wantPath := filepath.Join(workspaceRoot, "repo-1", "TCK-1")
+	if prepared.Path != wantPath {
+		t.Fatalf("checkout path mismatch: got %q want %q", prepared.Path, wantPath)
+	}
+	if prepared.SourceRepoPath != "/translated/root/repo/repo-1" {
+		t.Fatalf("source repo path mismatch: got %q", prepared.SourceRepoPath)
+	}
+}
+
+func TestRunAgentOnceCheckoutFailurePostsErrorUpdateAndSkipsCompletion(t *testing.T) {
+	bv := &fakeBVServer{
+		assigned: []common.AssignedTicket{{
+			TrackerSlug:    "tracker-1",
+			TicketSlug:     "TCK-ERR",
+			RepositorySlug: "repo-1",
+			Summary:        "Fix bug",
+			Content:        "details",
+			CreatedAt:      time.Now().UTC().Add(-time.Hour),
+		}},
+		repos: map[string]common.Repository{
+			"repo-1": {Slug: "repo-1", Path: "/translated/root/repo/repo-1"},
+		},
+	}
+	bvServer := newHTTPServer(t, http.HandlerFunc(bv.handler))
+
+	statePath := writeAgentStateFile(t, agentState{
+		ServerURL:    bvServer.URL,
+		ClientID:     "client",
+		ClientSecret: "secret",
+		RedirectURI:  "http://127.0.0.1:8787/callback",
+		Mode:         agentModeTestCounter,
+		Token: oauthTokenState{
+			AccessToken: "access",
+			ExpiresAt:   time.Now().UTC().Add(30 * time.Minute),
+		},
+		Profile: profileState{UserID: 1, Username: "agent"},
+	})
+
+	origPrepare := prepareTicketWorkspaceForRun
+	defer func() { prepareTicketWorkspaceForRun = origPrepare }()
+	prepareTicketWorkspaceForRun = func(string, common.AssignedTicket, common.Repository) (ticketWorkspace, error) {
+		return ticketWorkspace{}, fmt.Errorf("clone failed")
+	}
+
+	err := runAgentOnce(runConfig{StatePath: statePath, Workspace: t.TempDir(), MaxIter: 3})
+	if err == nil || !strings.Contains(err.Error(), "clone failed") {
+		t.Fatalf("expected clone failure, got %v", err)
+	}
+
+	bv.mu.Lock()
+	defer bv.mu.Unlock()
+	if len(bv.comments) != 1 {
+		t.Fatalf("expected acknowledgement only, got %d comments", len(bv.comments))
+	}
+	if len(bv.updates) == 0 || !strings.Contains(joinCommentUpdateContents(bv.updates, bv.comments[0].Slug), "agent_error: clone failed") {
+		t.Fatalf("expected agent_error update, got %v", bv.updates)
+	}
+}
+
+func TestRunAgentOnceCommitFailurePostsErrorUpdateAndSkipsCompletion(t *testing.T) {
+	bv := &fakeBVServer{
+		assigned: []common.AssignedTicket{{
+			TrackerSlug:    "tracker-1",
+			TicketSlug:     "TCK-RECORD",
+			RepositorySlug: "repo-1",
+			Summary:        "Fix bug",
+			Content:        "details",
+			CreatedAt:      time.Now().UTC().Add(-time.Hour),
+		}},
+		repos: map[string]common.Repository{
+			"repo-1": {Slug: "repo-1", Path: "/translated/root/repo/repo-1"},
+		},
+	}
+	bvServer := newHTTPServer(t, http.HandlerFunc(bv.handler))
+
+	statePath := writeAgentStateFile(t, agentState{
+		ServerURL:    bvServer.URL,
+		ClientID:     "client",
+		ClientSecret: "secret",
+		RedirectURI:  "http://127.0.0.1:8787/callback",
+		Mode:         agentModeTestCounter,
+		Token: oauthTokenState{
+			AccessToken: "access",
+			ExpiresAt:   time.Now().UTC().Add(30 * time.Minute),
+		},
+		Profile: profileState{UserID: 1, Username: "agent"},
+	})
+
+	origPrepare := prepareTicketWorkspaceForRun
+	origFinalize := finalizeTicketWorkspaceForRun
+	defer func() {
+		prepareTicketWorkspaceForRun = origPrepare
+		finalizeTicketWorkspaceForRun = origFinalize
+	}()
+	prepareTicketWorkspaceForRun = func(parent string, ticket common.AssignedTicket, repo common.Repository) (ticketWorkspace, error) {
+		return ticketWorkspace{
+			Path:           filepath.Join(parent, ticket.RepositorySlug, ticket.TicketSlug),
+			SourceRepoPath: repo.Path,
+		}, nil
+	}
+	finalizeTicketWorkspaceForRun = func(string, ticketWorkspace, common.AssignedTicket) error {
+		return fmt.Errorf("record failed")
+	}
+
+	err := runAgentOnce(runConfig{StatePath: statePath, Workspace: t.TempDir(), MaxIter: 3})
+	if err == nil || !strings.Contains(err.Error(), "record failed") {
+		t.Fatalf("expected record failure, got %v", err)
+	}
+
+	bv.mu.Lock()
+	defer bv.mu.Unlock()
+	if len(bv.comments) != 1 {
+		t.Fatalf("expected acknowledgement only, got %d comments", len(bv.comments))
+	}
+	if len(bv.updates) == 0 || !strings.Contains(joinCommentUpdateContents(bv.updates, bv.comments[0].Slug), "agent_error: record failed") {
+		t.Fatalf("expected agent_error update, got %v", bv.updates)
 	}
 }

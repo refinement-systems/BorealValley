@@ -68,7 +68,7 @@ Actions:
 
 Typical setup uses:
 
-- `ctl oauth-app create ... --scope profile:read --scope ticket:read --scope ticket:write`
+- `ctl oauth-app create ... --scope profile:read --scope repo:read --scope ticket:read --scope ticket:write`
 
 The generated `client_id` and `client_secret` are then passed to `agent init`.
 
