@@ -12,6 +12,7 @@
 package main
 
 import (
+	"context"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -33,6 +34,17 @@ type oauthAuthorizePageData struct {
 
 var oauthAuthorizeTmpl = template.Must(template.New("oauth-consent").Parse(assets.HtmlOAuthConsent))
 
+type authorizeErrorWriter interface {
+	WriteAuthorizeError(ctx context.Context, rw http.ResponseWriter, ar fosite.AuthorizeRequester, err error)
+}
+
+func writeAuthorizeError(ctx context.Context, w http.ResponseWriter, writer authorizeErrorWriter, requester fosite.AuthorizeRequester, err error) {
+	if requester == nil {
+		requester = fosite.NewAuthorizeRequest()
+	}
+	writer.WriteAuthorizeError(ctx, w, requester, err)
+}
+
 func (app *application) oauthAuthorizeGet(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -44,7 +56,7 @@ func (app *application) oauthAuthorizeGet(w http.ResponseWriter, r *http.Request
 	}
 	authorizeRequester, err := app.oauth.Provider.NewAuthorizeRequest(r.Context(), r)
 	if err != nil {
-		app.oauth.Provider.WriteAuthorizeError(r.Context(), w, nil, err)
+		writeAuthorizeError(r.Context(), w, app.oauth.Provider, authorizeRequester, err)
 		return
 	}
 
@@ -131,7 +143,7 @@ func (app *application) oauthAuthorizePost(w http.ResponseWriter, r *http.Reques
 	rawQuery := strings.TrimSpace(r.PostFormValue("query"))
 	authorizeRequester, err := app.oauthAuthorizeRequestFromRawQuery(r, rawQuery)
 	if err != nil {
-		app.oauth.Provider.WriteAuthorizeError(r.Context(), w, nil, err)
+		writeAuthorizeError(r.Context(), w, app.oauth.Provider, authorizeRequester, err)
 		return
 	}
 

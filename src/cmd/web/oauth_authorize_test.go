@@ -12,12 +12,15 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 
 	"github.com/alexedwards/scs/v2"
+	"github.com/ory/fosite"
 )
 
 func TestOAuthAuthorizeGetPromptLoginRedirectsToLoginEvenWithExistingSession(t *testing.T) {
@@ -81,4 +84,57 @@ func assertOAuthAuthorizeLoginRedirect(t *testing.T, rr *httptest.ResponseRecord
 	if got := authorizeURL.Query().Get("prompt"); got != "" {
 		t.Fatalf("expected prompt to be stripped from return_to, got %q", got)
 	}
+}
+
+func TestWriteAuthorizeErrorUsesEmptyRequesterWhenNil(t *testing.T) {
+	writer := &recordingAuthorizeErrorWriter{}
+	recorder := httptest.NewRecorder()
+	errBoom := errors.New("boom")
+
+	writeAuthorizeError(context.Background(), recorder, writer, nil, errBoom)
+
+	if writer.calls != 1 {
+		t.Fatalf("expected one WriteAuthorizeError call, got %d", writer.calls)
+	}
+	if writer.requester == nil {
+		t.Fatal("expected non-nil authorize requester")
+	}
+	if writer.err != errBoom {
+		t.Fatalf("expected error %v, got %v", errBoom, writer.err)
+	}
+	request, ok := writer.requester.(*fosite.AuthorizeRequest)
+	if !ok {
+		t.Fatalf("expected *fosite.AuthorizeRequest, got %T", writer.requester)
+	}
+	if request.GetRedirectURI() != nil {
+		t.Fatalf("expected empty fallback requester, got redirect URI %v", request.GetRedirectURI())
+	}
+}
+
+func TestWriteAuthorizeErrorPreservesRequester(t *testing.T) {
+	writer := &recordingAuthorizeErrorWriter{}
+	recorder := httptest.NewRecorder()
+	errBoom := errors.New("boom")
+	requester := fosite.NewAuthorizeRequest()
+
+	writeAuthorizeError(context.Background(), recorder, writer, requester, errBoom)
+
+	if writer.calls != 1 {
+		t.Fatalf("expected one WriteAuthorizeError call, got %d", writer.calls)
+	}
+	if writer.requester != requester {
+		t.Fatalf("expected requester to be preserved")
+	}
+}
+
+type recordingAuthorizeErrorWriter struct {
+	calls     int
+	requester fosite.AuthorizeRequester
+	err       error
+}
+
+func (r *recordingAuthorizeErrorWriter) WriteAuthorizeError(ctx context.Context, rw http.ResponseWriter, ar fosite.AuthorizeRequester, err error) {
+	r.calls++
+	r.requester = ar
+	r.err = err
 }
