@@ -719,9 +719,6 @@ func runRodneyOAuthFlow(t *testing.T, authURL, username, password string) {
 	runRodney(t, rodneyDir, "waitload")
 	runRodney(t, rodneyDir, "waitstable")
 
-	for _, scope := range []string{"profile:read", "repo:read", "ticket:read", "ticket:write"} {
-		runRodney(t, rodneyDir, "click", fmt.Sprintf("input[name='scope'][value='%s']", scope))
-	}
 	runRodney(t, rodneyDir, "click", "button[name='action'][value='approve']")
 	runRodney(t, rodneyDir, "waitload")
 	runRodney(t, rodneyDir, "waitstable")

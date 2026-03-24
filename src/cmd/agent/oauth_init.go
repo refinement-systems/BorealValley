@@ -320,31 +320,7 @@ func receiveAuthCodeLoopback(authorizeURL, redirectURI, expectedState string, op
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
-		gotState := strings.TrimSpace(r.URL.Query().Get("state"))
-		if gotState != expectedState {
-			http.Error(w, "state mismatch", http.StatusBadRequest)
-			select {
-			case errCh <- errors.New("oauth state mismatch"):
-			default:
-			}
-			return
-		}
-		code := strings.TrimSpace(r.URL.Query().Get("code"))
-		if code == "" {
-			http.Error(w, "missing code", http.StatusBadRequest)
-			select {
-			case errCh <- errors.New("authorization code missing"):
-			default:
-			}
-			return
-		}
-		_, _ = io.WriteString(w, "<html><body><p>Authorization complete. You can close this window.</p></body></html>")
-		select {
-		case codeCh <- code:
-		default:
-		}
-	})
+	mux.Handle(path, newAuthCodeCallbackHandler(expectedState, errCh, codeCh))
 
 	srv := &http.Server{Handler: mux}
 	go func() {
@@ -377,6 +353,25 @@ func receiveAuthCodeLoopback(authorizeURL, redirectURI, expectedState string, op
 	}
 }
 
+func newAuthCodeCallbackHandler(expectedState string, errCh chan<- error, codeCh chan<- string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		code, err := authCodeFromCallbackQuery(r.URL.Query(), expectedState)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			select {
+			case errCh <- err:
+			default:
+			}
+			return
+		}
+		_, _ = io.WriteString(w, "<html><body><p>Authorization complete. You can close this window.</p></body></html>")
+		select {
+		case codeCh <- code:
+		default:
+		}
+	})
+}
+
 func promptForAuthCode(expectedState string) (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Paste redirect URL (or raw code): ")
@@ -395,11 +390,25 @@ func promptForAuthCode(expectedState string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("invalid redirect URL: %w", err)
 	}
-	gotState := strings.TrimSpace(u.Query().Get("state"))
+	return authCodeFromCallbackQuery(u.Query(), expectedState)
+}
+
+func authCodeFromCallbackQuery(query url.Values, expectedState string) (string, error) {
+	gotState := strings.TrimSpace(query.Get("state"))
 	if gotState != expectedState {
 		return "", errors.New("oauth state mismatch")
 	}
-	code := strings.TrimSpace(u.Query().Get("code"))
+	if oauthErr := strings.TrimSpace(query.Get("error")); oauthErr != "" {
+		description := strings.TrimSpace(query.Get("error_description"))
+		if description == "" {
+			description = strings.TrimSpace(query.Get("error_hint"))
+		}
+		if description == "" {
+			return "", fmt.Errorf("oauth authorization failed: %s", oauthErr)
+		}
+		return "", fmt.Errorf("oauth authorization failed: %s: %s", oauthErr, description)
+	}
+	code := strings.TrimSpace(query.Get("code"))
 	if code == "" {
 		return "", errors.New("authorization code missing")
 	}

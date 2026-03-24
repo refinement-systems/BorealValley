@@ -127,6 +127,30 @@ func TestWriteAuthorizeErrorPreservesRequester(t *testing.T) {
 	}
 }
 
+func TestPreApprovedScopesDefaultsToAllRequestedWhenNoPriorGrant(t *testing.T) {
+	got := preApprovedScopes([]string{"profile:read", "repo:read"}, nil)
+
+	for _, scope := range []string{"profile:read", "repo:read"} {
+		if !got[scope] {
+			t.Fatalf("expected %q to be pre-approved by default", scope)
+		}
+	}
+}
+
+func TestPreApprovedScopesPreservesExistingGrantSubset(t *testing.T) {
+	got := preApprovedScopes([]string{"profile:read", "repo:read", "ticket:write"}, []string{"repo:read"})
+
+	if got["profile:read"] {
+		t.Fatal("expected profile:read to remain unapproved")
+	}
+	if !got["repo:read"] {
+		t.Fatal("expected repo:read to remain approved")
+	}
+	if got["ticket:write"] {
+		t.Fatal("expected ticket:write to remain unapproved")
+	}
+}
+
 type recordingAuthorizeErrorWriter struct {
 	calls     int
 	requester fosite.AuthorizeRequester

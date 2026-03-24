@@ -73,11 +73,10 @@ func (app *application) oauthAuthorizeGet(w http.ResponseWriter, r *http.Request
 		clientDescription = client.Description
 	}
 
-	preApproved := map[string]bool{}
+	requestedScopes := append([]string(nil), authorizeRequester.GetRequestedScopes()...)
+	preApproved := preApprovedScopes(requestedScopes, nil)
 	if grant, found, err := app.store.GetLatestActiveOAuthConsentGrant(r.Context(), userID, authorizeRequester.GetClient().GetID()); err == nil && found {
-		for _, scope := range grant.GrantedScopes {
-			preApproved[scope] = true
-		}
+		preApproved = preApprovedScopes(requestedScopes, grant.GrantedScopes)
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -85,7 +84,7 @@ func (app *application) oauthAuthorizeGet(w http.ResponseWriter, r *http.Request
 		RawQuery:          r.URL.RawQuery,
 		ClientName:        clientName,
 		ClientDescription: clientDescription,
-		RequestedScopes:   append([]string(nil), authorizeRequester.GetRequestedScopes()...),
+		RequestedScopes:   requestedScopes,
 		PreApproved:       preApproved,
 		Err:               "",
 	})
@@ -223,6 +222,28 @@ func approvedScopesSubset(selected []string, requested []string) []string {
 		}
 		seen[scope] = struct{}{}
 		out = append(out, scope)
+	}
+	return out
+}
+
+func preApprovedScopes(requested []string, previouslyGranted []string) map[string]bool {
+	out := map[string]bool{}
+	if len(previouslyGranted) == 0 {
+		for _, scope := range requested {
+			scope = strings.TrimSpace(scope)
+			if scope == "" {
+				continue
+			}
+			out[scope] = true
+		}
+		return out
+	}
+	for _, scope := range previouslyGranted {
+		scope = strings.TrimSpace(scope)
+		if scope == "" {
+			continue
+		}
+		out[scope] = true
 	}
 	return out
 }
