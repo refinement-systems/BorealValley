@@ -233,7 +233,7 @@ Use explicit state file:
 - `oauth state mismatch`: ensure browser redirected to the same `--redirect-uri` used during init.
 - `http 401/403` on agent API calls: ensure OAuth app has scopes `profile:read repo:read ticket:read ticket:write`.
 - Docker dev stopgap checkout support relies on translated repo paths from the server. It works for the standard `/work` to host-root mount and does not yet support remote/SSH repository checkout.
-- local Pijul commit failures usually mean the agent machine does not have a usable Pijul identity configured yet.
+- local Pijul commit failures usually mean the agent machine does not have a usable Pijul identity configured yet. Run `pijul identity new borealvalley-agent` interactively once on the agent machine, then retry.
 - `assignee has no repository access`: add `agentbot` as a member of the repository before assigning the ticket.
 - `no assigned completion-pending tickets`: assign the ticket to the agent user and ensure that user has not already completed it with an agent completion comment.
 - LM Studio errors: confirm API is enabled and the model name matches the loaded model.

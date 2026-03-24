@@ -29,6 +29,11 @@ type ticketWorkspace struct {
 
 var prepareTicketWorkspaceForRun = defaultPrepareTicketWorkspaceForRun
 var finalizeTicketWorkspaceForRun = defaultFinalizeTicketWorkspaceForRun
+var hasUsablePijulIdentity = common.HasUsablePijulIdentity
+
+func missingPijulIdentityMessage() string {
+	return "usable Pijul identity required on the agent machine: run `pijul identity new borealvalley-agent` interactively once, then retry"
+}
 
 func defaultPrepareTicketWorkspaceForRun(parent string, ticket common.AssignedTicket, repo common.Repository) (ticketWorkspace, error) {
 	parent = strings.TrimSpace(parent)
@@ -38,6 +43,13 @@ func defaultPrepareTicketWorkspaceForRun(parent string, ticket common.AssignedTi
 	}
 	if sourceRepoPath == "" {
 		return ticketWorkspace{}, fmt.Errorf("repository path missing for %s", ticket.RepositorySlug)
+	}
+	ok, err := hasUsablePijulIdentity(context.Background())
+	if err != nil {
+		return ticketWorkspace{}, err
+	}
+	if !ok {
+		return ticketWorkspace{}, fmt.Errorf("%s", missingPijulIdentityMessage())
 	}
 
 	checkoutPath := filepath.Join(parent, ticket.RepositorySlug, ticket.TicketSlug)
@@ -63,6 +75,9 @@ func defaultPrepareTicketWorkspaceForRun(parent string, ticket common.AssignedTi
 
 func defaultFinalizeTicketWorkspaceForRun(_ string, workspace ticketWorkspace, ticket common.AssignedTicket) error {
 	_, err := common.CommitPijulChanges(context.Background(), workspace.Path, workspace.BaselineUntracked, ticketCommitMessage(ticket))
+	if common.IsMissingPijulIdentityError(err) {
+		return fmt.Errorf("%s", missingPijulIdentityMessage())
+	}
 	return err
 }
 

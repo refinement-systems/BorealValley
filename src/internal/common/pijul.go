@@ -33,12 +33,25 @@ func ClonePijulRepo(ctx context.Context, source, dest string) error {
 	return clonePijulRepo(ctx, runPijulCommand, source, dest)
 }
 
+func HasUsablePijulIdentity(ctx context.Context) (bool, error) {
+	return hasUsablePijulIdentity(ctx, runPijulCommand)
+}
+
 func SnapshotUntrackedPaths(ctx context.Context, repoPath string) (map[string]struct{}, error) {
 	return snapshotUntrackedPaths(ctx, runPijulCommand, repoPath)
 }
 
 func CommitPijulChanges(ctx context.Context, repoPath string, baselineUntracked map[string]struct{}, message string) (bool, error) {
 	return commitPijulChanges(ctx, runPijulCommand, repoPath, baselineUntracked, message)
+}
+
+func IsMissingPijulIdentityError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "It doesn't look like you have any identities configured!") ||
+		strings.Contains(msg, "Cannot get path of un-named identity")
 }
 
 func clonePijulRepo(ctx context.Context, runner pijulCommandRunner, source, dest string) error {
@@ -60,7 +73,23 @@ func snapshotUntrackedPaths(ctx context.Context, runner pijulCommandRunner, repo
 	return out, nil
 }
 
+func hasUsablePijulIdentity(ctx context.Context, runner pijulCommandRunner) (bool, error) {
+	output, err := runner(ctx, "identity", "list", "--no-prompt")
+	if err != nil {
+		return false, err
+	}
+	text := strings.TrimSpace(string(output))
+	if text == "" {
+		return false, nil
+	}
+	if strings.Contains(text, "No identities found.") {
+		return false, nil
+	}
+	return true, nil
+}
+
 func commitPijulChanges(ctx context.Context, runner pijulCommandRunner, repoPath string, baselineUntracked map[string]struct{}, message string) (bool, error) {
+	repoPath = strings.TrimSpace(repoPath)
 	statuses, err := pijulStatus(ctx, runner, repoPath)
 	if err != nil {
 		return false, err
@@ -84,7 +113,11 @@ func commitPijulChanges(ctx context.Context, runner pijulCommandRunner, repoPath
 
 	sort.Strings(newUntracked)
 	if len(newUntracked) > 0 {
-		args := append([]string{"add", "--repository", strings.TrimSpace(repoPath), "--no-prompt"}, newUntracked...)
+		addPaths := make([]string, 0, len(newUntracked))
+		for _, path := range newUntracked {
+			addPaths = append(addPaths, filepath.Join(repoPath, path))
+		}
+		args := append([]string{"add", "--repository", repoPath, "--no-prompt"}, addPaths...)
 		if _, err := runner(ctx, args...); err != nil {
 			return false, err
 		}
@@ -93,7 +126,7 @@ func commitPijulChanges(ctx context.Context, runner pijulCommandRunner, repoPath
 	if message == "" {
 		return false, fmt.Errorf("pijul record message is required")
 	}
-	if _, err := runner(ctx, "record", "--repository", strings.TrimSpace(repoPath), "-a", "-m", message, "--no-prompt"); err != nil {
+	if _, err := runner(ctx, "record", "--repository", repoPath, "-a", "-m", message, "--no-prompt"); err != nil {
 		return false, err
 	}
 	return true, nil

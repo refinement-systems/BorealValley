@@ -14,8 +14,12 @@ package common
 import (
 	"context"
 	"errors"
+	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -51,6 +55,58 @@ func TestClonePijulRepoUsesCloneCommand(t *testing.T) {
 	want := [][]string{{"clone", "/source/repo", "/dest/repo"}}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("command mismatch: got %v want %v", got, want)
+	}
+}
+
+func TestHasUsablePijulIdentityReturnsFalseWhenListReportsNoIdentities(t *testing.T) {
+	t.Parallel()
+
+	runner := func(_ context.Context, args ...string) ([]byte, error) {
+		want := []string{"identity", "list", "--no-prompt"}
+		if !reflect.DeepEqual(args, want) {
+			t.Fatalf("command mismatch: got %v want %v", args, want)
+		}
+		return []byte("No identities found. Use `pijul identity new` to create one.\n"), nil
+	}
+
+	ok, err := hasUsablePijulIdentity(context.Background(), runner)
+	if err != nil {
+		t.Fatalf("hasUsablePijulIdentity: %v", err)
+	}
+	if ok {
+		t.Fatal("expected no usable identity")
+	}
+}
+
+func TestHasUsablePijulIdentityReturnsTrueWhenIdentityExists(t *testing.T) {
+	t.Parallel()
+
+	runner := func(_ context.Context, args ...string) ([]byte, error) {
+		return []byte("borealvalley-agent\n"), nil
+	}
+
+	ok, err := hasUsablePijulIdentity(context.Background(), runner)
+	if err != nil {
+		t.Fatalf("hasUsablePijulIdentity: %v", err)
+	}
+	if !ok {
+		t.Fatal("expected usable identity")
+	}
+}
+
+func TestIsMissingPijulIdentityErrorMatchesKnownMessages(t *testing.T) {
+	t.Parallel()
+
+	for _, err := range []error{
+		errors.New("It doesn't look like you have any identities configured!"),
+		errors.New("Error: Cannot get path of un-named identity"),
+	} {
+		if !IsMissingPijulIdentityError(err) {
+			t.Fatalf("expected missing identity match for %q", err)
+		}
+	}
+	if IsMissingPijulIdentityError(errors.New("some other error")) {
+		t.Fatal("did not expect unrelated error to match")
 	}
 }
 
@@ -103,10 +159,63 @@ func TestCommitPijulChangesAddsNewUntrackedBeforeRecord(t *testing.T) {
 
 	want := [][]string{
 		{"status", "--repository", "/repo", "-u", "--no-prompt"},
-		{"add", "--repository", "/repo", "--no-prompt", "new.txt"},
+		{"add", "--repository", "/repo", "--no-prompt", "/repo/new.txt"},
 		{"record", "--repository", "/repo", "-a", "-m", "TCK-1: Fix bug", "--no-prompt"},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("command mismatch: got %v want %v", got, want)
+	}
+}
+
+func TestCommitPijulChangesAddsNewUntrackedFileWithRealPijul(t *testing.T) {
+	if _, err := exec.LookPath("pijul"); err != nil {
+		t.Skip("pijul not installed")
+	}
+
+	repoPath := t.TempDir()
+	if err := exec.Command("pijul", "init", repoPath).Run(); err != nil {
+		t.Fatalf("pijul init: %v", err)
+	}
+
+	baseline, err := SnapshotUntrackedPaths(context.Background(), repoPath)
+	if err != nil {
+		t.Fatalf("SnapshotUntrackedPaths: %v", err)
+	}
+
+	filePath := filepath.Join(repoPath, "hello.py")
+	if err := os.WriteFile(filePath, []byte("print(\"hello, world\")\n"), 0o600); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	recordCalled := false
+	runner := func(ctx context.Context, args ...string) ([]byte, error) {
+		switch args[0] {
+		case "status", "add":
+			return runPijulCommand(ctx, args...)
+		case "record":
+			recordCalled = true
+			return nil, nil
+		default:
+			return nil, fmt.Errorf("unexpected pijul command %q", args[0])
+		}
+	}
+
+	recorded, err := commitPijulChanges(context.Background(), runner, repoPath, baseline, "TCK-1: Add hello")
+	if err != nil {
+		t.Fatalf("commitPijulChanges: %v", err)
+	}
+	if !recorded {
+		t.Fatal("expected new file to be recorded")
+	}
+	if !recordCalled {
+		t.Fatal("expected record step to be reached")
+	}
+
+	statusOut, err := exec.Command("pijul", "status", "--repository", repoPath, "-u", "--no-prompt").CombinedOutput()
+	if err != nil {
+		t.Fatalf("pijul status: %v\n%s", err, statusOut)
+	}
+	if strings.Contains(string(statusOut), "U hello.py") {
+		t.Fatalf("expected hello.py to be tracked after add, got status:\n%s", statusOut)
 	}
 }

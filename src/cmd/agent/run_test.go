@@ -12,6 +12,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -812,5 +813,55 @@ func TestRunAgentOnceCommitFailurePostsErrorUpdateAndSkipsCompletion(t *testing.
 	}
 	if len(bv.updates) == 0 || !strings.Contains(joinCommentUpdateContents(bv.updates, bv.comments[0].Slug), "agent_error: record failed") {
 		t.Fatalf("expected agent_error update, got %v", bv.updates)
+	}
+}
+
+func TestRunAgentOnceMissingPijulIdentityPostsErrorUpdateAndSkipsCompletion(t *testing.T) {
+	bv := &fakeBVServer{
+		assigned: []common.AssignedTicket{{
+			TrackerSlug:    "tracker-1",
+			TicketSlug:     "TCK-IDENTITY",
+			RepositorySlug: "repo-1",
+			Summary:        "Fix bug",
+			Content:        "details",
+			CreatedAt:      time.Now().UTC().Add(-time.Hour),
+		}},
+		repos: map[string]common.Repository{
+			"repo-1": {Slug: "repo-1", Path: "/translated/root/repo/repo-1"},
+		},
+	}
+	bvServer := newHTTPServer(t, http.HandlerFunc(bv.handler))
+
+	statePath := writeAgentStateFile(t, agentState{
+		ServerURL:    bvServer.URL,
+		ClientID:     "client",
+		ClientSecret: "secret",
+		RedirectURI:  "http://127.0.0.1:8787/callback",
+		Mode:         agentModeTestCounter,
+		Token: oauthTokenState{
+			AccessToken: "access",
+			ExpiresAt:   time.Now().UTC().Add(30 * time.Minute),
+		},
+		Profile: profileState{UserID: 1, Username: "agent"},
+	})
+
+	origCheck := hasUsablePijulIdentity
+	defer func() { hasUsablePijulIdentity = origCheck }()
+	hasUsablePijulIdentity = func(context.Context) (bool, error) {
+		return false, nil
+	}
+
+	err := runAgentOnce(runConfig{StatePath: statePath, Workspace: t.TempDir(), MaxIter: 3})
+	if err == nil || !strings.Contains(err.Error(), "pijul identity new borealvalley-agent") {
+		t.Fatalf("expected missing identity failure, got %v", err)
+	}
+
+	bv.mu.Lock()
+	defer bv.mu.Unlock()
+	if len(bv.comments) != 1 {
+		t.Fatalf("expected acknowledgement only, got %d comments", len(bv.comments))
+	}
+	if len(bv.updates) == 0 || !strings.Contains(joinCommentUpdateContents(bv.updates, bv.comments[0].Slug), "agent_error: usable Pijul identity required") {
+		t.Fatalf("expected missing identity agent_error update, got %v", bv.updates)
 	}
 }
