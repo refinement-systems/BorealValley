@@ -13,6 +13,18 @@ just dev-docker-up ~/repo/bvroot
 
 That command reuses the existing root directory and Docker PostgreSQL volume, so it is the right command when you want the same users, tickets, OAuth apps, and prior agent runs to remain available in the UI.
 
+In that standard setup:
+
+- the host root path is `~/repo/bvroot`
+- that same directory is mounted into the web container as `/work`
+- PostgreSQL is reachable from the host at `127.0.0.1:5432`
+- PostgreSQL is reachable from the web container at `db:5432`
+
+`--root` must match the filesystem namespace of the process you are running:
+
+- if you run `go run ./src/cmd/ctl ...` or `./tools/dev/agent/create-oauth-app.sh ...` on the host, use the host path such as `~/repo/bvroot`
+- if you run `./tools/deploy/docker-dev-ctl.sh ...`, the command executes inside the running web container, so use `/work`
+
 In the standard local setup, the web origin is:
 
 ```text
@@ -38,13 +50,57 @@ Do not use `just dev-docker-reset ~/repo/bvroot` when you intend to keep the exi
 
 ## 3. Server-Side Setup
 
+For host-side commands in the examples below, define the standard local root once:
+
+```bash
+export ROOT="$HOME/repo/bvroot"
+```
+
+### 3.1 Recommended when the local Docker dev stack is already running
+
+If you already started the standard local dev stack with `just dev-docker-up ~/repo/bvroot`, the simplest setup path is to run `BorealValley-ctl` inside the running web container.
+
+In that case:
+
+- use `--root /work`
+- do not pass `--pg-dsn`
+- do not export `BV_PG_DSN` on the host just for these `ctl` commands
+- the container already has `BV_PG_DSN=postgres://app:app_pw@db:5432/app_db?sslmode=disable`
+
 Create the agent user (or reuse an existing one):
+
+```bash
+./tools/deploy/docker-dev-ctl.sh adduser --root /work agentbot 'very-strong-password'
+```
+
+Create an OAuth app for the agent with required scopes:
+
+```bash
+./tools/deploy/docker-dev-ctl.sh oauth-app create \
+  --root /work \
+  --name "agentbot" \
+  --description "BorealValley agent app" \
+  --redirect-uri "http://127.0.0.1:8787/callback" \
+  --scope profile:read \
+  --scope ticket:read \
+  --scope ticket:write
+```
+
+The command prints `client_id` and `client_secret`. Save both values securely.
+
+### 3.2 Host-side variant
+
+If you prefer to run `ctl` or helper scripts from the host shell while the Docker PostgreSQL container stays running, export the host-reachable DSN first:
+
+```bash
+export BV_PG_DSN='postgres://app:app_pw@127.0.0.1:5432/app_db?sslmode=disable'
+```
+
+Then use the host path for `--root`:
 
 ```bash
 go run ./src/cmd/ctl adduser --root "$ROOT" --pg-dsn "$BV_PG_DSN" agentbot 'very-strong-password'
 ```
-
-Create an OAuth app for the agent with required scopes:
 
 ```bash
 ./tools/dev/agent/create-oauth-app.sh \
@@ -54,7 +110,7 @@ Create an OAuth app for the agent with required scopes:
   --redirect-uri "http://127.0.0.1:8787/callback"
 ```
 
-The script prints `client_id` and `client_secret`. Save both values securely.
+Use the host DSN only for host-side commands. If you switch back to `./tools/deploy/docker-dev-ctl.sh`, switch `--root` back to `/work` and omit `--pg-dsn` again.
 
 ## 4. Create a Fresh Test Repository and Ticket
 
@@ -65,7 +121,7 @@ On a fresh setup, the agent can only process tickets that are:
 
 ### 4.1 Create and discover a local repository
 
-Create a test repo under `$ROOT/repo`:
+Create a test repo under the host root path. In the standard Docker dev setup, that directory is mounted into the container as `/work/repo`:
 
 ```bash
 mkdir -p "$ROOT/repo/demo"

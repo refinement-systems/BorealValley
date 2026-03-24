@@ -42,7 +42,18 @@ Agent-side OAuth state is separate from the server state. If you initialized the
 ~/.local/state/BorealValley/agent/state.json
 ```
 
-## 3. Stop, Inspect, and Reset
+## 3. Run `ctl` Against the Existing Dev Stack
+
+When the standard stack is already running and you need `BorealValley-ctl` for tasks such as `adduser`, `oauth-app create`, or `resync`, there are two valid ways to address the same environment:
+
+- host shell commands use `--root ~/repo/bvroot` and should export `BV_PG_DSN='postgres://app:app_pw@127.0.0.1:5432/app_db?sslmode=disable'`
+- `./tools/deploy/docker-dev-ctl.sh ...` runs inside the web container, so it should use `--root /work` and it inherits `BV_PG_DSN=postgres://app:app_pw@db:5432/app_db?sslmode=disable`
+
+The rule is simple: `--root` must point at the path as seen by the process you are running.
+
+For the full agent setup flow, including OAuth app creation examples for an already-running Docker dev stack, see `agent-running-workflow.md`.
+
+## 4. Stop, Inspect, and Reset
 
 Stop the stack without deleting state:
 
@@ -72,7 +83,7 @@ just dev-docker-reset ~/repo/bvroot
 
 `just dev-docker-reset ~/repo/bvroot` is destructive for database state. It preserves the root directory on disk, but it removes the Docker PostgreSQL volume and starts with an empty database. Do not use it when you want to keep an existing test run.
 
-## 4. Run the Web Server Outside Docker Against the Same Data
+## 5. Run the Web Server Outside Docker Against the Same Data
 
 If you want the same BorealValley root and PostgreSQL state but want the web process to run directly on the host instead of in Docker, use the same root path and DSN:
 
@@ -84,6 +95,6 @@ go run ./src/cmd/web serve --root ~/repo/bvroot --env dev
 
 That command uses the current branch's UI and server code while pointing at the same persisted development data.
 
-## 5. If `~/repo/bvroot` Does Not Exist
+## 6. If `~/repo/bvroot` Does Not Exist
 
 This guide assumes the local Docker environment was already initialized in the standard place. If `~/repo/bvroot/config.json` is missing, you are not resuming the shared local setup and should create a fresh root instead of expecting old state to appear.
