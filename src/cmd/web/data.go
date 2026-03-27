@@ -84,8 +84,7 @@ func (app *application) dataList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = dataListTmpl.Execute(w, dataListData{Repositories: repositories})
+	renderTemplate(w, dataListTmpl, dataListData{Repositories: repositories})
 }
 
 func (app *application) dataRepo(w http.ResponseWriter, r *http.Request) {
@@ -112,6 +111,21 @@ func (app *application) dataRepoTicketTracker(w http.ResponseWriter, r *http.Req
 		// handled below
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	userID, ok := sessionUserIDFromContext(app, r)
+	if !ok {
+		http.Error(w, "authentication error", http.StatusUnauthorized)
+		return
+	}
+	canAccess, err := app.store.CanAccessRepository(r.Context(), repoSlug, userID)
+	if err != nil {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	if !canAccess {
+		http.Error(w, "permission error", http.StatusForbidden)
 		return
 	}
 
@@ -161,8 +175,7 @@ func (app *application) dataTicketTrackerList(w http.ResponseWriter, r *http.Req
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_ = dataTicketTrackerListTmpl.Execute(w, dataTicketTrackerListData{
+		renderTemplate(w, dataTicketTrackerListTmpl, dataTicketTrackerListData{
 			Trackers:                 trackers,
 			CreatedTicketTrackerSlug: strings.TrimSpace(r.URL.Query().Get("created")),
 		})
@@ -285,8 +298,7 @@ func (app *application) dataTicketList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = dataTicketListTmpl.Execute(w, dataTicketListData{Tickets: tickets})
+	renderTemplate(w, dataTicketListTmpl, dataTicketListData{Tickets: tickets})
 }
 
 func (app *application) dataNotificationList(w http.ResponseWriter, r *http.Request) {
@@ -322,8 +334,7 @@ func (app *application) dataNotificationList(w http.ResponseWriter, r *http.Requ
 		nextURL = "/web/notification?" + q.Encode()
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = dataNotificationListTmpl.Execute(w, dataNotificationListData{
+	renderTemplate(w, dataNotificationListTmpl, dataNotificationListData{
 		Notifications: notifications,
 		NextURL:       nextURL,
 	})
@@ -457,8 +468,7 @@ func (app *application) renderRepoPageBySlug(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = dataRepoTmpl.Execute(w, dataRepoData{
+	renderTemplate(w, dataRepoTmpl, dataRepoData{
 		Repository:      repo,
 		AssignedTracker: assigned,
 		Trackers:        trackers,
@@ -474,8 +484,7 @@ func (app *application) renderTicketTrackerListPage(w http.ResponseWriter, r *ht
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = dataTicketTrackerListTmpl.Execute(w, dataTicketTrackerListData{
+	renderTemplate(w, dataTicketTrackerListTmpl, dataTicketTrackerListData{
 		Trackers: trackers,
 		Err:      errMsg,
 	})
@@ -518,8 +527,7 @@ func (app *application) renderTicketTrackerDetailPageWithSelection(w http.Respon
 		selectedRepoSlug = repositories[0].Slug
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = dataTicketTrackerDetailTmpl.Execute(w, dataTicketTrackerDetailData{
+	renderTemplate(w, dataTicketTrackerDetailTmpl, dataTicketTrackerDetailData{
 		Tracker:             tracker,
 		Tickets:             tickets,
 		TrackedRepositories: repositories,

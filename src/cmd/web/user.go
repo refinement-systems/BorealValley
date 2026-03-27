@@ -90,8 +90,7 @@ func (app *application) userCtl(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = userCtlTmpl.Execute(w, userCtlTemplateData{
+	renderTemplate(w, userCtlTmpl, userCtlTemplateData{
 		Username:  record.Username,
 		ActorJSON: string(pretty),
 	})

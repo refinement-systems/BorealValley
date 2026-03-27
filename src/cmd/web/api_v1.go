@@ -145,9 +145,23 @@ func (app *application) apiV1RepoTicketTrackerAssign(w http.ResponseWriter, r *h
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	principal, ok := oauthPrincipalFromContext(r.Context())
+	if !ok {
+		writeBearerUnauthorized(w)
+		return
+	}
 	repoSlug := strings.TrimSpace(r.PathValue("repo"))
 	if repoSlug == "" {
 		http.NotFound(w, r)
+		return
+	}
+	canAccess, err := app.store.CanAccessRepository(r.Context(), repoSlug, principal.UserID)
+	if err != nil {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	if !canAccess {
+		http.Error(w, "permission error", http.StatusForbidden)
 		return
 	}
 	var body struct {
@@ -163,7 +177,6 @@ func (app *application) apiV1RepoTicketTrackerAssign(w http.ResponseWriter, r *h
 	if action == "" {
 		action = "assign"
 	}
-	var err error
 	switch action {
 	case "assign":
 		err = app.store.AssignTicketTrackerToRepository(r.Context(), repoSlug, trackerSlug)

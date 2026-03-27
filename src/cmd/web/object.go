@@ -130,8 +130,7 @@ func (app *application) objectUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = userCtlTmpl.Execute(w, userCtlTemplateData{
+	renderTemplate(w, userCtlTmpl, userCtlTemplateData{
 		Username:  record.Username,
 		ActorJSON: string(pretty),
 	})
@@ -171,8 +170,7 @@ func (app *application) objectRepo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = objectRepoTmpl.Execute(w, objectRepoTemplateData{
+	renderTemplate(w, objectRepoTmpl, objectRepoTemplateData{
 		Slug:                 repoSlug,
 		ActorID:              record.PrimaryKey,
 		Name:                 stringField(body, "name"),
@@ -216,8 +214,7 @@ func (app *application) objectTicketTracker(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = objectTicketTrackerTmpl.Execute(w, objectTicketTrackerTemplateData{
+	renderTemplate(w, objectTicketTrackerTmpl, objectTicketTrackerTemplateData{
 		Slug:       trackerSlug,
 		ActorID:    record.PrimaryKey,
 		Name:       stringField(body, "name"),
@@ -293,8 +290,7 @@ func (app *application) objectTicketComment(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = objectTicketCommentTmpl.Execute(w, objectTicketCommentTemplateData{
+	renderTemplate(w, objectTicketCommentTmpl, objectTicketCommentTemplateData{
 		Slug:           record.CommentSlug,
 		ActorID:        record.PrimaryKey,
 		InReplyTo:      stringField(body, "inReplyTo"),
@@ -408,8 +404,7 @@ func (app *application) renderTicketObjectPage(w http.ResponseWriter, r *http.Re
 		})
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = objectTicketTmpl.Execute(w, objectTicketTemplateData{
+	renderTemplate(w, objectTicketTmpl, objectTicketTemplateData{
 		TicketSlug:        record.TicketSlug,
 		TrackerSlug:       record.TrackerSlug,
 		RepositorySlug:    record.RepositorySlug,

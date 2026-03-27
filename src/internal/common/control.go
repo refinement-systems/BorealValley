@@ -313,6 +313,40 @@ func (s *Store) CreateUserWithAdmin(ctx context.Context, username, password stri
 	return tx.Commit()
 }
 
+func (s *Store) UserExists(ctx context.Context, userID int64) (bool, error) {
+	if userID <= 0 {
+		return false, nil
+	}
+	var exists bool
+	err := s.db.QueryRowContext(ctx,
+		`SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)`,
+		userID,
+	).Scan(&exists)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
+func (s *Store) DeleteUser(ctx context.Context, username string) error {
+	username = strings.TrimSpace(username)
+	if username == "" {
+		return fmt.Errorf("%w: username cannot be empty", ErrValidation)
+	}
+	result, err := s.db.ExecContext(ctx, `DELETE FROM users WHERE username = $1`, username)
+	if err != nil {
+		return err
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return fmt.Errorf("%w: user not found", ErrValidation)
+	}
+	return nil
+}
+
 func (s *Store) IsUserAdmin(ctx context.Context, userID int64) (bool, error) {
 	if userID <= 0 {
 		return false, nil
@@ -1559,6 +1593,9 @@ func (s *Store) listObjectVersionsByPrimaryKey(ctx context.Context, objectPrimar
 func (s *Store) ListObjectTypeCounts(ctx context.Context) ([]ObjectTypeCount, error) {
 	counts := make([]ObjectTypeCount, 0, len(objectTables))
 	for _, table := range objectTables {
+		if !allowedTable(table) {
+			return nil, fmt.Errorf("disallowed table name: %q", table)
+		}
 		var count int64
 		query := fmt.Sprintf("SELECT COUNT(*) FROM %s", table)
 		if err := s.db.QueryRowContext(ctx, query).Scan(&count); err != nil {

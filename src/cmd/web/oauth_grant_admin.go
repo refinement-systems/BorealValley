@@ -54,8 +54,7 @@ func (app *application) oauthGrantAdminList(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	rows := oauthGrantRowsForDisplay(grants)
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = oauthGrantAdminTmpl.Execute(w, oauthGrantAdminData{Grants: rows})
+	renderTemplate(w, oauthGrantAdminTmpl, oauthGrantAdminData{Grants: rows})
 }
 
 func (app *application) oauthGrantAdminRevoke(w http.ResponseWriter, r *http.Request) {

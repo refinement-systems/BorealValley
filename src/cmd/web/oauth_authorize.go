@@ -79,8 +79,7 @@ func (app *application) oauthAuthorizeGet(w http.ResponseWriter, r *http.Request
 		preApproved = preApprovedScopes(requestedScopes, grant.GrantedScopes)
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = oauthAuthorizeTmpl.Execute(w, oauthAuthorizePageData{
+	renderTemplate(w, oauthAuthorizeTmpl, oauthAuthorizePageData{
 		RawQuery:          r.URL.RawQuery,
 		ClientName:        clientName,
 		ClientDescription: clientDescription,

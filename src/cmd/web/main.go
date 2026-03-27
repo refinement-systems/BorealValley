@@ -44,11 +44,12 @@ type CSRFConfig struct {
 }
 
 type application struct {
-	store          *common.Store
-	oauth          *commonoauth.Runtime
-	sessionManager *scs.SessionManager
-	repoRoot       string
-	repoPathMapper *repoPathMapper
+	store            *common.Store
+	oauth            *commonoauth.Runtime
+	sessionManager   *scs.SessionManager
+	repoRoot         string
+	repoPathMapper   *repoPathMapper
+	loginRateLimiter *loginRateLimiter
 }
 
 const (
@@ -126,13 +127,14 @@ func newHandler(rootDir string, pgDSN string, isDev bool) (http.Handler, *common
 		return nil, nil, err
 	}
 
-	app := &application{store: store, oauth: oauthRuntime, sessionManager: sm, repoRoot: repoRoot, repoPathMapper: repoPathMapper}
+	app := &application{store: store, oauth: oauthRuntime, sessionManager: sm, repoRoot: repoRoot, repoPathMapper: repoPathMapper, loginRateLimiter: newLoginRateLimiter(10, 15*time.Minute)}
 	mux := http.NewServeMux()
 	registerRoutes(mux, app)
 
 	var handler http.Handler = mux
 	handler = OriginRefererCSRF(cfg, handler)
 	handler = sm.LoadAndSave(handler)
+	handler = MaxBytesBody(1<<20, handler) // 1 MB request body limit
 	return handler, store, nil
 }
 
@@ -326,8 +328,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_ = homeTmpl.Execute(w, struct {
+	renderTemplate(w, homeTmpl, struct {
 		Repositories []common.Repository
 		Counts       []common.ObjectTypeCount
 	}{Repositories: repositories, Counts: counts})

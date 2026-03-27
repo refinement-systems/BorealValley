@@ -192,6 +192,18 @@ func requiredStringField(m map[string]any, field string) (string, error) {
 	return s, nil
 }
 
+var allowedTableSet = func() map[string]bool {
+	m := make(map[string]bool, len(objectTables))
+	for _, t := range objectTables {
+		m[t] = true
+	}
+	return m
+}()
+
+func allowedTable(name string) bool {
+	return allowedTableSet[name]
+}
+
 func upsertObjectTx(ctx context.Context, tx *sql.Tx, id, objectType string, rawObject map[string]any) (string, error) {
 	rawJSON, err := json.Marshal(rawObject)
 	if err != nil {
@@ -214,6 +226,9 @@ func upsertObjectTx(ctx context.Context, tx *sql.Tx, id, objectType string, rawO
 			return "", err
 		}
 		return "ap_object_unknown", nil
+	}
+	if !allowedTable(table) {
+		return "", fmt.Errorf("disallowed table name: %q", table)
 	}
 
 	query := fmt.Sprintf(`INSERT INTO %s (primary_key, body, created_at, updated_at)

@@ -21,8 +21,7 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		returnTo := sanitizeReturnTo(r.URL.Query().Get("return_to"))
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_ = loginTmpl.Execute(w, struct {
+		renderTemplate(w, loginTmpl, struct {
 			Err      string
 			ReturnTo string
 		}{Err: "", ReturnTo: returnTo})
@@ -36,18 +35,27 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 		password := r.PostForm.Get("password")
 		returnTo := sanitizeReturnTo(r.PostForm.Get("return_to"))
 
+		if app.loginRateLimiter != nil && !app.loginRateLimiter.Allow(username) {
+			w.Header().Set("Retry-After", "60")
+			http.Error(w, "too many login attempts, try again later", http.StatusTooManyRequests)
+			return
+		}
+
 		id, ok, err := app.store.VerifyUser(r.Context(), username, password)
 		if err != nil {
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 		if !ok {
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			_ = loginTmpl.Execute(w, struct {
+			renderTemplate(w, loginTmpl, struct {
 				Err      string
 				ReturnTo string
 			}{Err: "Invalid credentials", ReturnTo: returnTo})
 			return
+		}
+
+		if app.loginRateLimiter != nil {
+			app.loginRateLimiter.Reset(username)
 		}
 
 		if err := app.sessionManager.RenewToken(r.Context()); err != nil {
@@ -73,7 +81,7 @@ func sanitizeReturnTo(raw string) string {
 	if raw[0] != '/' {
 		return ""
 	}
-	if len(raw) >= 2 && raw[1] == '/' {
+	if len(raw) >= 2 && (raw[1] == '/' || raw[1] == '\\' || raw[1] < 0x20) {
 		return ""
 	}
 	return raw
@@ -91,10 +99,18 @@ func (app *application) logout(w http.ResponseWriter, r *http.Request) {
 }
 
 // requireAuth is a middleware that redirects unauthenticated requests to /web/login.
-// A request is considered authenticated when "user_id" is present in the session.
+// A request is considered authenticated when "user_id" is present in the session
+// and the referenced user still exists in the database.
 func (app *application) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !app.sessionManager.Exists(r.Context(), "user_id") {
+		userID, ok := sessionUserIDFromContext(app, r)
+		if !ok {
+			http.Redirect(w, r, "/web/login", http.StatusSeeOther)
+			return
+		}
+		exists, err := app.store.UserExists(r.Context(), userID)
+		if err != nil || !exists {
+			_ = app.sessionManager.Destroy(r.Context())
 			http.Redirect(w, r, "/web/login", http.StatusSeeOther)
 			return
 		}
