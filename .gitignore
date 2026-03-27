@@ -2,6 +2,8 @@
 docs/.DS_Store
 bin/*
 !bin/.keep
+.temp/*
+!.temp/.keep
 .borealvalley-repo-id
 cert/*
 !cert/.gitkeep
