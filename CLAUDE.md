@@ -50,3 +50,9 @@ Paths follow XDG base directory spec (see `doc/external/XDG-base-directory.md`).
 ## Commit style
 
 Short, lowercase, outcome-focused: e.g. `login works`, `better path handling`. One logical change per commit.
+
+## Testing
+
+Use ~/repo/bvroot for --root of the main server.
+Point agents to use the .temp/work directory for their scratchpads. Create if it neccessary.
+
