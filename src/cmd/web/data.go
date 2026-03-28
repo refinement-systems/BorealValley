@@ -15,7 +15,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -66,12 +65,12 @@ type dataNotificationListData struct {
 	NextURL       string
 }
 
-var dataListTmpl = template.Must(template.New("data-list").Parse(assets.HtmlDataList))
-var dataRepoTmpl = template.Must(template.New("data-project").Parse(assets.HtmlDataProject))
-var dataTicketTrackerListTmpl = template.Must(template.New("ticket-tracker-list").Parse(assets.HtmlTicketTrackerList))
-var dataTicketTrackerDetailTmpl = template.Must(template.New("ticket-tracker-detail").Parse(assets.HtmlTicketTrackerDetail))
-var dataTicketListTmpl = template.Must(template.New("ticket-list").Parse(assets.HtmlTicketList))
-var dataNotificationListTmpl = template.Must(template.New("notification-list").Parse(assets.HtmlNotificationList))
+var dataListTmpl = parseWithLayout(assets.HtmlDataList)
+var dataRepoTmpl = parseWithLayout(assets.HtmlDataProject)
+var dataTicketTrackerListTmpl = parseWithLayout(assets.HtmlTicketTrackerList)
+var dataTicketTrackerDetailTmpl = parseWithLayout(assets.HtmlTicketTrackerDetail)
+var dataTicketListTmpl = parseWithLayout(assets.HtmlTicketList)
+var dataNotificationListTmpl = parseWithLayout(assets.HtmlNotificationList)
 
 func (app *application) dataList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {

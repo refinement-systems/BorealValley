@@ -1,14 +1,5 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="/static/css/catppuccin.css" />
-    <link rel="stylesheet" href="/static/css/app.css" />
-    <title>User Actor</title>
-  </head>
-  <body class="page page--user-actor">
-    <main class="page-shell">
+{{define "title"}}User Actor{{end}}
+{{define "content"}}
       <section class="page-card">
         <header class="page-header">
           <h1 class="page-title">User Actor</h1>
@@ -24,6 +15,4 @@
           <pre class="json-block">{{.ActorJSON}}</pre>
         </details>
       </section>
-    </main>
-  </body>
-</html>
+{{end}}

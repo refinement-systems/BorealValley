@@ -15,6 +15,9 @@ import (
 	"embed"
 )
 
+//go:embed html/layout.html
+var HtmlLayout string
+
 //go:embed html/home.html
 var HtmlHome string
 

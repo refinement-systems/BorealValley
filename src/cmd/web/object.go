@@ -14,7 +14,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"html/template"
 	"net/http"
 	"net/url"
 	"strings"
@@ -23,10 +22,10 @@ import (
 	"github.com/refinement-systems/BorealValley/src/internal/common"
 )
 
-var objectRepoTmpl = template.Must(template.New("object-repo").Parse(assets.HtmlObjectRepo))
-var objectTicketTrackerTmpl = template.Must(template.New("object-ticket-tracker").Parse(assets.HtmlObjectTicketTracker))
-var objectTicketTmpl = template.Must(template.New("object-ticket").Parse(assets.HtmlObjectTicket))
-var objectTicketCommentTmpl = template.Must(template.New("object-ticket-comment").Parse(assets.HtmlObjectTicketComment))
+var objectRepoTmpl = parseWithLayout(assets.HtmlObjectRepo)
+var objectTicketTrackerTmpl = parseWithLayout(assets.HtmlObjectTicketTracker)
+var objectTicketTmpl = parseWithLayout(assets.HtmlObjectTicket)
+var objectTicketCommentTmpl = parseWithLayout(assets.HtmlObjectTicketComment)
 
 type objectRepoTemplateData struct {
 	Slug                 string

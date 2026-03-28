@@ -14,14 +14,13 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"html/template"
 	"net/http"
 	"strings"
 
 	"github.com/refinement-systems/BorealValley/src/internal/assets"
 )
 
-var userCtlTmpl = template.Must(template.New("ctl-user").Parse(assets.HtmlCtlUser))
+var userCtlTmpl = parseWithLayout(assets.HtmlCtlUser)
 
 const apMediaType = `application/ld+json; profile="https://www.w3.org/ns/activitystreams"`
 

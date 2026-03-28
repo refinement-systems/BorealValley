@@ -14,13 +14,14 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"html/template"
 	"net/http"
 	"strings"
 
 	"github.com/refinement-systems/BorealValley/src/internal/assets"
 	"github.com/refinement-systems/BorealValley/src/internal/common"
 )
+
+var oauthGrantAdminTmpl = parseWithLayout(assets.HtmlOAuthGrantList)
 
 type oauthGrantAdminRow struct {
 	GrantID       string
@@ -36,7 +37,6 @@ type oauthGrantAdminData struct {
 	Err    string
 }
 
-var oauthGrantAdminTmpl = template.Must(template.New("oauth-grant-list").Parse(assets.HtmlOAuthGrantList))
 
 func (app *application) oauthGrantAdminList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {

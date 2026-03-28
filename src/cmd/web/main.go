@@ -34,7 +34,7 @@ import (
 	commonoauth "github.com/refinement-systems/BorealValley/src/internal/common/oauth"
 )
 
-var homeTmpl = template.Must(template.New("home").Parse(assets.HtmlHome))
+var homeTmpl = parseWithLayout(assets.HtmlHome)
 var loginTmpl = template.Must(template.New("login").Parse(assets.HtmlLogin))
 
 type CSRFConfig struct {

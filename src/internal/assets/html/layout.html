@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/static/css/catppuccin.css" />
+    <link rel="stylesheet" href="/static/css/app.css" />
+    <title>{{template "title" .}}</title>
+  </head>
+  <body class="page">
+    <header class="site-header">
+      <nav class="site-nav">
+        <a href="/web/admin" class="site-nav-brand">BorealValley</a>
+        <ul class="site-nav-links">
+          <li><a href="/web/repo">Repositories</a></li>
+          <li><a href="/web/ticket-tracker">Trackers</a></li>
+          <li><a href="/web/ticket">Tickets</a></li>
+          <li><a href="/web/notification">Notifications</a></li>
+          <li><a href="/web/oauth/grant">OAuth Grants</a></li>
+        </ul>
+        <form class="site-nav-logout" method="POST" action="/web/logout">
+          <button type="submit">Logout</button>
+        </form>
+      </nav>
+    </header>
+    <main class="page-shell">
+      {{template "content" .}}
+    </main>
+  </body>
+</html>
