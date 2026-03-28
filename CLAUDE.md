@@ -44,7 +44,7 @@ No database migrations are necessary, implement all modifications to the databas
 
 - **Session management**: `github.com/alexedwards/scs/v2` with a 24h lifetime / 30m idle timeout. Dev mode uses a plain `session` cookie; prod uses `__Host-session` with `Secure: true`.
 - **CSRF protection**: `OriginRefererCSRF` middleware (`cross-site-request-forgery.go`) — checks `Origin`/`Referer` headers against the effective scheme+host for all unsafe methods (POST/PUT/PATCH/DELETE). Proxy headers (`Forwarded`, `X-Forwarded-Proto`, `X-Forwarded-Host`) are trusted only from the configured CIDRs (default: `127.0.0.1/32`, `::1/128`).
-- **Middleware chain** (outermost first): `OriginRefererCSRF` → `sm.LoadAndSave` → mux handlers.
+- **Middleware chain** (outermost first): `MaxBytesBody` → `OriginRefererCSRF` → `sm.LoadAndSave` → mux handlers.
 - **Templates**: HTML templates are embedded via `//go:embed` in `src/internal/assets/assets.go` and parsed at startup with `template.Must`.
 
 ### Directory conventions

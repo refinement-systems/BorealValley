@@ -16,7 +16,17 @@ Runtime behavior:
 - initializes embedded OAuth server (Fosite)
 - listens on `:<port>` from config
 
+TLS behavior:
+
+- when `--cert`/`--key` are provided (or auto-detected in dev mode), the server enforces TLS 1.3 as the minimum version
+- a single TCP listener detects the protocol by peeking at the first byte: a TLS ClientHello (`0x16`) is handled as HTTPS; plain HTTP receives a `301` redirect to the HTTPS equivalent URL — no separate HTTP port is opened
+- in dev mode, if `--cert`/`--key` are not given, the server looks for `cert/bv.local+3.pem` and `cert/bv.local+3-key.pem` relative to the working directory and enables TLS automatically if found
+
 ## 2. Session and CSRF Model
+
+Middleware chain (outermost first): `MaxBytesBody` → `OriginRefererCSRF` → `sm.LoadAndSave` → mux handlers.
+
+`MaxBytesBody` wraps request bodies for unsafe methods (POST, PUT, PATCH, DELETE) with `http.MaxBytesReader` at a 1 MB (`1<<20` bytes) limit. Requests exceeding this limit receive `413 Payload Too Large`.
 
 Session backend: `github.com/alexedwards/scs/v2`.
 
@@ -28,6 +38,7 @@ Session backend: `github.com/alexedwards/scs/v2`.
 - cookie name:
   - `session` in dev
   - `__Host-session` in prod
+- on successful login, `sessionManager.RenewToken` is called before storing `user_id`, preventing session fixation attacks where an attacker pre-seeds a session cookie
 
 CSRF middleware (`OriginRefererCSRF`) applies to unsafe methods for cookie/session routes.
 OAuth token/revocation endpoints and `/api/v1/*` bearer endpoints are exempt.
@@ -43,6 +54,8 @@ OAuth token/revocation endpoints and `/api/v1/*` bearer endpoints are exempt.
   - redirects to `/web/admin`
 - `GET|POST /web/login`
   - supports optional `return_to` local path and redirects there after successful login
+  - `return_to` is sanitized: must begin with `/`; values starting with `//` (protocol-relative) or `\`, or whose second character is a control byte (`< 0x20`), are rejected and treated as empty (redirect falls back to `/web/admin`)
+  - login attempts are rate-limited per username: 10 attempts per 15-minute sliding window; when exceeded the server returns `429 Too Many Requests` with `Retry-After: 60`; the counter resets on successful login (also mitigates Argon2id resource exhaustion)
 - `POST /web/logout`
 
 ### 3.2 OAuth Authorization Server routes
@@ -66,7 +79,9 @@ Behavior summary:
 
 ### 3.3 Session-auth web routes
 
-All routes below require session `user_id`:
+All routes below require session `user_id`. The `requireAuth` middleware also verifies the user still exists in the database on every request; if the user has been deleted, the session is destroyed and the client is redirected to `/web/login`.
+
+Repository mutation endpoints (tracker assign/unassign, ticket create, comment create, assignee mutation) additionally verify `CanAccessRepository()` for the acting user and return `403 Forbidden` if denied.
 
 - `GET /users/{name}` (canonical local Person object URL)
 - `GET /repo/{repo}` (canonical local Repository object URL)
@@ -94,7 +109,7 @@ All routes below require session `user_id`:
 
 ### 3.4 Bearer API routes (`/api/v1`)
 
-All routes below require `Authorization: Bearer` with required scopes:
+All routes below require `Authorization: Bearer` with required scopes. Mutation endpoints that act on a repository's resources additionally verify `CanAccessRepository()` for the authenticated principal and return `403 Forbidden` if denied.
 
 - `GET /api/v1/profile` (`profile:read`)
 - `GET /api/v1/repo` (`repo:read`)
@@ -165,6 +180,7 @@ dereference only.
 ## 6. Ticket and Comment Visibility
 
 - Ticket and comment visibility is scoped by repository membership.
+- Repository membership is enforced on write operations (ticket create, comment create, tracker assign/unassign, assignee mutation) in addition to read/visibility checks.
 - Admin users (`users.is_admin = true`) bypass repository membership checks.
 - Ticket list endpoints (`/web/ticket`, `/web/ticket-tracker/{tracker}`, and API ticket list routes) are filtered per authenticated user.
 - Canonical ticket/comment object dereference requires access to the ticket's repository.
