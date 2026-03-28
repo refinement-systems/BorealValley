@@ -854,7 +854,7 @@ func (s *Store) UnassignTicketTrackerFromRepository(ctx context.Context, repoSlu
 			`UPDATE ff_repository
 			    SET ticket_tracker_internal_id = NULL,
 			        updated_at = now()
-			  WHERE internal_id = $2::uuid`,
+			  WHERE internal_id = $1::uuid`,
 			repo.InternalID,
 		); err != nil {
 			return err

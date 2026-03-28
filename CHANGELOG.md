@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 ### Fixed
+- SQL placeholder mismatch in UnassignTicketTrackerFromRepository (#48)
 - AgentRun.cfg missing SPECIFICATION clause — TLC cannot run (#45)
 - Fix undefined variable 'responded' in AgentRun.tla line 94 (#34)
 - Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
