@@ -91,7 +91,7 @@ FailRun ==
 CrashAndRestart ==
   /\ current \in Tickets
   /\ current' = Nil
-  /\ UNCHANGED <<assigned, responded, started, done, failed>>
+  /\ UNCHANGED <<assigned, acked, started, done, failed>>
 
 Next ==
   \/ IdleNoWork
