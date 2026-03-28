@@ -10,13 +10,56 @@ type loginRateLimiter struct {
 	attempts map[string][]time.Time
 	max      int
 	window   time.Duration
+	done     chan struct{}
 }
 
 func newLoginRateLimiter(max int, window time.Duration) *loginRateLimiter {
-	return &loginRateLimiter{
+	rl := &loginRateLimiter{
 		attempts: make(map[string][]time.Time),
 		max:      max,
 		window:   window,
+		done:     make(chan struct{}),
+	}
+	go rl.evict()
+	return rl
+}
+
+// Stop shuts down the background eviction goroutine.
+func (rl *loginRateLimiter) Stop() {
+	close(rl.done)
+}
+
+// evict runs a periodic sweep to remove fully-expired keys so the map cannot
+// grow without bound when many distinct keys are used.
+func (rl *loginRateLimiter) evict() {
+	ticker := time.NewTicker(rl.window)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			rl.sweep()
+		case <-rl.done:
+			return
+		}
+	}
+}
+
+func (rl *loginRateLimiter) sweep() {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+	cutoff := time.Now().Add(-rl.window)
+	for key, entries := range rl.attempts {
+		valid := entries[:0]
+		for _, t := range entries {
+			if t.After(cutoff) {
+				valid = append(valid, t)
+			}
+		}
+		if len(valid) == 0 {
+			delete(rl.attempts, key)
+		} else {
+			rl.attempts[key] = valid
+		}
 	}
 }
 

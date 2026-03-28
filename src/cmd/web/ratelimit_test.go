@@ -8,6 +8,7 @@ import (
 func TestLoginRateLimiterAllowsInitialAttempts(t *testing.T) {
 	t.Parallel()
 	rl := newLoginRateLimiter(5, time.Minute)
+	defer rl.Stop()
 	for i := 0; i < 5; i++ {
 		if !rl.Allow("alice") {
 			t.Fatalf("attempt %d should be allowed", i+1)
@@ -18,6 +19,7 @@ func TestLoginRateLimiterAllowsInitialAttempts(t *testing.T) {
 func TestLoginRateLimiterBlocksAfterLimit(t *testing.T) {
 	t.Parallel()
 	rl := newLoginRateLimiter(3, time.Minute)
+	defer rl.Stop()
 	for i := 0; i < 3; i++ {
 		rl.Allow("bob")
 	}
@@ -29,6 +31,7 @@ func TestLoginRateLimiterBlocksAfterLimit(t *testing.T) {
 func TestLoginRateLimiterIsolatesUsers(t *testing.T) {
 	t.Parallel()
 	rl := newLoginRateLimiter(2, time.Minute)
+	defer rl.Stop()
 	rl.Allow("carol")
 	rl.Allow("carol")
 	// carol is at limit, but dave should still be allowed.
@@ -40,6 +43,7 @@ func TestLoginRateLimiterIsolatesUsers(t *testing.T) {
 func TestLoginRateLimiterResetsAfterWindow(t *testing.T) {
 	t.Parallel()
 	rl := newLoginRateLimiter(2, 50*time.Millisecond)
+	defer rl.Stop()
 	rl.Allow("eve")
 	rl.Allow("eve")
 	if rl.Allow("eve") {
@@ -54,6 +58,7 @@ func TestLoginRateLimiterResetsAfterWindow(t *testing.T) {
 func TestLoginRateLimiterResetOnSuccess(t *testing.T) {
 	t.Parallel()
 	rl := newLoginRateLimiter(3, time.Minute)
+	defer rl.Stop()
 	rl.Allow("frank")
 	rl.Allow("frank")
 	rl.Reset("frank")
