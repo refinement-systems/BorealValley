@@ -29,11 +29,16 @@ Instructions for Linux and Windows will be added when needed. The general approa
 
 ## Running TLC from the Command Line
 
-This requires `doc/tla/AgentRun.cfg` to exist alongside the `.tla` file. The `.cfg` file defines model constants and which properties to check.
+This requires `doc/tla/AgentRun.cfg` to exist alongside the `.tla` file. The `.cfg` file defines the specification entry point, model constants, and which properties to check.
 
-Example `AgentRun.cfg`:
+Current `AgentRun.cfg`:
 
 ```
+SPECIFICATION Spec
+
+\* done=TRUE is the intended terminal state; no further actions are enabled.
+CHECK_DEADLOCK FALSE
+
 CONSTANTS
   Ticket = 1
 
@@ -49,10 +54,10 @@ PROPERTY EventuallyDone
 Define a shell alias for convenience (or add to your shell profile):
 
 ```bash
-alias tlc='"/Applications/TLA+ Toolbox.app/Contents/Eclipse/plugins/org.lamport.openjdk.macosx.x86_64_14.0.1.7/Contents/Home/bin/java" -cp "/Applications/TLA+ Toolbox.app/Contents/Eclipse/tla2tools.jar" tlc2.TLC'
+alias tlc='"/Applications/TLA+ Toolbox.app/Contents/Eclipse/plugins/org.lamport.openjdk.macosx.x86_64_14.0.1.7/Contents/Home/bin/java" -XX:+UseParallelGC -cp "/Applications/TLA+ Toolbox.app/Contents/Eclipse/tla2tools.jar" tlc2.TLC'
 ```
 
-Then from the project root:
+Then from the project root (TLC auto-discovers the matching `.cfg`):
 
 ```bash
 tlc doc/tla/AgentRun
@@ -62,6 +67,7 @@ Or without the alias:
 
 ```bash
 "/Applications/TLA+ Toolbox.app/Contents/Eclipse/plugins/org.lamport.openjdk.macosx.x86_64_14.0.1.7/Contents/Home/bin/java" \
+  -XX:+UseParallelGC \
   -cp "/Applications/TLA+ Toolbox.app/Contents/Eclipse/tla2tools.jar" \
   tlc2.TLC doc/tla/AgentRun
 ```
@@ -86,9 +92,19 @@ These steps are platform-independent:
    - Properties: `EventuallyDone`
 6. Run the model checker.
 
-## Known Issues
+## Expected output
 
-None. All properties — invariants (`TypeOK`, `AckBeforeComplete`, `NoAckCrashGap`) and the liveness property (`EventuallyDone`) — check cleanly under the fairness assumptions in the `Spec` definition.
+```
+TLC2 Version 2.19 of 08 August 2024 (rev: 5a47802)
+...
+Model checking completed. No error has been found.
+  ...
+6 states generated, 4 distinct states found, 0 states left on queue.
+The depth of the complete state graph search is 4.
+Finished in 01s at (...)
+```
+
+All properties check cleanly: invariants (`TypeOK`, `AckBeforeComplete`, `NoAckCrashGap`) and the liveness property (`EventuallyDone`) are satisfied under the fairness assumptions in `Spec`.
 
 ## PlusCal
 

@@ -22,6 +22,11 @@ go run ./src/cmd/web serve --root ~/repo/bvroot --env dev
 
 # Add a user (min 12-char password)
 go run ./src/cmd/ctl adduser --root ~/repo/bvroot <username> <password>
+
+# Run TLA+ model checker (requires TLA+ Toolbox at /Applications/TLA+ Toolbox.app/)
+# Full instructions: doc/usage/tla-model-checking.md
+alias tlc='"/Applications/TLA+ Toolbox.app/Contents/Eclipse/plugins/org.lamport.openjdk.macosx.x86_64_14.0.1.7/Contents/Home/bin/java" -XX:+UseParallelGC -cp "/Applications/TLA+ Toolbox.app/Contents/Eclipse/tla2tools.jar" tlc2.TLC'
+tlc doc/tla/AgentRun    # check AgentRun spec; expects "No error has been found"
 ```
 
 ## Architecture
