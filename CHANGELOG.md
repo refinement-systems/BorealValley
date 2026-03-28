@@ -21,6 +21,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
 
 ### Changed
+- HTTP access shows bare Go error instead of redirecting to HTTPS (#15)
+- assign tracker form stays visible after tracker already assigned (#22)
+- priority field is an unlabeled number input with no guidance (#21)
+- tracker detail page header redundantly shows name twice (#25)
 - permission error for repo operations gives no explanation or path forward (#19)
 - justfile has no target descriptions and integration tests excluded from 'just test' (#30)
 - deprecated --keep-root flag still documented and wired up in justfile (#31)
