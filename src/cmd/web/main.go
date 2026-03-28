@@ -260,7 +260,17 @@ func main() {
 	slog.Info("listening", "addr", addr, "env", *env, "root", *rootDir, "hostname", cfg.Hostname, "tls", useTLS)
 	var serverErr error
 	if useTLS {
-		serverErr = srv.ListenAndServeTLS(certPath, keyPath)
+		ln, err := net.Listen("tcp", addr)
+		if err != nil {
+			slog.Error("listen", "err", err)
+			os.Exit(1)
+		}
+		redirectLn, err := newTLSOrRedirectListener(ln, certPath, keyPath, srv.TLSConfig, common.CanonicalBaseURL(cfg))
+		if err != nil {
+			slog.Error("load tls certificate", "err", err)
+			os.Exit(1)
+		}
+		serverErr = srv.Serve(redirectLn)
 	} else {
 		serverErr = srv.ListenAndServe()
 	}
