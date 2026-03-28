@@ -1,6 +1,13 @@
 {
   "version": 1,
-  "locks": {},
+  "locks": {
+    "52": {
+      "agent_id": "claude",
+      "branch": null,
+      "claimed_at": "2026-03-28T23:53:57.034138Z",
+      "signed_by": "claude"
+    }
+  },
   "settings": {
     "stale_lock_timeout_minutes": 60
   }
