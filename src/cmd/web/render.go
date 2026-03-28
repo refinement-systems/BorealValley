@@ -32,3 +32,35 @@ func renderTemplate(w http.ResponseWriter, tmpl *template.Template, data any) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	buf.WriteTo(w)
 }
+
+var errorTmpl = parseWithLayout(assets.HtmlError)
+
+type errorPageData struct {
+	StatusCode int
+	StatusText string
+	Message    string
+}
+
+// renderError renders a styled HTML error page with the given status code and
+// message. If the error template itself fails, it falls back to plain-text.
+func renderError(w http.ResponseWriter, statusCode int, message string) {
+	data := errorPageData{
+		StatusCode: statusCode,
+		StatusText: http.StatusText(statusCode),
+		Message:    message,
+	}
+	var buf bytes.Buffer
+	if err := errorTmpl.Execute(&buf, data); err != nil {
+		slog.Error("error template execute failed", "err", err)
+		http.Error(w, message, statusCode)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(statusCode)
+	buf.WriteTo(w)
+}
+
+// renderNotFound renders a styled 404 page.
+func renderNotFound(w http.ResponseWriter) {
+	renderError(w, http.StatusNotFound, "page not found")
+}

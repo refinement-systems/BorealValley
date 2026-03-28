@@ -63,6 +63,9 @@ var HtmlOAuthConsent string
 //go:embed html/oauth-grant-list.html
 var HtmlOAuthGrantList string
 
+//go:embed html/error.html
+var HtmlError string
+
 //go:embed sql/create.sql
 var SqlControlCreate string
 

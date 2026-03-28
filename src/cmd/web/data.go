@@ -74,13 +74,13 @@ var dataNotificationListTmpl = parseWithLayout(assets.HtmlNotificationList)
 
 func (app *application) dataList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	repositories, err := app.store.ListRepositories(r.Context())
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -89,7 +89,7 @@ func (app *application) dataList(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) dataRepo(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -99,7 +99,7 @@ func (app *application) dataRepo(w http.ResponseWriter, r *http.Request) {
 func (app *application) dataRepoTicketTracker(w http.ResponseWriter, r *http.Request) {
 	repoSlug := strings.TrimSpace(r.PathValue("repo"))
 	if repoSlug == "" {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 
@@ -110,22 +110,22 @@ func (app *application) dataRepoTicketTracker(w http.ResponseWriter, r *http.Req
 	case http.MethodPost:
 		// handled below
 	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 	canAccess, err := app.store.CanAccessRepository(r.Context(), repoSlug, userID)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !canAccess {
-		http.Error(w, "permission error", http.StatusForbidden)
+		renderError(w, http.StatusForbidden, "permission error")
 		return
 	}
 
@@ -147,7 +147,7 @@ func (app *application) dataRepoTicketTracker(w http.ResponseWriter, r *http.Req
 				app.renderRepoPageBySlug(w, r, repoSlug, err.Error())
 				return
 			}
-			http.Error(w, "internal error", http.StatusInternalServerError)
+			renderError(w, http.StatusInternalServerError, "internal error")
 			return
 		}
 	case "unassign":
@@ -156,7 +156,7 @@ func (app *application) dataRepoTicketTracker(w http.ResponseWriter, r *http.Req
 				app.renderRepoPageBySlug(w, r, repoSlug, err.Error())
 				return
 			}
-			http.Error(w, "internal error", http.StatusInternalServerError)
+			renderError(w, http.StatusInternalServerError, "internal error")
 			return
 		}
 	default:
@@ -172,7 +172,7 @@ func (app *application) dataTicketTrackerList(w http.ResponseWriter, r *http.Req
 	case http.MethodGet:
 		trackers, err := app.store.ListTicketTrackers(r.Context())
 		if err != nil {
-			http.Error(w, "internal error", http.StatusInternalServerError)
+			renderError(w, http.StatusInternalServerError, "internal error")
 			return
 		}
 		renderTemplate(w, dataTicketTrackerListTmpl, dataTicketTrackerListData{
@@ -183,7 +183,7 @@ func (app *application) dataTicketTrackerList(w http.ResponseWriter, r *http.Req
 	case http.MethodPost:
 		// handled below
 	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -194,7 +194,7 @@ func (app *application) dataTicketTrackerList(w http.ResponseWriter, r *http.Req
 
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 
@@ -209,7 +209,7 @@ func (app *application) dataTicketTrackerList(w http.ResponseWriter, r *http.Req
 			app.renderTicketTrackerListPage(w, r, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -218,7 +218,7 @@ func (app *application) dataTicketTrackerList(w http.ResponseWriter, r *http.Req
 
 func (app *application) dataTicketTrackerDetail(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -227,13 +227,13 @@ func (app *application) dataTicketTrackerDetail(w http.ResponseWriter, r *http.R
 
 func (app *application) dataTicketTrackerTicket(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	trackerSlug := strings.TrimSpace(r.PathValue("tracker"))
 	if trackerSlug == "" {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 
@@ -244,7 +244,7 @@ func (app *application) dataTicketTrackerTicket(w http.ResponseWriter, r *http.R
 
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 
@@ -268,7 +268,7 @@ func (app *application) dataTicketTrackerTicket(w http.ResponseWriter, r *http.R
 			app.renderTicketTrackerDetailPageWithSelection(w, r, trackerSlug, repoSlug, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -282,19 +282,19 @@ func (app *application) dataTicketTrackerTicket(w http.ResponseWriter, r *http.R
 
 func (app *application) dataTicketList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 
 	tickets, err := app.store.ListTicketsForUser(r.Context(), userID)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -303,13 +303,13 @@ func (app *application) dataTicketList(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) dataNotificationList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 
@@ -322,7 +322,7 @@ func (app *application) dataNotificationList(w http.ResponseWriter, r *http.Requ
 		Limit: limit,
 	})
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -342,17 +342,17 @@ func (app *application) dataNotificationList(w http.ResponseWriter, r *http.Requ
 
 func (app *application) dataNotificationClear(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 	if err := app.store.SetAllNotificationsUnread(r.Context(), userID, false); err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	http.Redirect(w, r, "/web/notification", http.StatusSeeOther)
@@ -360,17 +360,17 @@ func (app *application) dataNotificationClear(w http.ResponseWriter, r *http.Req
 
 func (app *application) dataNotificationReset(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 	if err := app.store.SetAllNotificationsUnread(r.Context(), userID, true); err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	http.Redirect(w, r, "/web/notification", http.StatusSeeOther)
@@ -378,35 +378,35 @@ func (app *application) dataNotificationReset(w http.ResponseWriter, r *http.Req
 
 func (app *application) dataNotificationUpdate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 	notificationID, err := parseRequiredPositiveInt64(r.PathValue("notification"))
 	if err != nil {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "bad form", http.StatusBadRequest)
+		renderError(w, http.StatusBadRequest, "bad form")
 		return
 	}
 	unread, err := parseRequiredBool(r.PostFormValue("unread"))
 	if err != nil {
-		http.Error(w, "bad form", http.StatusBadRequest)
+		renderError(w, http.StatusBadRequest, "bad form")
 		return
 	}
 	if err := app.store.SetNotificationUnread(r.Context(), userID, notificationID, unread); err != nil {
 		if errors.Is(err, common.ErrValidation) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			renderError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	http.Redirect(w, r, "/web/notification", http.StatusSeeOther)
@@ -415,7 +415,7 @@ func (app *application) dataNotificationUpdate(w http.ResponseWriter, r *http.Re
 func (app *application) renderRepoPage(w http.ResponseWriter, r *http.Request, errMsg string) {
 	repoSlug := strings.TrimSpace(r.PathValue("repo"))
 	if repoSlug == "" {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 	app.renderRepoPageBySlug(w, r, repoSlug, errMsg)
@@ -424,27 +424,27 @@ func (app *application) renderRepoPage(w http.ResponseWriter, r *http.Request, e
 func (app *application) renderRepoPageBySlug(w http.ResponseWriter, r *http.Request, repoSlug string, errMsg string) {
 	repo, found, err := app.repositoryFromPathValue(r.Context(), repoSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 
 	trackers, err := app.store.ListTicketTrackers(r.Context())
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	members, err := app.store.ListRepositoryMembers(r.Context(), repoSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	isAdmin, err := sessionUserIsAdmin(app, r)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -459,7 +459,7 @@ func (app *application) renderRepoPageBySlug(w http.ResponseWriter, r *http.Requ
 		if assigned == nil {
 			tracker, found, err := app.store.GetTicketTrackerBySlug(r.Context(), repo.TicketTrackerSlug)
 			if err != nil {
-				http.Error(w, "internal error", http.StatusInternalServerError)
+				renderError(w, http.StatusInternalServerError, "internal error")
 				return
 			}
 			if found {
@@ -481,7 +481,7 @@ func (app *application) renderRepoPageBySlug(w http.ResponseWriter, r *http.Requ
 func (app *application) renderTicketTrackerListPage(w http.ResponseWriter, r *http.Request, errMsg string) {
 	trackers, err := app.store.ListTicketTrackers(r.Context())
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	renderTemplate(w, dataTicketTrackerListTmpl, dataTicketTrackerListData{
@@ -497,28 +497,28 @@ func (app *application) renderTicketTrackerDetailPage(w http.ResponseWriter, r *
 func (app *application) renderTicketTrackerDetailPageWithSelection(w http.ResponseWriter, r *http.Request, trackerSlug string, selectedRepoSlug string, errMsg string) {
 	tracker, found, err := app.ticketTrackerFromPathValue(r.Context(), trackerSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 
 	repositories, err := app.store.ListRepositoriesForTracker(r.Context(), tracker.Slug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 
 	tickets, err := app.store.ListTicketsForTrackerForUser(r.Context(), tracker.Slug, userID)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -559,23 +559,23 @@ func (app *application) ticketTrackerFromPathValue(ctx context.Context, slug str
 
 func (app *application) dataRepoMember(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	repoSlug := strings.TrimSpace(r.PathValue("repo"))
 	if repoSlug == "" {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 
 	isAdmin, err := sessionUserIsAdmin(app, r)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !isAdmin {
-		http.Error(w, "permission error", http.StatusForbidden)
+		renderError(w, http.StatusForbidden, "permission error")
 		return
 	}
 
@@ -605,7 +605,7 @@ func (app *application) dataRepoMember(w http.ResponseWriter, r *http.Request) {
 			app.renderRepoPageBySlug(w, r, repoSlug, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -614,20 +614,20 @@ func (app *application) dataRepoMember(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) dataTicketComment(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	trackerSlug := strings.TrimSpace(r.PathValue("tracker"))
 	ticketSlug := strings.TrimSpace(r.PathValue("ticket"))
 	if trackerSlug == "" || ticketSlug == "" {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 
@@ -649,7 +649,7 @@ func (app *application) dataTicketComment(w http.ResponseWriter, r *http.Request
 			app.renderTicketObjectPage(w, r, trackerSlug, ticketSlug, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -663,20 +663,20 @@ func (app *application) dataTicketComment(w http.ResponseWriter, r *http.Request
 
 func (app *application) dataTicketAssignee(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	trackerSlug := strings.TrimSpace(r.PathValue("tracker"))
 	ticketSlug := strings.TrimSpace(r.PathValue("ticket"))
 	if trackerSlug == "" || ticketSlug == "" {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 
@@ -692,7 +692,7 @@ func (app *application) dataTicketAssignee(w http.ResponseWriter, r *http.Reques
 			app.renderTicketObjectPage(w, r, trackerSlug, ticketSlug, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	http.Redirect(

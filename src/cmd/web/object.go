@@ -93,29 +93,29 @@ func wantsActivityPubJSON(accept string) bool {
 
 func (app *application) objectUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	requestedUsername := strings.TrimSpace(r.PathValue("name"))
 	if requestedUsername == "" {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 
 	record, ok, err := app.store.GetUserActorByUsername(r.Context(), requestedUsername)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !ok {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 
 	actorJSON, err := sanitizeActorJSON(record.ActorJSON)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -127,7 +127,7 @@ func (app *application) objectUser(w http.ResponseWriter, r *http.Request) {
 
 	pretty, err := prettyJSON(actorJSON)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	renderTemplate(w, userCtlTmpl, userCtlTemplateData{
@@ -138,18 +138,18 @@ func (app *application) objectUser(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) objectRepo(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	repoSlug := strings.TrimSpace(r.PathValue("repo"))
 	record, found, err := app.store.GetLocalRepositoryObjectBySlug(r.Context(), repoSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 
@@ -161,12 +161,12 @@ func (app *application) objectRepo(w http.ResponseWriter, r *http.Request) {
 
 	body, err := parseObjectBody(record.BodyJSON)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	pretty, err := prettyJSON(record.BodyJSON)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -182,18 +182,18 @@ func (app *application) objectRepo(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) objectTicketTracker(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	trackerSlug := strings.TrimSpace(r.PathValue("tracker"))
 	record, found, err := app.store.GetLocalTicketTrackerObjectBySlug(r.Context(), trackerSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 
@@ -205,12 +205,12 @@ func (app *application) objectTicketTracker(w http.ResponseWriter, r *http.Reque
 
 	body, err := parseObjectBody(record.BodyJSON)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	pretty, err := prettyJSON(record.BodyJSON)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -226,7 +226,7 @@ func (app *application) objectTicketTracker(w http.ResponseWriter, r *http.Reque
 
 func (app *application) objectTicket(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -235,7 +235,7 @@ func (app *application) objectTicket(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) objectTicketComment(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
@@ -243,33 +243,33 @@ func (app *application) objectTicketComment(w http.ResponseWriter, r *http.Reque
 	ticketSlug := strings.TrimSpace(r.PathValue("ticket"))
 	commentSlug := strings.TrimSpace(r.PathValue("comment"))
 	if trackerSlug == "" || ticketSlug == "" || commentSlug == "" {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 
 	canAccess, err := app.store.CanAccessTicket(r.Context(), userID, trackerSlug, ticketSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !canAccess {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 
 	record, found, err := app.store.GetLocalTicketCommentObjectBySlug(r.Context(), trackerSlug, ticketSlug, commentSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 
@@ -281,12 +281,12 @@ func (app *application) objectTicketComment(w http.ResponseWriter, r *http.Reque
 
 	body, err := parseObjectBody(record.BodyJSON)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	pretty, err := prettyJSON(record.BodyJSON)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -309,48 +309,48 @@ func (app *application) renderTicketObjectPage(w http.ResponseWriter, r *http.Re
 	trackerSlug = strings.TrimSpace(trackerSlug)
 	ticketSlug = strings.TrimSpace(ticketSlug)
 	if trackerSlug == "" || ticketSlug == "" {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 
 	canAccess, err := app.store.CanAccessTicket(r.Context(), userID, trackerSlug, ticketSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !canAccess {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 
 	record, found, err := app.store.GetLocalTicketObjectBySlug(r.Context(), trackerSlug, ticketSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 
 	comments, err := app.store.ListTicketCommentsForTicket(r.Context(), userID, trackerSlug, ticketSlug)
 	if err != nil {
 		if errors.Is(err, common.ErrValidation) {
-			http.NotFound(w, r)
+			renderNotFound(w)
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	assignees, err := app.store.ListTicketAssigneesForTicket(r.Context(), trackerSlug, ticketSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -362,12 +362,12 @@ func (app *application) renderTicketObjectPage(w http.ResponseWriter, r *http.Re
 
 	body, err := parseObjectBody(record.BodyJSON)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	pretty, err := prettyJSON(record.BodyJSON)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 

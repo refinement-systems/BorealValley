@@ -272,11 +272,11 @@ func main() {
 
 func (app *application) root(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+		renderNotFound(w)
 		return
 	}
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	if app.sessionManager.Exists(r.Context(), "user_id") {
@@ -288,7 +288,7 @@ func (app *application) root(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) web(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	http.Redirect(w, r, "/web/admin", http.StatusSeeOther)
@@ -313,18 +313,18 @@ func pathExists(path string) bool {
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	repositories, err := app.store.ListRepositories(r.Context())
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	counts, err := app.store.ListObjectTypeCounts(r.Context())
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 

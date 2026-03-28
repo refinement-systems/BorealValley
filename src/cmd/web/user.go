@@ -31,49 +31,49 @@ type userCtlTemplateData struct {
 
 func (app *application) userCtl(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
 	requestedUsername := strings.TrimSpace(r.PathValue("name"))
 	if requestedUsername == "" {
-		http.Error(w, "not found", http.StatusNotFound)
+		renderError(w, http.StatusNotFound, "not found")
 		return
 	}
 
 	sessionUserID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 
 	username, ok, err := app.store.GetUsernameByID(r.Context(), sessionUserID)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !ok {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 	if username != requestedUsername {
-		http.Error(w, "permission error", http.StatusForbidden)
+		renderError(w, http.StatusForbidden, "permission error")
 		return
 	}
 
 	record, ok, err := app.store.GetUserActorByUsername(r.Context(), requestedUsername)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !ok {
-		http.Error(w, "not found", http.StatusNotFound)
+		renderError(w, http.StatusNotFound, "not found")
 		return
 	}
 
 	actorJSON, err := sanitizeActorJSON(record.ActorJSON)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -86,7 +86,7 @@ func (app *application) userCtl(w http.ResponseWriter, r *http.Request) {
 
 	pretty, err := prettyJSON(actorJSON)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	renderTemplate(w, userCtlTmpl, userCtlTemplateData{

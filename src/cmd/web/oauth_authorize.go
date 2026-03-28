@@ -47,7 +47,7 @@ func writeAuthorizeError(ctx context.Context, w http.ResponseWriter, writer auth
 
 func (app *application) oauthAuthorizeGet(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	if app.oauthAuthorizeMustReauthenticate(r) || !app.sessionManager.Exists(r.Context(), "user_id") {
@@ -62,7 +62,7 @@ func (app *application) oauthAuthorizeGet(w http.ResponseWriter, r *http.Request
 
 	userID, _, ok := app.oauthSessionUser(r)
 	if !ok {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 
@@ -126,7 +126,7 @@ func oauthAuthorizeReturnTo(r *http.Request) string {
 
 func (app *application) oauthAuthorizePost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	if !app.sessionManager.Exists(r.Context(), "user_id") {
@@ -134,7 +134,7 @@ func (app *application) oauthAuthorizePost(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "bad form", http.StatusBadRequest)
+		renderError(w, http.StatusBadRequest, "bad form")
 		return
 	}
 
@@ -163,13 +163,13 @@ func (app *application) oauthAuthorizePost(w http.ResponseWriter, r *http.Reques
 
 	userID, username, ok := app.oauthSessionUser(r)
 	if !ok {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 
 	grant, err := app.store.UpsertOAuthConsentGrant(r.Context(), authorizeRequester.GetClient().GetID(), userID, requestedScopes, approvedScopes)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 

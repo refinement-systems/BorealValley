@@ -40,17 +40,17 @@ type oauthGrantAdminData struct {
 
 func (app *application) oauthGrantAdminList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok || userID <= 0 {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 	grants, err := app.store.ListOAuthConsentGrantsByUser(r.Context(), userID)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	rows := oauthGrantRowsForDisplay(grants)
@@ -59,21 +59,21 @@ func (app *application) oauthGrantAdminList(w http.ResponseWriter, r *http.Reque
 
 func (app *application) oauthGrantAdminRevoke(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok || userID <= 0 {
-		http.Error(w, "authentication error", http.StatusUnauthorized)
+		renderError(w, http.StatusUnauthorized, "authentication error")
 		return
 	}
 	grantID := strings.TrimSpace(r.PathValue("grant"))
 	if err := app.store.RevokeOAuthConsentGrant(r.Context(), userID, grantID); err != nil {
 		if errors.Is(err, common.ErrValidation) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			renderError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		renderError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	http.Redirect(w, r, "/web/oauth/grant", http.StatusSeeOther)

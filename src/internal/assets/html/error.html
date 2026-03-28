@@ -1,0 +1,13 @@
+{{define "title"}}Error {{.StatusCode}}{{end}}
+{{define "content"}}
+<section class="page-card">
+  <header class="page-header">
+    <h1 class="page-title">{{.StatusCode}} {{.StatusText}}</h1>
+  </header>
+  <p class="message-banner message-banner--error">{{.Message}}</p>
+  <nav class="link-row">
+    <a href="javascript:history.back()">Go back</a>
+    <a href="/web/admin">Home</a>
+  </nav>
+</section>
+{{end}}
