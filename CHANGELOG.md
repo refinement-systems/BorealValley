@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
 
 ### Changed
+- tla+ verification audit (#44)
 - Add TLA+ usage docs and fix spec/doc index entries (#42)
 - Add fairness assumptions to TLA+ spec for liveness verification (#41)
 - Update TLA+ spec semantics to match Go agent implementation (#36)
