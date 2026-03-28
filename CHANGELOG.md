@@ -21,6 +21,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
 
 ### Changed
+- form textarea widths inconsistent with text inputs (#24)
+- login page: card is full-width, no required field validation (#23)
 - HTTP access shows bare Go error instead of redirecting to HTTPS (#15)
 - assign tracker form stays visible after tracker already assigned (#22)
 - priority field is an unlabeled number input with no guidance (#21)
