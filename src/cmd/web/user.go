@@ -25,8 +25,9 @@ var userCtlTmpl = parseWithLayout(assets.HtmlCtlUser)
 const apMediaType = `application/ld+json; profile="https://www.w3.org/ns/activitystreams"`
 
 type userCtlTemplateData struct {
-	Username  string
-	ActorJSON string
+	Username    string
+	IsAdmin     bool
+	MemberSince string
 }
 
 func (app *application) userCtl(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +62,28 @@ func (app *application) userCtl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	record, ok, err := app.store.GetUserActorByUsername(r.Context(), requestedUsername)
+	accept := strings.ToLower(r.Header.Get("Accept"))
+	if wantsUserActorJSON(accept) {
+		record, ok, err := app.store.GetUserActorByUsername(r.Context(), requestedUsername)
+		if err != nil {
+			renderError(w, http.StatusInternalServerError, "internal error")
+			return
+		}
+		if !ok {
+			renderError(w, http.StatusNotFound, "not found")
+			return
+		}
+		actorJSON, err := sanitizeActorJSON(record.ActorJSON)
+		if err != nil {
+			renderError(w, http.StatusInternalServerError, "internal error")
+			return
+		}
+		w.Header().Set("Content-Type", userActorJSONContentType(accept))
+		_, _ = w.Write(actorJSON)
+		return
+	}
+
+	profile, ok, err := app.store.GetUserProfileByID(r.Context(), sessionUserID)
 	if err != nil {
 		renderError(w, http.StatusInternalServerError, "internal error")
 		return
@@ -70,28 +92,10 @@ func (app *application) userCtl(w http.ResponseWriter, r *http.Request) {
 		renderError(w, http.StatusNotFound, "not found")
 		return
 	}
-
-	actorJSON, err := sanitizeActorJSON(record.ActorJSON)
-	if err != nil {
-		renderError(w, http.StatusInternalServerError, "internal error")
-		return
-	}
-
-	accept := strings.ToLower(r.Header.Get("Accept"))
-	if wantsUserActorJSON(accept) {
-		w.Header().Set("Content-Type", userActorJSONContentType(accept))
-		_, _ = w.Write(actorJSON)
-		return
-	}
-
-	pretty, err := prettyJSON(actorJSON)
-	if err != nil {
-		renderError(w, http.StatusInternalServerError, "internal error")
-		return
-	}
 	renderTemplate(w, userCtlTmpl, userCtlTemplateData{
-		Username:  record.Username,
-		ActorJSON: string(pretty),
+		Username:    requestedUsername,
+		IsAdmin:     profile.IsAdmin,
+		MemberSince: profile.CreatedAt.Format("2006-01-02"),
 	})
 }
 

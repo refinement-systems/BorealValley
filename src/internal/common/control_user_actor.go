@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 )
 
 type UserActorRecord struct {
@@ -171,6 +172,26 @@ func (s *Store) GetUsernameByID(ctx context.Context, userID int64) (string, bool
 		return "", false, err
 	}
 	return username, true, nil
+}
+
+type UserProfileRecord struct {
+	IsAdmin   bool
+	CreatedAt time.Time
+}
+
+func (s *Store) GetUserProfileByID(ctx context.Context, userID int64) (UserProfileRecord, bool, error) {
+	var r UserProfileRecord
+	err := s.db.QueryRowContext(ctx,
+		`SELECT is_admin, created_at FROM users WHERE id = $1`,
+		userID,
+	).Scan(&r.IsAdmin, &r.CreatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return r, false, nil
+	}
+	if err != nil {
+		return r, false, err
+	}
+	return r, true, nil
 }
 
 func (s *Store) GetUserActorByUsername(ctx context.Context, username string) (UserActorRecord, bool, error) {

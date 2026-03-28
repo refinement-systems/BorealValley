@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
 
 ### Changed
+- user profile page is an ActivityPub actor viewer, not a profile page (#26)
 - repo list and detail expose container-internal filesystem paths (#17)
 - ticket tracker detail: Create Ticket form silently disappears with no repos assigned (#18)
 - admin dashboard exposes internal DB table names in Object Type Counts (#13)

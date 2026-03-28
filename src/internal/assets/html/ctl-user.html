@@ -1,18 +1,14 @@
-{{define "title"}}User Actor{{end}}
+{{define "title"}}Profile{{end}}
 {{define "content"}}
       <section class="page-card">
         <header class="page-header">
-          <h1 class="page-title">User Actor</h1>
-          <p class="page-subtitle">Rendered actor details for <strong>{{.Username}}</strong>.</p>
+          <h1 class="page-title">Profile</h1>
+          <p class="page-subtitle"><strong>{{.Username}}</strong></p>
         </header>
         <ul class="meta-list">
           <li class="meta-item"><strong>Username:</strong> {{.Username}}</li>
+          <li class="meta-item"><strong>Member since:</strong> {{.MemberSince}}</li>
+          {{if .IsAdmin}}<li class="meta-item"><strong>Role:</strong> Administrator</li>{{end}}
         </ul>
-      </section>
-      <section class="json-panel">
-        <details class="json-details">
-          <summary class="details-toggle">Actor JSON</summary>
-          <pre class="json-block">{{.ActorJSON}}</pre>
-        </details>
       </section>
 {{end}}

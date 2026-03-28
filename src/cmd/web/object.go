@@ -136,14 +136,8 @@ func (app *application) objectUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pretty, err := prettyJSON(actorJSON)
-	if err != nil {
-		renderError(w, http.StatusInternalServerError, "internal error")
-		return
-	}
 	renderTemplate(w, userCtlTmpl, userCtlTemplateData{
-		Username:  record.Username,
-		ActorJSON: string(pretty),
+		Username: record.Username,
 	})
 }
 
