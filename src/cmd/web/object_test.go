@@ -49,10 +49,11 @@ func TestObjectTicketTemplateRendersCommentAndReplyForms(t *testing.T) {
 
 	var body bytes.Buffer
 	err := objectTicketTmpl.Execute(&body, objectTicketTemplateData{
-		TicketSlug:     "ticket-001",
-		TrackerSlug:    "tracker-a",
-		RepositorySlug: "repo-a",
-		Summary:        "Fix login bug",
+		TicketSlug:       "ticket-001",
+		TrackerSlug:      "tracker-a",
+		RepositorySlug:   "repo-a",
+		Summary:          "Fix login bug",
+		ReporterUsername: "alice",
 		CommentPostURL:    "/web/ticket-tracker/tracker-a/ticket/ticket-001/comment",
 		AssigneeActionURL: "/web/ticket-tracker/tracker-a/ticket/ticket-001/assignee",
 		Content:           "line one\nline two",
@@ -66,9 +67,7 @@ func TestObjectTicketTemplateRendersCommentAndReplyForms(t *testing.T) {
 			{
 				Slug:             "comment-001",
 				ActorID:          "https://example.test/ticket-tracker/tracker-a/ticket/ticket-001/comment/comment-001",
-				InReplyTo:        "https://example.test/ticket-tracker/tracker-a/ticket/ticket-001",
-				InReplyToHref:    "#",
-				InReplyToLabel:   "ticket",
+				AuthorUsername:   "bob",
 				Content:          "hello\nworld",
 				CommentActionURL: "/web/ticket-tracker/tracker-a/ticket/ticket-001/comment",
 			},
@@ -91,8 +90,17 @@ func TestObjectTicketTemplateRendersCommentAndReplyForms(t *testing.T) {
 	if !strings.Contains(out, `<a href="/web/repo/repo-a">repo-a</a>`) {
 		t.Fatalf("expected relative repo link, got:\n%s", out)
 	}
-	if !strings.Contains(out, `<a href="#">ticket</a>`) {
-		t.Fatalf("expected in-reply-to anchor link, got:\n%s", out)
+	if !strings.Contains(out, "Reporter:") || !strings.Contains(out, "alice") {
+		t.Fatalf("expected reporter username, got:\n%s", out)
+	}
+	if !strings.Contains(out, "Author:") || !strings.Contains(out, "bob") {
+		t.Fatalf("expected comment author username, got:\n%s", out)
+	}
+	if strings.Contains(out, "Attributed To:") {
+		t.Fatalf("expected no ActivityPub 'Attributed To:' label, got:\n%s", out)
+	}
+	if strings.Contains(out, "Object JSON") {
+		t.Fatalf("expected no Object JSON panel, got:\n%s", out)
 	}
 	if !strings.Contains(out, `action="/web/ticket-tracker/tracker-a/ticket/ticket-001/comment"`) {
 		t.Fatalf("expected comment action url, got:\n%s", out)

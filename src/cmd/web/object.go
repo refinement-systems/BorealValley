@@ -16,6 +16,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 
 	"github.com/refinement-systems/BorealValley/src/internal/assets"
@@ -56,6 +57,7 @@ type objectTicketTemplateData struct {
 	Content           string
 	Published         string
 	AttributedTo      string
+	ReporterUsername  string
 	AssigneeActionURL string
 	Assignees         []objectTicketAssigneeTemplateData
 	CommentPostURL    string
@@ -77,6 +79,7 @@ type objectTicketCommentTemplateData struct {
 	InReplyToHref    string
 	InReplyToLabel   string
 	AttributedTo     string
+	AuthorUsername   string
 	To               string
 	Content          string
 	Published        string
@@ -89,6 +92,14 @@ func wantsActivityPubJSON(accept string) bool {
 	accept = strings.ToLower(accept)
 	return strings.Contains(accept, "application/activity+json") ||
 		strings.Contains(accept, "application/ld+json")
+}
+
+func usernameFromActorURL(actorURL string) string {
+	base := path.Base(actorURL)
+	if base == "." || base == "/" {
+		return ""
+	}
+	return base
 }
 
 func (app *application) objectUser(w http.ResponseWriter, r *http.Request) {
@@ -399,6 +410,7 @@ func (app *application) renderTicketObjectPage(w http.ResponseWriter, r *http.Re
 			InReplyToHref:    inReplyToHref,
 			InReplyToLabel:   parentLabel,
 			AttributedTo:     comment.AttributedTo,
+			AuthorUsername:   usernameFromActorURL(comment.AttributedTo),
 			Content:          comment.Content,
 			Published:        comment.Published,
 			CommentActionURL: "/web/ticket-tracker/" + url.PathEscape(record.TrackerSlug) + "/ticket/" + url.PathEscape(record.TicketSlug) + "/comment",
@@ -422,6 +434,7 @@ func (app *application) renderTicketObjectPage(w http.ResponseWriter, r *http.Re
 		Content:           stringField(body, "content"),
 		Published:         stringField(body, "published"),
 		AttributedTo:      stringField(body, "attributedTo"),
+		ReporterUsername:  usernameFromActorURL(stringField(body, "attributedTo")),
 		AssigneeActionURL: "/web/ticket-tracker/" + url.PathEscape(record.TrackerSlug) + "/ticket/" + url.PathEscape(record.TicketSlug) + "/assignee",
 		Assignees:         assigneeViews,
 		CommentPostURL:    "/web/ticket-tracker/" + url.PathEscape(record.TrackerSlug) + "/ticket/" + url.PathEscape(record.TicketSlug) + "/comment",
