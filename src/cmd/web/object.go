@@ -75,6 +75,7 @@ type objectTicketCommentTemplateData struct {
 	Slug             string
 	ActorID          string
 	InReplyTo        string
+	InReplyToHref    string
 	InReplyToLabel   string
 	AttributedTo     string
 	To               string
@@ -386,10 +387,17 @@ func (app *application) renderTicketObjectPage(w http.ResponseWriter, r *http.Re
 				parentLabel = comment.InReplyToActorID
 			}
 		}
+		inReplyToHref := "#"
+		if !comment.InReplyToTicketID {
+			if label, ok := parentLabels[comment.InReplyToActorID]; ok {
+				inReplyToHref = "#comment-" + label
+			}
+		}
 		commentViews = append(commentViews, objectTicketCommentTemplateData{
 			Slug:             comment.Slug,
 			ActorID:          comment.ActorID,
 			InReplyTo:        comment.InReplyToActorID,
+			InReplyToHref:    inReplyToHref,
 			InReplyToLabel:   parentLabel,
 			AttributedTo:     comment.AttributedTo,
 			Content:          comment.Content,

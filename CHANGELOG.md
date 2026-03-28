@@ -18,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 ### Fixed
+- Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
 
 ### Changed
+- UX and usability review (#9)
 - Security review (#1)

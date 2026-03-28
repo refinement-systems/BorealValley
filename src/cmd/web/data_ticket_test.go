@@ -36,6 +36,7 @@ func TestTicketTrackerDetailTemplateShowsExistingTickets(t *testing.T) {
 				ActorID:        "https://example.test/ticket-tracker/tracker-a/ticket/ticket-001",
 				TrackerSlug:    "tracker-a",
 				RepositorySlug: "repo-a",
+				Summary:        "Fix login bug",
 			},
 		},
 	})
@@ -47,8 +48,8 @@ func TestTicketTrackerDetailTemplateShowsExistingTickets(t *testing.T) {
 	if !strings.Contains(out, "Existing Tickets") {
 		t.Fatalf("expected existing tickets section, got:\n%s", out)
 	}
-	if !strings.Contains(out, `<a href="https://example.test/ticket-tracker/tracker-a/ticket/ticket-001">ticket-001</a>`) {
-		t.Fatalf("expected linked ticket slug in output, got:\n%s", out)
+	if !strings.Contains(out, `<a href="/ticket-tracker/tracker-a/ticket/ticket-001">Fix login bug</a>`) {
+		t.Fatalf("expected linked ticket summary in output, got:\n%s", out)
 	}
 	if !strings.Contains(out, `name="priority"`) {
 		t.Fatalf("expected priority input in create ticket form, got:\n%s", out)
@@ -66,6 +67,7 @@ func TestTicketListTemplateRendersTicketRows(t *testing.T) {
 				ActorID:        "https://example.test/ticket-tracker/tracker-b/ticket/ticket-002",
 				TrackerSlug:    "tracker-b",
 				RepositorySlug: "repo-b",
+				Summary:        "Dashboard crash",
 			},
 		},
 	})
@@ -77,8 +79,8 @@ func TestTicketListTemplateRendersTicketRows(t *testing.T) {
 	if !strings.Contains(out, `<th>Name</th>`) {
 		t.Fatalf("expected Name header, got:\n%s", out)
 	}
-	if !strings.Contains(out, `<a href="https://example.test/ticket-tracker/tracker-b/ticket/ticket-002">ticket-002</a>`) {
-		t.Fatalf("expected linked ticket name in output, got:\n%s", out)
+	if !strings.Contains(out, `<a href="/ticket-tracker/tracker-b/ticket/ticket-002">Dashboard crash</a>`) {
+		t.Fatalf("expected linked ticket summary in output, got:\n%s", out)
 	}
 	if !strings.Contains(out, `<td>tracker-b</td>`) {
 		t.Fatalf("expected tracker column value, got:\n%s", out)

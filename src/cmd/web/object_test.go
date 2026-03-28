@@ -49,8 +49,10 @@ func TestObjectTicketTemplateRendersCommentAndReplyForms(t *testing.T) {
 
 	var body bytes.Buffer
 	err := objectTicketTmpl.Execute(&body, objectTicketTemplateData{
-		TicketSlug:        "ticket-001",
-		TrackerSlug:       "tracker-a",
+		TicketSlug:     "ticket-001",
+		TrackerSlug:    "tracker-a",
+		RepositorySlug: "repo-a",
+		Summary:        "Fix login bug",
 		CommentPostURL:    "/web/ticket-tracker/tracker-a/ticket/ticket-001/comment",
 		AssigneeActionURL: "/web/ticket-tracker/tracker-a/ticket/ticket-001/assignee",
 		Content:           "line one\nline two",
@@ -65,6 +67,7 @@ func TestObjectTicketTemplateRendersCommentAndReplyForms(t *testing.T) {
 				Slug:             "comment-001",
 				ActorID:          "https://example.test/ticket-tracker/tracker-a/ticket/ticket-001/comment/comment-001",
 				InReplyTo:        "https://example.test/ticket-tracker/tracker-a/ticket/ticket-001",
+				InReplyToHref:    "#",
 				InReplyToLabel:   "ticket",
 				Content:          "hello\nworld",
 				CommentActionURL: "/web/ticket-tracker/tracker-a/ticket/ticket-001/comment",
@@ -76,6 +79,21 @@ func TestObjectTicketTemplateRendersCommentAndReplyForms(t *testing.T) {
 	}
 
 	out := body.String()
+	if !strings.Contains(out, `<title>Fix login bug</title>`) {
+		t.Fatalf("expected summary in page title, got:\n%s", out)
+	}
+	if !strings.Contains(out, `<h1 class="page-title">Fix login bug</h1>`) {
+		t.Fatalf("expected summary in page heading, got:\n%s", out)
+	}
+	if !strings.Contains(out, `<a href="/web/ticket-tracker/tracker-a">tracker-a</a>`) {
+		t.Fatalf("expected relative tracker link, got:\n%s", out)
+	}
+	if !strings.Contains(out, `<a href="/web/repo/repo-a">repo-a</a>`) {
+		t.Fatalf("expected relative repo link, got:\n%s", out)
+	}
+	if !strings.Contains(out, `<a href="#">ticket</a>`) {
+		t.Fatalf("expected in-reply-to anchor link, got:\n%s", out)
+	}
 	if !strings.Contains(out, `action="/web/ticket-tracker/tracker-a/ticket/ticket-001/comment"`) {
 		t.Fatalf("expected comment action url, got:\n%s", out)
 	}

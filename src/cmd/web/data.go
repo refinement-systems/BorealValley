@@ -50,8 +50,9 @@ type dataTicketTrackerDetailData struct {
 	Tickets             []common.Ticket
 	TrackedRepositories []common.Repository
 	SelectedRepoSlug    string
-	CreatedTicketSlug   string
-	Err                 string
+	CreatedTicketSlug    string
+	CreatedTicketSummary string
+	Err                  string
 }
 
 type dataTicketListData struct {
@@ -527,13 +528,25 @@ func (app *application) renderTicketTrackerDetailPageWithSelection(w http.Respon
 		selectedRepoSlug = repositories[0].Slug
 	}
 
+	createdTicketSlug := strings.TrimSpace(r.URL.Query().Get("created-ticket"))
+	var createdTicketSummary string
+	if createdTicketSlug != "" {
+		for _, t := range tickets {
+			if t.Slug == createdTicketSlug {
+				createdTicketSummary = t.Summary
+				break
+			}
+		}
+	}
+
 	renderTemplate(w, dataTicketTrackerDetailTmpl, dataTicketTrackerDetailData{
-		Tracker:             tracker,
-		Tickets:             tickets,
-		TrackedRepositories: repositories,
-		SelectedRepoSlug:    selectedRepoSlug,
-		CreatedTicketSlug:   strings.TrimSpace(r.URL.Query().Get("created-ticket")),
-		Err:                 errMsg,
+		Tracker:              tracker,
+		Tickets:              tickets,
+		TrackedRepositories:  repositories,
+		SelectedRepoSlug:     selectedRepoSlug,
+		CreatedTicketSlug:    createdTicketSlug,
+		CreatedTicketSummary: createdTicketSummary,
+		Err:                  errMsg,
 	})
 }
 
