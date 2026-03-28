@@ -5,28 +5,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```sh
-just build          # build both binaries into bin/
-just test           # run package tests for both binaries
+just build          # build all binaries into bin/
+just test           # run package tests for all binaries
 just build-web      # build bin/BorealValley-web only
 just test-web       # go test ./src/cmd/web
+just build-ctl      # build bin/BorealValley-ctl only
+just test-ctl       # go test ./src/cmd/ctl
 just clean          # remove bin/* (keeps bin/.keep)
 
 go test ./...       # run all tests (baseline CI command)
 go test ./src/internal/common   # run a single package's tests
 
-# Run the web server locally
-go run ./src/cmd/web -db app.db -addr :4000 -env dev
+# Run the web server locally (requires PostgreSQL via BV_PG_DSN)
+export BV_PG_DSN='postgres://app:app_pw@127.0.0.1:5432/app_db?sslmode=disable'
+go run ./src/cmd/web serve --root ~/repo/bvroot --env dev
 
 # Add a user (min 12-char password)
-go run ./src/cmd/ctl adduser -db app.db <username> <password>
+go run ./src/cmd/ctl adduser --root ~/repo/bvroot <username> <password>
 ```
 
 ## Architecture
 
-Two binaries share the `src/internal/common` package:
+Three binaries share the `src/internal/common` package:
 
-- **`src/cmd/web`** — HTTP server. Flags: `-db`, `-addr`, `-env` (dev|prod), `-verbosity`.
-- **`src/cmd/ctl`** — CLI admin tool. Subcommand: `adduser`.
+- **`src/cmd/web`** — HTTP server. Subcommand: `serve`. Flags: `--root`, `--pg-dsn`, `--env` (dev|prod), `--cert`, `--key`, `--verbosity`.
+- **`src/cmd/ctl`** — CLI admin tool. Subcommands: `init-root`, `resync`, `adduser`, `oauth-app`.
+- **`src/cmd/agent`** — Agent binary.
 
 ### Database schema modifications
 This is an experimental project that wasn't yet deployed anywhere.
