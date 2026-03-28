@@ -21,6 +21,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
 
 ### Changed
+- justfile has no target descriptions and integration tests excluded from 'just test' (#30)
+- deprecated --keep-root flag still documented and wired up in justfile (#31)
 - ctl validation errors use structured log format instead of plain error messages (#29)
 - README.md is empty — no setup instructions for new developers (#28)
 - CLAUDE.md references flags that no longer exist (-db, -addr) (#27)
