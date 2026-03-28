@@ -88,9 +88,7 @@ These steps are platform-independent:
 
 ## Known Issues
 
-One open issue remains before all properties can be verified:
-
-1. **#41 (medium)**: No fairness assumptions in the `Spec` definition, so the `EventuallyDone` liveness property cannot be verified. TLC will find a counterexample trace where crashes repeat forever. This is expected — the invariants (`TypeOK`, `AckBeforeComplete`, `NoAckCrashGap`) check cleanly.
+None. All properties — invariants (`TypeOK`, `AckBeforeComplete`, `NoAckCrashGap`) and the liveness property (`EventuallyDone`) — check cleanly under the fairness assumptions in the `Spec` definition.
 
 ## PlusCal
 

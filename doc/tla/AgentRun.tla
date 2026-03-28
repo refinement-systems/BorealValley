@@ -71,7 +71,12 @@ Next ==
   \/ CompleteRun
   \/ CrashAndRestart
 
-Spec == Init /\ [][Next]_vars
+Spec ==
+  /\ Init
+  /\ [][Next]_vars
+  /\ WF_vars(FetchTicket)
+  /\ SF_vars(PostAckComment)
+  /\ SF_vars(CompleteRun)
 
 (***************************************************************************)
 (* Properties                                                              *)
@@ -84,7 +89,7 @@ AckBeforeComplete == done => acked
 \* (CrashAndRestart resets acked, keeping the ticket eligible via FetchTicket.)
 NoAckCrashGap == acked => (current = Ticket \/ done)
 
-\* Eventually the ticket is done. Requires fairness — see issue #41.
+\* Eventually the ticket is done. Verified under the fairness assumptions in Spec.
 EventuallyDone == <>(done)
 
 (***************************************************************************)
@@ -95,8 +100,6 @@ EventuallyDone == <>(done)
 (*   Go code is an informational progress update, not a server-side state.*)
 (* - acked resets on CrashAndRestart because each invocation posts a new  *)
 (*   ack comment unconditionally (doc/spec/agent.md section 8).           *)
-(* - EventuallyDone requires WF on the non-crash actions but cannot be    *)
-(*   verified without bounding crashes. Tracked in issue #41.             *)
 (***************************************************************************)
 
 ====
