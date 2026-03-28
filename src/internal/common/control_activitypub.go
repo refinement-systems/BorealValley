@@ -200,6 +200,15 @@ var allowedTableSet = func() map[string]bool {
 	return m
 }()
 
+var tableToTypeName = func() map[string]string {
+	m := make(map[string]string, len(objectTypeToTable)+1)
+	for typeName, table := range objectTypeToTable {
+		m[table] = typeName
+	}
+	m["ap_object_unknown"] = "Unknown"
+	return m
+}()
+
 func allowedTable(name string) bool {
 	return allowedTableSet[name]
 }

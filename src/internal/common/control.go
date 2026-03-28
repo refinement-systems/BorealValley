@@ -203,7 +203,7 @@ type LocalTicketCommentObjectRecord struct {
 }
 
 type ObjectTypeCount struct {
-	Table string
+	Label string
 	Count int64
 }
 
@@ -1601,10 +1601,10 @@ func (s *Store) ListObjectTypeCounts(ctx context.Context) ([]ObjectTypeCount, er
 		if err := s.db.QueryRowContext(ctx, query).Scan(&count); err != nil {
 			return nil, err
 		}
-		counts = append(counts, ObjectTypeCount{Table: table, Count: count})
+		counts = append(counts, ObjectTypeCount{Label: tableToTypeName[table], Count: count})
 	}
 	sort.Slice(counts, func(i, j int) bool {
-		return counts[i].Table < counts[j].Table
+		return counts[i].Label < counts[j].Label
 	})
 	return counts, nil
 }
