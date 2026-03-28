@@ -125,7 +125,7 @@ func (app *application) dataRepoTicketTracker(w http.ResponseWriter, r *http.Req
 		return
 	}
 	if !canAccess {
-		renderError(w, http.StatusForbidden, "permission error")
+		renderError(w, http.StatusForbidden, "you are not a member of this repository; a site administrator can add you as a member from the repository settings page")
 		return
 	}
 
@@ -575,7 +575,7 @@ func (app *application) dataRepoMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !isAdmin {
-		renderError(w, http.StatusForbidden, "permission error")
+		renderError(w, http.StatusForbidden, "only site administrators can manage repository members")
 		return
 	}
 

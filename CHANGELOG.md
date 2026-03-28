@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
 
 ### Changed
+- permission error for repo operations gives no explanation or path forward (#19)
 - justfile has no target descriptions and integration tests excluded from 'just test' (#30)
 - deprecated --keep-root flag still documented and wired up in justfile (#31)
 - ctl validation errors use structured log format instead of plain error messages (#29)
