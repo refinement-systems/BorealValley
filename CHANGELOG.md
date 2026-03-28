@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Security
+- Add timeout and file limits to agent SearchText (#52)
 - LOW: Template Execute error results silently discarded (#8)
 - LOW: SQL queries using fmt.Sprintf for table names - fragile pattern (#7)
 - MEDIUM: No login rate limiting - brute force and Argon2id DoS (#6)

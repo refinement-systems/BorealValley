@@ -153,7 +153,7 @@ func runLMStudioTicketLoop(ctx context.Context, lmstudioURL, model, workspace, t
 						return "", err
 					}
 				}
-				toolResult := executeToolCall(workspace, tc)
+				toolResult := executeToolCall(ctx, workspace, tc)
 				if cbs.OnToolResult != nil {
 					if err := cbs.OnToolResult(tc.Function.Name, toolResult); err != nil {
 						return "", err
@@ -198,7 +198,7 @@ func runLMStudioTicketLoop(ctx context.Context, lmstudioURL, model, workspace, t
 	return strings.TrimSpace(lastContent), fmt.Errorf("stopped after %d round-trips (iteration limit)", maxIter)
 }
 
-func executeToolCall(workspace string, tc llmToolCall) string {
+func executeToolCall(ctx context.Context, workspace string, tc llmToolCall) string {
 	args := map[string]string{}
 	if err := json.Unmarshal([]byte(tc.Function.Arguments), &args); err != nil {
 		return `{"error":"failed to parse arguments"}`
@@ -218,7 +218,7 @@ func executeToolCall(workspace string, tc llmToolCall) string {
 			result = fmt.Sprintf(`{"ok":true,"path":%q}`, args["path"])
 		}
 	case "search_text":
-		result, err = commonagent.SearchText(workspace, args["path"], args["query"])
+		result, err = commonagent.SearchText(ctx, workspace, args["path"], args["query"])
 	default:
 		return fmt.Sprintf(`{"error":"unknown tool %q"}`, tc.Function.Name)
 	}

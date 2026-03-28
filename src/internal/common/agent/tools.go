@@ -12,6 +12,7 @@
 package agent
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -93,7 +94,7 @@ func WriteFile(root, path, content string) error {
 	return os.WriteFile(abs, []byte(content), 0o644)
 }
 
-func SearchText(root, path, query string) (string, error) {
+func SearchText(ctx context.Context, root, path, query string) (string, error) {
 	abs, err := sandboxed(root, path)
 	if err != nil {
 		return "", err
@@ -103,10 +104,29 @@ func SearchText(root, path, query string) (string, error) {
 		return "", fmt.Errorf("invalid query: %w", err)
 	}
 	var matches []SearchMatch
-	const maxMatches = 100
+	const (
+		maxMatches  = 100
+		maxFiles    = 10_000
+		maxFileSize = 1 << 20 // 1 MB
+	)
+	fileCount := 0
 	err = filepath.WalkDir(abs, func(p string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
+		}
+		if ctx.Err() != nil {
+			return filepath.SkipAll
+		}
+		fileCount++
+		if fileCount > maxFiles {
+			return filepath.SkipAll
+		}
+		info, err := d.Info()
+		if err != nil {
+			return nil
+		}
+		if info.Size() > maxFileSize {
+			return nil
 		}
 		data, err := os.ReadFile(p)
 		if err != nil {
@@ -125,6 +145,9 @@ func SearchText(root, path, query string) (string, error) {
 	})
 	if err != nil {
 		return "", err
+	}
+	if ctx.Err() != nil {
+		return "", ctx.Err()
 	}
 	if matches == nil {
 		return "[]", nil

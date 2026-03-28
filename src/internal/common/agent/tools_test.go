@@ -12,6 +12,7 @@
 package agent
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -37,7 +38,7 @@ func TestListDirAndReadWriteSearch(t *testing.T) {
 	if content != "hello world" {
 		t.Fatalf("unexpected content: %q", content)
 	}
-	search, err := SearchText(root, ".", "hello")
+	search, err := SearchText(context.Background(), root, ".", "hello")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,7 +65,7 @@ func TestSearchInvalidRegex(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(root, "f.txt"), []byte("abc"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := SearchText(root, ".", "[invalid"); err == nil {
+	if _, err := SearchText(context.Background(), root, ".", "[invalid"); err == nil {
 		t.Fatal("expected invalid regex error")
 	}
 }
