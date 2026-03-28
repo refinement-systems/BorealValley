@@ -6,7 +6,7 @@ The `doc/tla/` directory contains TLA+ formal specifications that model agent be
 
 Currently one specification exists:
 
-- **`AgentRun.tla`** — models the `agent run` lifecycle: fetch an assigned ticket, post acknowledgement, process it, and post a completion comment. Properties verify that acknowledged tickets cannot silently disappear (NoAckCrashGap) and that all tickets eventually reach a terminal state (EventuallyTerminal).
+- **`AgentRun.tla`** — models the `agent run` lifecycle: fetch an assigned ticket, post acknowledgement, process it, and post a completion comment. Properties verify that a run cannot complete without acking first (AckBeforeComplete), that an acked ticket is either still being processed or done (NoAckCrashGap), and that the ticket eventually completes (EventuallyDone).
 
 The Go implementation (`src/cmd/agent/run.go`) and the spec document (`doc/spec/agent.md`) are the source of truth. The TLA+ spec is a verification aid, not the canonical definition.
 
@@ -31,17 +31,17 @@ Instructions for Linux and Windows will be added when needed. The general approa
 
 This requires `doc/tla/AgentRun.cfg` to exist alongside the `.tla` file. The `.cfg` file defines model constants and which properties to check.
 
-Example `AgentRun.cfg` (not yet created — see known issues):
+Example `AgentRun.cfg`:
 
 ```
 CONSTANTS
-  Tickets = {1, 2, 3}
-  Assigned = {1, 2}
+  Ticket = 1
 
 INVARIANT TypeOK
+INVARIANT AckBeforeComplete
 INVARIANT NoAckCrashGap
 
-PROPERTY EventuallyTerminal
+PROPERTY EventuallyDone
 ```
 
 ### macOS
@@ -80,28 +80,17 @@ These steps are platform-independent:
 2. File > Open Spec > Add New Spec, select `doc/tla/AgentRun.tla`.
 3. TLC Model Checker > New Model.
 4. Under "What is the model?", set constants:
-   - `Tickets` = `{1, 2, 3}` (model value set)
-   - `Assigned` = `{1, 2}` (model value set)
+   - `Ticket` = `1` (ordinary assignment)
 5. Under "What to check?":
-   - Invariants: `TypeOK`, `NoAckCrashGap`
-   - Properties: `EventuallyTerminal`
+   - Invariants: `TypeOK`, `AckBeforeComplete`, `NoAckCrashGap`
+   - Properties: `EventuallyDone`
 6. Run the model checker.
 
 ## Known Issues
 
-The TLA+ specification has several open issues that must be resolved before model checking succeeds cleanly. These are tracked in chainlink:
+One open issue remains before all properties can be verified:
 
-1. **#34 (critical)**: Line 94 references undefined variable `responded` — should be `acked`. TLC will refuse to parse the spec until this is fixed.
-
-2. **#35 (high)**: No `.cfg` file exists. TLC requires `doc/tla/AgentRun.cfg` to define constants and properties. Blocked by #34.
-
-3. **#36 (high, epic)**: The TLA+ spec diverges from the Go implementation in four ways:
-   - `failed` state is terminal in TLA+ but non-terminal in Go (tickets retry after failure)
-   - Acknowledgement is one-time per ticket in TLA+ but repeated per run in Go
-   - `started` variable models a log line, not a real state transition
-   - Spec models multi-ticket processing; Go agent processes exactly one ticket per invocation
-
-4. **#41 (medium)**: No fairness assumptions in the `Spec` definition, so the `EventuallyTerminal` liveness property cannot be verified. Blocked by #36.
+1. **#41 (medium)**: No fairness assumptions in the `Spec` definition, so the `EventuallyDone` liveness property cannot be verified. TLC will find a counterexample trace where crashes repeat forever. This is expected — the invariants (`TypeOK`, `AckBeforeComplete`, `NoAckCrashGap`) check cleanly.
 
 ## PlusCal
 

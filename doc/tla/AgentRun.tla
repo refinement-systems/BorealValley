@@ -2,104 +2,73 @@
 EXTENDS Naturals, TLC
 
 (***************************************************************************)
-(* Recommendation                                                          *)
+(* Models the 'agent run' lifecycle for a single assigned ticket.          *)
 (*                                                                         *)
-(* Use PlusCal for the primary AgentRun spec. The `agent run` behavior is  *)
-(* an algorithmic control-flow protocol (fetch -> ack -> progress -> finish *)
-(* with crash/restart branches), which PlusCal represents more directly     *)
-(* than hand-written action decomposition.                                  *)
+(* One invocation processes at most one ticket. If the agent crashes or    *)
+(* fails at any point, the ticket remains eligible for a future invocation.*)
+(* Multiple invocations are modeled by allowing CrashAndRestart to reset   *)
+(* per-run state so FetchTicket may fire again.                            *)
 (*                                                                         *)
-(* This file is a raw TLA+ draft of the same protocol so it can be checked *)
-(* immediately and used as a baseline before (or alongside) a PlusCal      *)
-(* version.                                                                 *)
+(* Go source of truth: src/cmd/agent/run.go (runAgentOnce)                *)
+(* Design doc:         doc/spec/agent.md section 4                        *)
+(*                                                                         *)
+(* Recommendation: rewrite in PlusCal for clearer control-flow expression. *)
 (***************************************************************************)
 
-CONSTANTS Tickets, Assigned
-
-ASSUME /\ Tickets # {}
-       /\ Tickets \subseteq Nat
-       /\ Assigned \subseteq Tickets
-       /\ Assigned # {}
+CONSTANT Ticket   \* The single assigned ticket; a natural number
 
 Nil == 0
 
-VARIABLES assigned, acked, started, done, failed, current
+ASSUME Ticket \in Nat /\ Ticket # Nil
 
-vars == <<assigned, acked, started, done, failed, current>>
+VARIABLES current, acked, done
+
+vars == <<current, acked, done>>
 
 TypeOK ==
-  /\ assigned = Assigned
-  /\ acked \in [Tickets -> BOOLEAN]
-  /\ started \in [Tickets -> BOOLEAN]
-  /\ done \in [Tickets -> BOOLEAN]
-  /\ failed \in [Tickets -> BOOLEAN]
-  /\ current \in Tickets \cup {Nil}
-
-Eligible ==
-  {t \in assigned : ~done[t]}
-
-Pick(S) == CHOOSE t \in S : \A u \in S : t <= u
+  /\ current \in {Ticket, Nil}
+  /\ acked \in BOOLEAN
+  /\ done \in BOOLEAN
 
 Init ==
-  /\ assigned = Assigned
-  /\ acked = [t \in Tickets |-> FALSE]
-  /\ started = [t \in Tickets |-> FALSE]
-  /\ done = [t \in Tickets |-> FALSE]
-  /\ failed = [t \in Tickets |-> FALSE]
   /\ current = Nil
+  /\ acked = FALSE
+  /\ done = FALSE
 
-IdleNoWork ==
+\* Pick up the assigned ticket for processing.
+FetchTicket ==
   /\ current = Nil
-  /\ Eligible = {}
-  /\ UNCHANGED vars
+  /\ ~done
+  /\ current' = Ticket
+  /\ UNCHANGED <<acked, done>>
 
-FetchAssignedCompletionPending ==
-  /\ current = Nil
-  /\ Eligible # {}
-  /\ current' = Pick(Eligible)
-  /\ UNCHANGED <<assigned, acked, started, done, failed>>
-
+\* Post an acknowledgement comment; happens once at the start of each run.
 PostAckComment ==
-  /\ current \in Tickets
-  /\ ~acked[current]
-  /\ acked' = [acked EXCEPT ![current] = TRUE]
-  /\ UNCHANGED <<assigned, started, done, failed, current>>
+  /\ current = Ticket
+  /\ ~acked
+  /\ acked' = TRUE
+  /\ UNCHANGED <<current, done>>
 
-PostStartUpdate ==
-  /\ current \in Tickets
-  /\ acked[current]
-  /\ ~started[current]
-  /\ started' = [started EXCEPT ![current] = TRUE]
-  /\ UNCHANGED <<assigned, acked, done, failed, current>>
-
+\* Run completes successfully; posts a completion comment and exits.
 CompleteRun ==
-  /\ current \in Tickets
-  /\ started[current]
-  /\ ~done[current]
-  /\ done' = [done EXCEPT ![current] = TRUE]
+  /\ current = Ticket
+  /\ acked
+  /\ done' = TRUE
   /\ current' = Nil
-  /\ UNCHANGED <<assigned, acked, started, failed>>
+  /\ UNCHANGED acked
 
-FailRun ==
-  /\ current \in Tickets
-  /\ started[current]
-  /\ ~failed[current]
-  /\ failed' = [failed EXCEPT ![current] = TRUE]
-  /\ current' = Nil
-  /\ UNCHANGED <<assigned, acked, started, done>>
-
+\* Agent crashes or fails at any point — ticket stays eligible for retry.
+\* acked is reset because the next invocation posts a fresh ack comment.
 CrashAndRestart ==
-  /\ current \in Tickets
+  /\ current = Ticket
   /\ current' = Nil
-  /\ UNCHANGED <<assigned, acked, started, done, failed>>
+  /\ acked' = FALSE
+  /\ UNCHANGED done
 
 Next ==
-  \/ IdleNoWork
-  \/ FetchAssignedCompletionPending
+  \/ FetchTicket
   \/ PostAckComment
-  \/ PostStartUpdate
   \/ CompleteRun
-  \/ FailRun
   \/ CrashAndRestart
 
 Spec == Init /\ [][Next]_vars
@@ -108,25 +77,26 @@ Spec == Init /\ [][Next]_vars
 (* Properties                                                              *)
 (***************************************************************************)
 
-CompletionPendingAfterAck(t) ==
-  /\ t \in assigned
-  /\ acked[t]
-  /\ ~done[t]
-  /\ (current = t \/ t \in Eligible)
+\* A run cannot complete without first posting an ack comment.
+AckBeforeComplete == done => acked
 
-NoAckCrashGap == \A t \in assigned : CompletionPendingAfterAck(t) \/ ~acked[t] \/ done[t]
+\* Once acked in a run, the ticket is either still being processed or done.
+\* (CrashAndRestart resets acked, keeping the ticket eligible via FetchTicket.)
+NoAckCrashGap == acked => (current = Ticket \/ done)
 
-EventuallyTerminal == \A t \in assigned : <>(done[t] \/ failed[t])
+\* Eventually the ticket is done. Requires fairness — see issue #41.
+EventuallyDone == <>(done)
 
 (***************************************************************************)
 (* Notes                                                                   *)
-(* - Completion is modeled only by `done[t]`, corresponding to the         *)
-(*   separate completion root comment.                                     *)
-(* - Acknowledgement and progress updates do not remove a ticket from      *)
-(*   `Eligible`; crash/restart after acknowledgement keeps it runnable.     *)
-(* - `EventuallyTerminal` may still fail if retries continue forever, but   *)
-(*   the earlier ack-first lost-ticket counterexample is removed.           *)
-(* - In a PlusCal version, keep this same state and properties.            *)
+(* - 'failed' and FailRun are removed: Go failure is non-terminal. The    *)
+(*   ticket is not marked failed on the server; it stays eligible.        *)
+(* - 'started' and PostStartUpdate are removed: the start marker in the   *)
+(*   Go code is an informational progress update, not a server-side state.*)
+(* - acked resets on CrashAndRestart because each invocation posts a new  *)
+(*   ack comment unconditionally (doc/spec/agent.md section 8).           *)
+(* - EventuallyDone requires WF on the non-crash actions but cannot be    *)
+(*   verified without bounding crashes. Tracked in issue #41.             *)
 (***************************************************************************)
 
 ====

@@ -18,9 +18,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 ### Fixed
+- Fix undefined variable 'responded' in AgentRun.tla line 94 (#34)
 - Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
 
 ### Changed
+- Update TLA+ spec semantics to match Go agent implementation (#36)
+- Align spec with single-ticket-per-invocation execution model (#40)
+- Remove or simplify the started state variable (#39)
+- Fix ack-comment model to allow repeated acknowledgement per run (#38)
+- Fix failed state to match non-terminal failure semantics (#37)
+- Add TLC model-checking configuration file (AgentRun.cfg) (#35)
 - Install Java runtime for TLA+ model checking (#43)
 - spec does not reflect lessons from closed security and UX issues (#33)
 - form textarea widths inconsistent with text inputs (#24)
