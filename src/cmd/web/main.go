@@ -339,7 +339,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		Username     string
 		Repositories []common.Repository
 		Counts       []common.ObjectTypeCount
-	}{Username: username, Repositories: repositories, Counts: counts})
+	}{Username: username, Repositories: mapRepositories(app.repoPathMapper, repositories), Counts: counts})
 }
 
 func parseForwardedFirst(v string) (proto, host string, ok bool) {

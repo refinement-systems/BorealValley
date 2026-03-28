@@ -84,7 +84,7 @@ func (app *application) dataList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	renderTemplate(w, dataListTmpl, dataListData{Repositories: repositories})
+	renderTemplate(w, dataListTmpl, dataListData{Repositories: mapRepositories(app.repoPathMapper, repositories)})
 }
 
 func (app *application) dataRepo(w http.ResponseWriter, r *http.Request) {
@@ -469,7 +469,7 @@ func (app *application) renderRepoPageBySlug(w http.ResponseWriter, r *http.Requ
 	}
 
 	renderTemplate(w, dataRepoTmpl, dataRepoData{
-		Repository:      repo,
+		Repository:      mapRepository(app.repoPathMapper, repo),
 		AssignedTracker: assigned,
 		Trackers:        trackers,
 		Members:         members,

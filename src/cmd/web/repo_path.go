@@ -71,18 +71,18 @@ func (m *repoPathMapper) Translate(path string) string {
 	return filepath.Join(m.to, suffix)
 }
 
-func mapRepositoryForAPI(mapper *repoPathMapper, repo common.Repository) common.Repository {
+func mapRepository(mapper *repoPathMapper, repo common.Repository) common.Repository {
 	repo.Path = mapper.Translate(repo.Path)
 	return repo
 }
 
-func mapRepositoriesForAPI(mapper *repoPathMapper, repos []common.Repository) []common.Repository {
+func mapRepositories(mapper *repoPathMapper, repos []common.Repository) []common.Repository {
 	if len(repos) == 0 {
 		return repos
 	}
 	mapped := make([]common.Repository, 0, len(repos))
 	for _, repo := range repos {
-		mapped = append(mapped, mapRepositoryForAPI(mapper, repo))
+		mapped = append(mapped, mapRepository(mapper, repo))
 	}
 	return mapped
 }

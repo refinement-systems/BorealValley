@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
 
 ### Changed
+- repo list and detail expose container-internal filesystem paths (#17)
 - ticket detail page uses ActivityPub-internal terminology and UUIDs as titles (#20)
 - admin dashboard shows no username — just 'Logged in.' (#16)
 - error pages are bare unstyled plain text (#12)

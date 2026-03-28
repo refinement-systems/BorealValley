@@ -114,7 +114,7 @@ func TestMapRepositoryForAPI(t *testing.T) {
 	}
 
 	t.Run("raw path is preserved when mapper is nil", func(t *testing.T) {
-		got := mapRepositoryForAPI(nil, repo)
+		got := mapRepository(nil, repo)
 		if got.Path != repo.Path {
 			t.Fatalf("path mismatch: got %q want %q", got.Path, repo.Path)
 		}
@@ -126,7 +126,7 @@ func TestMapRepositoryForAPI(t *testing.T) {
 			t.Fatalf("newRepoPathMapper: %v", err)
 		}
 
-		got := mapRepositoryForAPI(mapper, repo)
+		got := mapRepository(mapper, repo)
 		want := "/Users/mjm/repo/bvroot/repo/demo"
 		if got.Path != want {
 			t.Fatalf("path mismatch: got %q want %q", got.Path, want)

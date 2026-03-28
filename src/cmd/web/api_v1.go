@@ -60,7 +60,7 @@ func (app *application) apiV1RepoList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"repo": mapRepositoriesForAPI(app.repoPathMapper, repos)})
+	writeJSON(w, http.StatusOK, map[string]any{"repo": mapRepositories(app.repoPathMapper, repos)})
 }
 
 func (app *application) apiV1RepoDetail(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +77,7 @@ func (app *application) apiV1RepoDetail(w http.ResponseWriter, r *http.Request) 
 		http.NotFound(w, r)
 		return
 	}
-	writeJSON(w, http.StatusOK, mapRepositoryForAPI(app.repoPathMapper, repo))
+	writeJSON(w, http.StatusOK, mapRepository(app.repoPathMapper, repo))
 }
 
 func (app *application) apiV1TicketTrackerList(w http.ResponseWriter, r *http.Request) {
