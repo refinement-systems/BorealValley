@@ -9,3 +9,4 @@ style notes in this folder).
 | `common.md` | `src/internal/common`, `src/internal/assets/sql/create.sql` |
 | `web.md` | `src/cmd/web`, `src/internal/assets/html`, `src/internal/assets/js` |
 | `ctl.md` | `src/cmd/ctl` |
+| `agent.md` | `src/cmd/agent` |

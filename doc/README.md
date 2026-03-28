@@ -16,3 +16,4 @@ Entry point to each sub-directory is the `README.md` in it.
 | `spec`       | Specification of this suite of programs       |
 | `usage`      | Practical operator and workflow documentation |
 | `external`   | External resources such as standards and RFCs |
+| `tla`        | TLA+ formal specifications                    |

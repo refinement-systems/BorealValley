@@ -20,3 +20,4 @@ Do not use `just dev-docker-reset ~/repo/bvroot` unless you want a fresh Postgre
 
 - `docker-dev-stack.md`: start, resume, inspect, or reset the standard local Docker dev stack rooted at `~/repo/bvroot`.
 - `agent-running-workflow.md`: end-to-end setup and manual run workflow for `BorealValley-agent` against a live server.
+- `tla-model-checking.md`: running the TLA+ model checker (TLC) against the agent formal specification.

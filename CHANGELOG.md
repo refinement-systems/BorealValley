@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
 
 ### Changed
+- Install Java runtime for TLA+ model checking (#43)
 - spec does not reflect lessons from closed security and UX issues (#33)
 - form textarea widths inconsistent with text inputs (#24)
 - login page: card is full-width, no required field validation (#23)
