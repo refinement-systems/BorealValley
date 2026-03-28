@@ -274,10 +274,10 @@ func (s *Store) CreateUser(ctx context.Context, username, password string) error
 func (s *Store) CreateUserWithAdmin(ctx context.Context, username, password string, isAdmin bool) error {
 	username = strings.TrimSpace(username)
 	if username == "" {
-		return errors.New("empty username")
+		return fmt.Errorf("%w: empty username", ErrValidation)
 	}
 	if len(password) < 12 {
-		return errors.New("password too short (min 12 chars)")
+		return fmt.Errorf("%w: password too short (min 12 chars)", ErrValidation)
 	}
 
 	salt := make([]byte, defaultParams.saltLen)

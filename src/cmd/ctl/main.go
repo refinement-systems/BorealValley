@@ -203,6 +203,10 @@ func addUserCmd(args []string) {
 	defer store.Close()
 
 	if err := store.CreateUserWithAdmin(context.Background(), username, password, *isAdmin); err != nil {
+		if errors.Is(err, common.ErrValidation) {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
 		slog.Error("failed to create user", "username", username, "err", err)
 		os.Exit(1)
 	}

@@ -118,6 +118,10 @@ func oauthAppCreateCmd(args []string) {
 	defer store.Close()
 	client, err := store.CreateOAuthClient(context.Background(), *name, *description, redirectURIs, scopes)
 	if err != nil {
+		if errors.Is(err, common.ErrValidation) {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
 		slog.Error("oauth app create failed", "err", err)
 		os.Exit(1)
 	}
@@ -131,6 +135,10 @@ func oauthAppRotateSecretCmd(args []string) {
 	defer store.Close()
 	secret, err := store.RotateOAuthClientSecret(context.Background(), clientID)
 	if err != nil {
+		if errors.Is(err, common.ErrValidation) {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
 		slog.Error("oauth app rotate-secret failed", "client_id", clientID, "err", err)
 		os.Exit(1)
 	}
@@ -143,6 +151,10 @@ func oauthAppEnableCmd(args []string) {
 	clientID, store := oauthAppStoreWithClientID(args)
 	defer store.Close()
 	if err := store.SetOAuthClientEnabled(context.Background(), clientID, true); err != nil {
+		if errors.Is(err, common.ErrValidation) {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
 		slog.Error("oauth app enable failed", "client_id", clientID, "err", err)
 		os.Exit(1)
 	}
@@ -153,6 +165,10 @@ func oauthAppDisableCmd(args []string) {
 	clientID, store := oauthAppStoreWithClientID(args)
 	defer store.Close()
 	if err := store.SetOAuthClientEnabled(context.Background(), clientID, false); err != nil {
+		if errors.Is(err, common.ErrValidation) {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
 		slog.Error("oauth app disable failed", "client_id", clientID, "err", err)
 		os.Exit(1)
 	}
