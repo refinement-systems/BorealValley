@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
 
 ### Changed
+- admin dashboard shows no username — just 'Logged in.' (#16)
 - error pages are bare unstyled plain text (#12)
 - no persistent navigation — every page is an island (#14)
 - UX and usability review (#9)

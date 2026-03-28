@@ -317,6 +317,13 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID, _ := sessionUserIDFromContext(app, r)
+	username, _, err := app.store.GetUsernameByID(r.Context(), userID)
+	if err != nil {
+		renderError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+
 	repositories, err := app.store.ListRepositories(r.Context())
 	if err != nil {
 		renderError(w, http.StatusInternalServerError, "internal error")
@@ -329,9 +336,10 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	}
 
 	renderTemplate(w, homeTmpl, struct {
+		Username     string
 		Repositories []common.Repository
 		Counts       []common.ObjectTypeCount
-	}{Repositories: repositories, Counts: counts})
+	}{Username: username, Repositories: repositories, Counts: counts})
 }
 
 func parseForwardedFirst(v string) (proto, host string, ok bool) {
