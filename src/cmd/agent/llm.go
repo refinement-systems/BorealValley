@@ -29,6 +29,7 @@ type loopCallbacks struct {
 	OnToolCall      func(name, args string) error
 	OnToolResult    func(name, result string) error
 	OnAssistant     func(text string) error
+	OnPlanProposed  func(plan string) error
 	ApproveToolCall ToolApprovalFunc
 }
 
@@ -189,6 +190,13 @@ func runLMStudioTicketLoop(ctx context.Context, lmstudioURL, model, workspace, t
 					return "", err
 				}
 			}
+			if answer != "" && cbs.OnPlanProposed != nil {
+				for _, plan := range commonagent.ParseProposedPlans(answer) {
+					if err := cbs.OnPlanProposed(plan); err != nil {
+						return "", err
+					}
+				}
+			}
 			return answer, nil
 		}
 	}
@@ -196,6 +204,13 @@ func runLMStudioTicketLoop(ctx context.Context, lmstudioURL, model, workspace, t
 	if strings.TrimSpace(lastContent) != "" && cbs.OnAssistant != nil {
 		if err := cbs.OnAssistant(lastContent); err != nil {
 			return "", err
+		}
+	}
+	if strings.TrimSpace(lastContent) != "" && cbs.OnPlanProposed != nil {
+		for _, plan := range commonagent.ParseProposedPlans(lastContent) {
+			if err := cbs.OnPlanProposed(plan); err != nil {
+				return "", err
+			}
 		}
 	}
 	return strings.TrimSpace(lastContent), fmt.Errorf("stopped after %d round-trips (iteration limit)", maxIter)

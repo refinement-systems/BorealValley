@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - HIGH: Open redirect via backslash in return_to (FIXED) (#3)
 
 ### Added
+- agent: parse proposed_plan blocks from assistant output (#75)
 - agent: inject plan-mode behavioral constraints into system prompt (#74)
 - agent: block mutating tools when collaboration mode is plan (#73)
 - agent: add tool call approval gate to the LLM loop (#72)

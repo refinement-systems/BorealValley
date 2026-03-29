@@ -181,6 +181,9 @@ func processTicket(client *apiClient, cfg runConfig, state agentState, ticket co
 	}
 	if collabMode == CollabModePlan {
 		callbacks.ApproveToolCall = planModeApprovalFunc()
+		callbacks.OnPlanProposed = func(plan string) error {
+			return client.createTicketCommentUpdate(context.Background(), ticket.TrackerSlug, ticket.TicketSlug, ackComment.Slug, "proposed_plan:\n"+truncateForUpdate(plan, 4000))
+		}
 	}
 	answer, err := runLMStudioTicketLoop(context.Background(), state.LMStudioURL, state.Model, workspace.Path, envelope, cfg.MaxIter, collabMode, callbacks)
 	if err != nil {
