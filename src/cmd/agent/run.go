@@ -179,6 +179,9 @@ func processTicket(client *apiClient, cfg runConfig, state agentState, ticket co
 	if err != nil {
 		return fmt.Errorf("resolve collab mode: %w", err)
 	}
+	if collabMode == CollabModePlan {
+		callbacks.ApproveToolCall = planModeApprovalFunc()
+	}
 	answer, err := runLMStudioTicketLoop(context.Background(), state.LMStudioURL, state.Model, workspace.Path, envelope, cfg.MaxIter, collabMode, callbacks)
 	if err != nil {
 		_ = client.createTicketCommentUpdate(context.Background(), ticket.TrackerSlug, ticket.TicketSlug, ackComment.Slug, "agent_error: "+err.Error())

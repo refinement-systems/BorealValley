@@ -865,3 +865,63 @@ func TestRunAgentOnceMissingPijulIdentityPostsErrorUpdateAndSkipsCompletion(t *t
 		t.Fatalf("expected missing identity agent_error update, got %v", bv.updates)
 	}
 }
+
+func TestPlanModeBlocksWriteFile(t *testing.T) {
+	workspace := t.TempDir()
+	stubTicketWorkspaceLifecycle(t, nil)
+
+	bv := &fakeBVServer{
+		assigned: []common.AssignedTicket{{
+			ActorID:        "https://example.test/ticket-tracker/tracker-1/ticket/TCK-1",
+			TrackerSlug:    "tracker-1",
+			TicketSlug:     "TCK-1",
+			RepositorySlug: "repo-1",
+			Summary:        "plan task",
+			Content:        "analyse the code",
+			CreatedAt:      time.Now().UTC().Add(-time.Hour),
+			Priority:       5,
+		}},
+		tokenResponse:  oauthTokenResponse{AccessToken: "new-access", RefreshToken: "new-refresh", ExpiresIn: 3600},
+		profilePayload: profileState{UserID: 1, Username: "agent", ActorID: "https://example.test/users/agent", MainKeyID: "https://example.test/users/agent#main-key"},
+	}
+	bvServer := newHTTPServer(t, http.HandlerFunc(bv.handler))
+
+	lm := newHTTPServer(t, http.HandlerFunc(fakeLMStudioServer{
+		handler: twoRoundHandler(
+			toolCallsResponse("write_file", `{"path":"out.txt","content":"hello"}`),
+			nil,
+		),
+	}.serveHTTP))
+
+	statePath := writeAgentStateFile(t, agentState{
+		ServerURL:    bvServer.URL,
+		ClientID:     "client",
+		ClientSecret: "secret",
+		RedirectURI:  "http://127.0.0.1:8787/callback",
+		Model:        "m",
+		LMStudioURL:  lm.URL,
+		Token: oauthTokenState{
+			AccessToken:  "access",
+			RefreshToken: "refresh",
+			ExpiresAt:    time.Now().UTC().Add(30 * time.Minute),
+		},
+		Profile: profileState{UserID: 1, Username: "agent", ActorID: "https://example.test/users/agent", MainKeyID: "https://example.test/users/agent#main-key"},
+	})
+
+	if err := runAgentOnce(runConfig{StatePath: statePath, Workspace: workspace, MaxIter: 3, CollabMode: "plan"}); err != nil {
+		t.Fatalf("runAgentOnce: %v", err)
+	}
+
+	bv.mu.Lock()
+	defer bv.mu.Unlock()
+	ackSlug := bv.comments[0].Slug
+	updates := joinCommentUpdateContents(bv.updates, ackSlug)
+	if !strings.Contains(updates, "tool_blocked") {
+		t.Fatalf("expected tool_blocked in comment updates, got:\n%s", updates)
+	}
+
+	outPath := filepath.Join(workspace, "repo-1", "TCK-1", "out.txt")
+	if _, err := os.Stat(outPath); !os.IsNotExist(err) {
+		t.Fatalf("write_file should have been blocked; file exists at %s", outPath)
+	}
+}

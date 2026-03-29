@@ -45,3 +45,25 @@ func TestToolMutabilityMap_coverage(t *testing.T) {
 		}
 	}
 }
+
+func TestPlanModeApprovalFunc_blocksMutatingTool(t *testing.T) {
+	fn := planModeApprovalFunc()
+	approved, reason := fn("write_file", nil)
+	if approved {
+		t.Error("expected write_file to be blocked in plan mode")
+	}
+	want := "write_file is not permitted in plan mode"
+	if reason != want {
+		t.Errorf("reason = %q, want %q", reason, want)
+	}
+}
+
+func TestPlanModeApprovalFunc_allowsReadOnlyTool(t *testing.T) {
+	fn := planModeApprovalFunc()
+	for _, name := range []string{"read_file", "list_dir", "search_text"} {
+		approved, reason := fn(name, nil)
+		if !approved {
+			t.Errorf("%q should be allowed in plan mode, blocked with: %q", name, reason)
+		}
+	}
+}

@@ -35,3 +35,13 @@ func ToolIsMutating(name string) bool {
 	}
 	return m == ToolMutating
 }
+
+// planModeApprovalFunc returns a ToolApprovalFunc that blocks all mutating tools.
+func planModeApprovalFunc() ToolApprovalFunc {
+	return func(toolName string, _ map[string]string) (bool, string) {
+		if ToolIsMutating(toolName) {
+			return false, toolName + " is not permitted in plan mode"
+		}
+		return true, ""
+	}
+}
