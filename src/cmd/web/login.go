@@ -35,7 +35,7 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 		password := r.PostForm.Get("password")
 		returnTo := sanitizeReturnTo(r.PostForm.Get("return_to"))
 
-		if app.loginRateLimiter != nil && !app.loginRateLimiter.Allow(username) {
+		if !app.loginRateLimiter.Allow(username) {
 			w.Header().Set("Retry-After", "60")
 			http.Error(w, "too many login attempts, try again later", http.StatusTooManyRequests)
 			return
@@ -54,9 +54,7 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if app.loginRateLimiter != nil {
-			app.loginRateLimiter.Reset(username)
-		}
+		app.loginRateLimiter.Reset(username)
 
 		if err := app.sessionManager.RenewToken(r.Context()); err != nil {
 			http.Error(w, "internal error", http.StatusInternalServerError)
