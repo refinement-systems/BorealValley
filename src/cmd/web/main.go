@@ -33,9 +33,6 @@ import (
 	commonoauth "github.com/refinement-systems/BorealValley/src/internal/common/oauth"
 )
 
-var homeTmpl = parseWithLayout(assets.HtmlHome)
-var loginTmpl = template.Must(template.New("login").Parse(assets.HtmlLogin))
-
 type application struct {
 	store            *common.Store
 	oauth            *commonoauth.Runtime
@@ -43,6 +40,10 @@ type application struct {
 	repoRoot         string
 	repoPathMapper   *repoPathMapper
 	loginRateLimiter *loginRateLimiter
+	templates        struct {
+		home  *template.Template
+		login *template.Template
+	}
 }
 
 const (
@@ -121,6 +122,8 @@ func newHandler(rootDir string, pgDSN string, isDev bool) (http.Handler, *common
 	}
 
 	app := &application{store: store, oauth: oauthRuntime, sessionManager: sm, repoRoot: repoRoot, repoPathMapper: repoPathMapper, loginRateLimiter: newLoginRateLimiter(10, 15*time.Minute)}
+	app.templates.home = parseWithLayout(assets.HtmlHome)
+	app.templates.login = template.Must(template.New("login").Parse(assets.HtmlLogin))
 	mux := http.NewServeMux()
 	registerRoutes(mux, app)
 
@@ -338,7 +341,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	renderTemplate(w, homeTmpl, struct {
+	renderTemplate(w, app.templates.home, struct {
 		Username     string
 		Repositories []common.Repository
 		Counts       []common.ObjectTypeCount

@@ -21,7 +21,7 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		returnTo := sanitizeReturnTo(r.URL.Query().Get("return_to"))
-		renderTemplate(w, loginTmpl, struct {
+		renderTemplate(w, app.templates.login, struct {
 			Err      string
 			ReturnTo string
 		}{Err: "", ReturnTo: returnTo})
@@ -47,7 +47,7 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if !ok {
-			renderTemplate(w, loginTmpl, struct {
+			renderTemplate(w, app.templates.login, struct {
 				Err      string
 				ReturnTo string
 			}{Err: "Invalid credentials", ReturnTo: returnTo})
