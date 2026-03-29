@@ -456,16 +456,6 @@ func (app *application) renderRepoPageBySlug(w http.ResponseWriter, r *http.Requ
 				break
 			}
 		}
-		if assigned == nil {
-			tracker, found, err := app.store.GetTicketTrackerBySlug(r.Context(), repo.TicketTrackerSlug)
-			if err != nil {
-				renderError(w, http.StatusInternalServerError, "internal error")
-				return
-			}
-			if found {
-				assigned = &tracker
-			}
-		}
 	}
 
 	renderTemplate(w, dataRepoTmpl, dataRepoData{

@@ -27,6 +27,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
 
 ### Changed
+- remove dead fallback DB query in renderRepoPageBySlug (#62)
+- remove dead fallback DB query in renderRepoPageBySlug (#69)
 - Architecture QA review report (#47)
 - Extract domain-bounded sub-stores from Store god object (#49)
 - Standardize error response format between web and API endpoints (#55)
