@@ -240,7 +240,7 @@ func upsertObjectTx(ctx context.Context, tx *sql.Tx, id, objectType string, rawO
 		return "", fmt.Errorf("disallowed table name: %q", table)
 	}
 
-	query := fmt.Sprintf(`INSERT INTO %s (primary_key, body, created_at, updated_at)
+	query := fmt.Sprintf(`INSERT INTO "%s" (primary_key, body, created_at, updated_at)
         VALUES ($1, $2::jsonb, now(), now())
         ON CONFLICT (primary_key)
         DO UPDATE SET
