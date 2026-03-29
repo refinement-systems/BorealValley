@@ -105,7 +105,7 @@ func (s *Store) StoreObjectJSON(ctx context.Context, raw []byte) (objectID strin
 		return "", "", "", err
 	}
 
-	tx, err := s.db.BeginTx(ctx, nil)
+	tx, err := s.UserStore.db.BeginTx(ctx, nil)
 	if err != nil {
 		return "", "", "", err
 	}

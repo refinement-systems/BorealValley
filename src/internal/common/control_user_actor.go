@@ -16,9 +16,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"database/sql"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 )
@@ -159,73 +157,7 @@ func base58EncodeRaw(input []byte) string {
 
 const base58Alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
-func (s *Store) GetUsernameByID(ctx context.Context, userID int64) (string, bool, error) {
-	var username string
-	err := s.db.QueryRowContext(ctx,
-		`SELECT username FROM users WHERE id = $1`,
-		userID,
-	).Scan(&username)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return "", false, nil
-		}
-		return "", false, err
-	}
-	return username, true, nil
-}
-
 type UserProfileRecord struct {
 	IsAdmin   bool
 	CreatedAt time.Time
-}
-
-func (s *Store) GetUserProfileByID(ctx context.Context, userID int64) (UserProfileRecord, bool, error) {
-	var r UserProfileRecord
-	err := s.db.QueryRowContext(ctx,
-		`SELECT is_admin, created_at FROM users WHERE id = $1`,
-		userID,
-	).Scan(&r.IsAdmin, &r.CreatedAt)
-	if errors.Is(err, sql.ErrNoRows) {
-		return r, false, nil
-	}
-	if err != nil {
-		return r, false, err
-	}
-	return r, true, nil
-}
-
-func (s *Store) GetUserActorByUsername(ctx context.Context, username string) (UserActorRecord, bool, error) {
-	username = strings.TrimSpace(username)
-	if username == "" {
-		return UserActorRecord{}, false, nil
-	}
-
-	var record UserActorRecord
-	var actorRaw []byte
-	err := s.db.QueryRowContext(ctx,
-		`SELECT u.id, u.username, i.actor_id, i.main_key_id, p.body
-	       FROM users u
-	       JOIN user_actor_identity i ON i.user_id = u.id
-	       JOIN as_person p ON p.primary_key = i.actor_id
-	      WHERE u.username = $1`,
-		username,
-	).Scan(&record.UserID, &record.Username, &record.ActorID, &record.MainKeyID, &actorRaw)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return UserActorRecord{}, false, nil
-		}
-		return UserActorRecord{}, false, err
-	}
-
-	// Force canonical JSON formatting for deterministic responses.
-	var obj map[string]any
-	if err := json.Unmarshal(actorRaw, &obj); err != nil {
-		return UserActorRecord{}, false, fmt.Errorf("invalid stored actor json: %w", err)
-	}
-	raw, err := json.Marshal(obj)
-	if err != nil {
-		return UserActorRecord{}, false, err
-	}
-	record.ActorJSON = raw
-	return record, true, nil
 }

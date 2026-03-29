@@ -1,7 +1,7 @@
 // Permission to use, copy, modify, and/or distribute this software for
 // any purpose with or without fee is hereby granted.
 //
-// THE SOFTWARE IS PROVIDED “AS IS” AND THE AUTHOR DISCLAIMS ALL
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
 // WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
 // OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE
 // FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY
@@ -204,280 +204,6 @@ func normalizeRedirectURIs(uris []string) ([]string, error) {
 	return out, nil
 }
 
-func (s *Store) CreateOAuthClient(ctx context.Context, name, description string, redirectURIs, allowedScopes []string) (OAuthClientSecretRecord, error) {
-	name = strings.TrimSpace(name)
-	description = strings.TrimSpace(description)
-	if name == "" {
-		return OAuthClientSecretRecord{}, fmt.Errorf("%w: name is required", ErrValidation)
-	}
-	redirectURIs, err := normalizeRedirectURIs(redirectURIs)
-	if err != nil {
-		return OAuthClientSecretRecord{}, err
-	}
-	allowedScopes, err = NormalizeOAuthScopes(allowedScopes)
-	if err != nil {
-		return OAuthClientSecretRecord{}, err
-	}
-
-	clientID, clientSecret, err := generateOAuthClientCredentials()
-	if err != nil {
-		return OAuthClientSecretRecord{}, err
-	}
-	secretHash, err := bcrypt.GenerateFromPassword([]byte(clientSecret), bcrypt.DefaultCost)
-	if err != nil {
-		return OAuthClientSecretRecord{}, err
-	}
-
-	redirectRaw, err := json.Marshal(redirectURIs)
-	if err != nil {
-		return OAuthClientSecretRecord{}, err
-	}
-	scopesRaw, err := json.Marshal(allowedScopes)
-	if err != nil {
-		return OAuthClientSecretRecord{}, err
-	}
-
-	err = withTx(s.db, ctx, func(tx *sql.Tx) error {
-		if _, err := tx.ExecContext(ctx,
-			`INSERT INTO oauth_client (client_id, name, description, redirect_uris, allowed_scopes, enabled, created_at, updated_at)
-		         VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, TRUE, now(), now())`,
-			clientID, name, description, string(redirectRaw), string(scopesRaw),
-		); err != nil {
-			return err
-		}
-		if _, err := tx.ExecContext(ctx,
-			`INSERT INTO oauth_client_secret (client_id, secret_hash, created_at, updated_at)
-		         VALUES ($1, $2, now(), now())`,
-			clientID, string(secretHash),
-		); err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return OAuthClientSecretRecord{}, err
-	}
-
-	now := time.Now().UTC()
-	return OAuthClientSecretRecord{
-		OAuthClientRecord: OAuthClientRecord{
-			ClientID:      clientID,
-			Name:          name,
-			Description:   description,
-			RedirectURIs:  redirectURIs,
-			AllowedScopes: allowedScopes,
-			Enabled:       true,
-			CreatedAt:     now,
-			UpdatedAt:     now,
-		},
-		ClientSecret: clientSecret,
-	}, nil
-}
-
-func (s *Store) RotateOAuthClientSecret(ctx context.Context, clientID string) (string, error) {
-	clientID = strings.TrimSpace(clientID)
-	if clientID == "" {
-		return "", fmt.Errorf("%w: client id is required", ErrValidation)
-	}
-
-	clientSecret, err := randomOAuthToken(48)
-	if err != nil {
-		return "", err
-	}
-	hash, err := bcrypt.GenerateFromPassword([]byte(clientSecret), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
-
-	res, err := s.db.ExecContext(ctx,
-		`UPDATE oauth_client_secret
-		    SET secret_hash = $2,
-		        updated_at = now()
-		  WHERE client_id = $1`,
-		clientID,
-		string(hash),
-	)
-	if err != nil {
-		return "", err
-	}
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return "", err
-	}
-	if rows == 0 {
-		return "", fmt.Errorf("%w: oauth client not found", ErrValidation)
-	}
-	return clientSecret, nil
-}
-
-func (s *Store) SetOAuthClientEnabled(ctx context.Context, clientID string, enabled bool) error {
-	clientID = strings.TrimSpace(clientID)
-	if clientID == "" {
-		return fmt.Errorf("%w: client id is required", ErrValidation)
-	}
-	return withTx(s.db, ctx, func(tx *sql.Tx) error {
-		res, err := tx.ExecContext(ctx,
-			`UPDATE oauth_client
-			    SET enabled = $2,
-			        updated_at = now()
-			  WHERE client_id = $1`,
-			clientID,
-			enabled,
-		)
-		if err != nil {
-			return err
-		}
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return err
-		}
-		if rows == 0 {
-			return fmt.Errorf("%w: oauth client not found", ErrValidation)
-		}
-		if !enabled {
-			if _, err := tx.ExecContext(ctx,
-				`UPDATE oauth_consent_grant
-				    SET revoked_at = COALESCE(revoked_at, now()),
-				        updated_at = now()
-				  WHERE client_id = $1`,
-				clientID,
-			); err != nil {
-				return err
-			}
-			if _, err := tx.ExecContext(ctx,
-				`UPDATE oauth_authorization_code
-				    SET active = FALSE,
-				        consumed_at = COALESCE(consumed_at, now())
-				  WHERE client_id = $1`,
-				clientID,
-			); err != nil {
-				return err
-			}
-			if _, err := tx.ExecContext(ctx,
-				`UPDATE oauth_access_token
-				    SET revoked_at = COALESCE(revoked_at, now())
-				  WHERE client_id = $1`,
-				clientID,
-			); err != nil {
-				return err
-			}
-			if _, err := tx.ExecContext(ctx,
-				`UPDATE oauth_refresh_token
-				    SET active = FALSE,
-				        revoked_at = COALESCE(revoked_at, now()),
-				        used_at = COALESCE(used_at, now())
-				  WHERE client_id = $1`,
-				clientID,
-			); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-}
-
-func (s *Store) ListOAuthClients(ctx context.Context) ([]OAuthClientRecord, error) {
-	rows, err := s.db.QueryContext(ctx,
-		`SELECT client_id,
-		        name,
-		        description,
-		        redirect_uris,
-		        allowed_scopes,
-		        enabled,
-		        created_at,
-		        updated_at
-		   FROM oauth_client
-		  ORDER BY created_at, client_id`,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	out := []OAuthClientRecord{}
-	for rows.Next() {
-		var (
-			rec         OAuthClientRecord
-			redirectRaw []byte
-			scopesRaw   []byte
-		)
-		if err := rows.Scan(
-			&rec.ClientID,
-			&rec.Name,
-			&rec.Description,
-			&redirectRaw,
-			&scopesRaw,
-			&rec.Enabled,
-			&rec.CreatedAt,
-			&rec.UpdatedAt,
-		); err != nil {
-			return nil, err
-		}
-		rec.RedirectURIs, err = decodeStringSliceJSON(redirectRaw)
-		if err != nil {
-			return nil, err
-		}
-		rec.AllowedScopes, err = decodeStringSliceJSON(scopesRaw)
-		if err != nil {
-			return nil, err
-		}
-		out = append(out, rec)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (s *Store) GetOAuthClient(ctx context.Context, clientID string) (OAuthClientRecord, bool, error) {
-	clientID = strings.TrimSpace(clientID)
-	if clientID == "" {
-		return OAuthClientRecord{}, false, nil
-	}
-	var (
-		rec         OAuthClientRecord
-		redirectRaw []byte
-		scopesRaw   []byte
-	)
-	err := s.db.QueryRowContext(ctx,
-		`SELECT client_id,
-		        name,
-		        description,
-		        redirect_uris,
-		        allowed_scopes,
-		        enabled,
-		        created_at,
-		        updated_at
-		   FROM oauth_client
-		  WHERE client_id = $1`,
-		clientID,
-	).Scan(
-		&rec.ClientID,
-		&rec.Name,
-		&rec.Description,
-		&redirectRaw,
-		&scopesRaw,
-		&rec.Enabled,
-		&rec.CreatedAt,
-		&rec.UpdatedAt,
-	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return OAuthClientRecord{}, false, nil
-		}
-		return OAuthClientRecord{}, false, err
-	}
-	rec.RedirectURIs, err = decodeStringSliceJSON(redirectRaw)
-	if err != nil {
-		return OAuthClientRecord{}, false, err
-	}
-	rec.AllowedScopes, err = decodeStringSliceJSON(scopesRaw)
-	if err != nil {
-		return OAuthClientRecord{}, false, err
-	}
-	return rec, true, nil
-}
-
 func generateOAuthClientCredentials() (clientID string, clientSecret string, err error) {
 	idPart, err := randomOAuthToken(18)
 	if err != nil {
@@ -601,7 +327,408 @@ func cloneURLValues(in url.Values) url.Values {
 	return out
 }
 
-func (s *Store) requesterFromSnapshot(ctx context.Context, snap oauthStoredRequest, allowDisabled bool) (fosite.Requester, error) {
+func userIDFromRequester(req fosite.Requester) (int64, bool) {
+	session := req.GetSession()
+	if session == nil {
+		return 0, false
+	}
+	sub := strings.TrimSpace(session.GetSubject())
+	if sub == "" {
+		return 0, false
+	}
+	id, err := strconv.ParseInt(sub, 10, 64)
+	if err != nil {
+		return 0, false
+	}
+	return id, true
+}
+
+func grantIDFromRequester(req fosite.Requester) string {
+	session := req.GetSession()
+	ds, ok := session.(*fosite.DefaultSession)
+	if !ok || ds == nil || ds.Extra == nil {
+		return ""
+	}
+	raw, ok := ds.Extra["grant_id"]
+	if !ok {
+		return ""
+	}
+	s, ok := raw.(string)
+	if !ok {
+		return ""
+	}
+	return strings.TrimSpace(s)
+}
+
+func refreshFamilyIDFromRequester(req fosite.Requester) string {
+	session := req.GetSession()
+	ds, ok := session.(*fosite.DefaultSession)
+	if !ok || ds == nil || ds.Extra == nil {
+		return ""
+	}
+	raw, ok := ds.Extra["refresh_family_id"]
+	if !ok {
+		return ""
+	}
+	s, ok := raw.(string)
+	if !ok {
+		return ""
+	}
+	return strings.TrimSpace(s)
+}
+
+func defaultTokenExpiry(req fosite.Requester, tokenType fosite.TokenType, fallback time.Duration) time.Time {
+	if req.GetSession() != nil {
+		exp := req.GetSession().GetExpiresAt(tokenType)
+		if !exp.IsZero() {
+			return exp.UTC()
+		}
+	}
+	return req.GetRequestedAt().UTC().Add(fallback)
+}
+
+func isSubset(subset []string, superset []string) bool {
+	if len(subset) == 0 {
+		return true
+	}
+	m := map[string]struct{}{}
+	for _, item := range superset {
+		m[item] = struct{}{}
+	}
+	for _, item := range subset {
+		if _, ok := m[item]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// OAuthStore owns all OAuth2 client and token queries.
+type OAuthStore struct {
+	db *sql.DB
+}
+
+func (s *OAuthStore) CreateOAuthClient(ctx context.Context, name, description string, redirectURIs, allowedScopes []string) (OAuthClientSecretRecord, error) {
+	name = strings.TrimSpace(name)
+	description = strings.TrimSpace(description)
+	if name == "" {
+		return OAuthClientSecretRecord{}, fmt.Errorf("%w: name is required", ErrValidation)
+	}
+	redirectURIs, err := normalizeRedirectURIs(redirectURIs)
+	if err != nil {
+		return OAuthClientSecretRecord{}, err
+	}
+	allowedScopes, err = NormalizeOAuthScopes(allowedScopes)
+	if err != nil {
+		return OAuthClientSecretRecord{}, err
+	}
+
+	clientID, clientSecret, err := generateOAuthClientCredentials()
+	if err != nil {
+		return OAuthClientSecretRecord{}, err
+	}
+	secretHash, err := bcrypt.GenerateFromPassword([]byte(clientSecret), bcrypt.DefaultCost)
+	if err != nil {
+		return OAuthClientSecretRecord{}, err
+	}
+
+	redirectRaw, err := json.Marshal(redirectURIs)
+	if err != nil {
+		return OAuthClientSecretRecord{}, err
+	}
+	scopesRaw, err := json.Marshal(allowedScopes)
+	if err != nil {
+		return OAuthClientSecretRecord{}, err
+	}
+
+	err = withTx(s.db, ctx, func(tx *sql.Tx) error {
+		if _, err := tx.ExecContext(ctx,
+			`INSERT INTO oauth_client (client_id, name, description, redirect_uris, allowed_scopes, enabled, created_at, updated_at)
+		         VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, TRUE, now(), now())`,
+			clientID, name, description, string(redirectRaw), string(scopesRaw),
+		); err != nil {
+			return err
+		}
+		if _, err := tx.ExecContext(ctx,
+			`INSERT INTO oauth_client_secret (client_id, secret_hash, created_at, updated_at)
+		         VALUES ($1, $2, now(), now())`,
+			clientID, string(secretHash),
+		); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return OAuthClientSecretRecord{}, err
+	}
+
+	now := time.Now().UTC()
+	return OAuthClientSecretRecord{
+		OAuthClientRecord: OAuthClientRecord{
+			ClientID:      clientID,
+			Name:          name,
+			Description:   description,
+			RedirectURIs:  redirectURIs,
+			AllowedScopes: allowedScopes,
+			Enabled:       true,
+			CreatedAt:     now,
+			UpdatedAt:     now,
+		},
+		ClientSecret: clientSecret,
+	}, nil
+}
+
+func (s *OAuthStore) RotateOAuthClientSecret(ctx context.Context, clientID string) (string, error) {
+	clientID = strings.TrimSpace(clientID)
+	if clientID == "" {
+		return "", fmt.Errorf("%w: client id is required", ErrValidation)
+	}
+
+	clientSecret, err := randomOAuthToken(48)
+	if err != nil {
+		return "", err
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(clientSecret), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+
+	res, err := s.db.ExecContext(ctx,
+		`UPDATE oauth_client_secret
+		    SET secret_hash = $2,
+		        updated_at = now()
+		  WHERE client_id = $1`,
+		clientID,
+		string(hash),
+	)
+	if err != nil {
+		return "", err
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return "", err
+	}
+	if rows == 0 {
+		return "", fmt.Errorf("%w: oauth client not found", ErrValidation)
+	}
+	return clientSecret, nil
+}
+
+func (s *OAuthStore) SetOAuthClientEnabled(ctx context.Context, clientID string, enabled bool) error {
+	clientID = strings.TrimSpace(clientID)
+	if clientID == "" {
+		return fmt.Errorf("%w: client id is required", ErrValidation)
+	}
+	return withTx(s.db, ctx, func(tx *sql.Tx) error {
+		res, err := tx.ExecContext(ctx,
+			`UPDATE oauth_client
+			    SET enabled = $2,
+			        updated_at = now()
+			  WHERE client_id = $1`,
+			clientID,
+			enabled,
+		)
+		if err != nil {
+			return err
+		}
+		rows, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if rows == 0 {
+			return fmt.Errorf("%w: oauth client not found", ErrValidation)
+		}
+		if !enabled {
+			if _, err := tx.ExecContext(ctx,
+				`UPDATE oauth_consent_grant
+				    SET revoked_at = COALESCE(revoked_at, now()),
+				        updated_at = now()
+				  WHERE client_id = $1`,
+				clientID,
+			); err != nil {
+				return err
+			}
+			if _, err := tx.ExecContext(ctx,
+				`UPDATE oauth_authorization_code
+				    SET active = FALSE,
+				        consumed_at = COALESCE(consumed_at, now())
+				  WHERE client_id = $1`,
+				clientID,
+			); err != nil {
+				return err
+			}
+			if _, err := tx.ExecContext(ctx,
+				`UPDATE oauth_access_token
+				    SET revoked_at = COALESCE(revoked_at, now())
+				  WHERE client_id = $1`,
+				clientID,
+			); err != nil {
+				return err
+			}
+			if _, err := tx.ExecContext(ctx,
+				`UPDATE oauth_refresh_token
+				    SET active = FALSE,
+				        revoked_at = COALESCE(revoked_at, now()),
+				        used_at = COALESCE(used_at, now())
+				  WHERE client_id = $1`,
+				clientID,
+			); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func (s *OAuthStore) ListOAuthClients(ctx context.Context) ([]OAuthClientRecord, error) {
+	rows, err := s.db.QueryContext(ctx,
+		`SELECT client_id,
+		        name,
+		        description,
+		        redirect_uris,
+		        allowed_scopes,
+		        enabled,
+		        created_at,
+		        updated_at
+		   FROM oauth_client
+		  ORDER BY created_at, client_id`,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := []OAuthClientRecord{}
+	for rows.Next() {
+		var (
+			rec         OAuthClientRecord
+			redirectRaw []byte
+			scopesRaw   []byte
+		)
+		if err := rows.Scan(
+			&rec.ClientID,
+			&rec.Name,
+			&rec.Description,
+			&redirectRaw,
+			&scopesRaw,
+			&rec.Enabled,
+			&rec.CreatedAt,
+			&rec.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		rec.RedirectURIs, err = decodeStringSliceJSON(redirectRaw)
+		if err != nil {
+			return nil, err
+		}
+		rec.AllowedScopes, err = decodeStringSliceJSON(scopesRaw)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, rec)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (s *OAuthStore) GetOAuthClient(ctx context.Context, clientID string) (OAuthClientRecord, bool, error) {
+	clientID = strings.TrimSpace(clientID)
+	if clientID == "" {
+		return OAuthClientRecord{}, false, nil
+	}
+	var (
+		rec         OAuthClientRecord
+		redirectRaw []byte
+		scopesRaw   []byte
+	)
+	err := s.db.QueryRowContext(ctx,
+		`SELECT client_id,
+		        name,
+		        description,
+		        redirect_uris,
+		        allowed_scopes,
+		        enabled,
+		        created_at,
+		        updated_at
+		   FROM oauth_client
+		  WHERE client_id = $1`,
+		clientID,
+	).Scan(
+		&rec.ClientID,
+		&rec.Name,
+		&rec.Description,
+		&redirectRaw,
+		&scopesRaw,
+		&rec.Enabled,
+		&rec.CreatedAt,
+		&rec.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return OAuthClientRecord{}, false, nil
+		}
+		return OAuthClientRecord{}, false, err
+	}
+	rec.RedirectURIs, err = decodeStringSliceJSON(redirectRaw)
+	if err != nil {
+		return OAuthClientRecord{}, false, err
+	}
+	rec.AllowedScopes, err = decodeStringSliceJSON(scopesRaw)
+	if err != nil {
+		return OAuthClientRecord{}, false, err
+	}
+	return rec, true, nil
+}
+
+func (s *OAuthStore) getOAuthClientForFosite(ctx context.Context, id string, allowDisabled bool) (*fosite.DefaultClient, error) {
+	id = strings.TrimSpace(id)
+	if id == "" {
+		return nil, fosite.ErrNotFound
+	}
+	var (
+		secretHash  string
+		redirectRaw []byte
+		scopesRaw   []byte
+		enabled     bool
+	)
+	err := s.db.QueryRowContext(ctx,
+		`SELECT c.enabled, c.redirect_uris, c.allowed_scopes, cs.secret_hash
+		   FROM oauth_client c
+		   JOIN oauth_client_secret cs ON cs.client_id = c.client_id
+		  WHERE c.client_id = $1`,
+		id,
+	).Scan(&enabled, &redirectRaw, &scopesRaw, &secretHash)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fosite.ErrNotFound
+		}
+		return nil, err
+	}
+	if !allowDisabled && !enabled {
+		return nil, fosite.ErrNotFound
+	}
+	redirectURIs, err := decodeStringSliceJSON(redirectRaw)
+	if err != nil {
+		return nil, err
+	}
+	scopes, err := decodeStringSliceJSON(scopesRaw)
+	if err != nil {
+		return nil, err
+	}
+	return &fosite.DefaultClient{
+		ID:            id,
+		Secret:        []byte(secretHash),
+		RedirectURIs:  redirectURIs,
+		GrantTypes:    []string{string(fosite.GrantTypeAuthorizationCode), string(fosite.GrantTypeRefreshToken)},
+		ResponseTypes: []string{"code"},
+		Scopes:        scopes,
+		Public:        false,
+	}, nil
+}
+
+func (s *OAuthStore) requesterFromSnapshot(ctx context.Context, snap oauthStoredRequest, allowDisabled bool) (fosite.Requester, error) {
 	client, err := s.getOAuthClientForFosite(ctx, snap.ClientID, allowDisabled)
 	if err != nil {
 		return nil, err
@@ -671,117 +798,11 @@ func (s *Store) requesterFromSnapshot(ctx context.Context, snap oauthStoredReque
 	}
 }
 
-func userIDFromRequester(req fosite.Requester) (int64, bool) {
-	session := req.GetSession()
-	if session == nil {
-		return 0, false
-	}
-	sub := strings.TrimSpace(session.GetSubject())
-	if sub == "" {
-		return 0, false
-	}
-	id, err := strconv.ParseInt(sub, 10, 64)
-	if err != nil {
-		return 0, false
-	}
-	return id, true
-}
-
-func grantIDFromRequester(req fosite.Requester) string {
-	session := req.GetSession()
-	ds, ok := session.(*fosite.DefaultSession)
-	if !ok || ds == nil || ds.Extra == nil {
-		return ""
-	}
-	raw, ok := ds.Extra["grant_id"]
-	if !ok {
-		return ""
-	}
-	s, ok := raw.(string)
-	if !ok {
-		return ""
-	}
-	return strings.TrimSpace(s)
-}
-
-func refreshFamilyIDFromRequester(req fosite.Requester) string {
-	session := req.GetSession()
-	ds, ok := session.(*fosite.DefaultSession)
-	if !ok || ds == nil || ds.Extra == nil {
-		return ""
-	}
-	raw, ok := ds.Extra["refresh_family_id"]
-	if !ok {
-		return ""
-	}
-	s, ok := raw.(string)
-	if !ok {
-		return ""
-	}
-	return strings.TrimSpace(s)
-}
-
-func defaultTokenExpiry(req fosite.Requester, tokenType fosite.TokenType, fallback time.Duration) time.Time {
-	if req.GetSession() != nil {
-		exp := req.GetSession().GetExpiresAt(tokenType)
-		if !exp.IsZero() {
-			return exp.UTC()
-		}
-	}
-	return req.GetRequestedAt().UTC().Add(fallback)
-}
-
-func (s *Store) getOAuthClientForFosite(ctx context.Context, id string, allowDisabled bool) (*fosite.DefaultClient, error) {
-	id = strings.TrimSpace(id)
-	if id == "" {
-		return nil, fosite.ErrNotFound
-	}
-	var (
-		secretHash  string
-		redirectRaw []byte
-		scopesRaw   []byte
-		enabled     bool
-	)
-	err := s.db.QueryRowContext(ctx,
-		`SELECT c.enabled, c.redirect_uris, c.allowed_scopes, cs.secret_hash
-		   FROM oauth_client c
-		   JOIN oauth_client_secret cs ON cs.client_id = c.client_id
-		  WHERE c.client_id = $1`,
-		id,
-	).Scan(&enabled, &redirectRaw, &scopesRaw, &secretHash)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fosite.ErrNotFound
-		}
-		return nil, err
-	}
-	if !allowDisabled && !enabled {
-		return nil, fosite.ErrNotFound
-	}
-	redirectURIs, err := decodeStringSliceJSON(redirectRaw)
-	if err != nil {
-		return nil, err
-	}
-	scopes, err := decodeStringSliceJSON(scopesRaw)
-	if err != nil {
-		return nil, err
-	}
-	return &fosite.DefaultClient{
-		ID:            id,
-		Secret:        []byte(secretHash),
-		RedirectURIs:  redirectURIs,
-		GrantTypes:    []string{string(fosite.GrantTypeAuthorizationCode), string(fosite.GrantTypeRefreshToken)},
-		ResponseTypes: []string{"code"},
-		Scopes:        scopes,
-		Public:        false,
-	}, nil
-}
-
-func (s *Store) GetClient(ctx context.Context, id string) (fosite.Client, error) {
+func (s *OAuthStore) GetClient(ctx context.Context, id string) (fosite.Client, error) {
 	return s.getOAuthClientForFosite(ctx, id, false)
 }
 
-func (s *Store) ClientAssertionJWTValid(ctx context.Context, jti string) error {
+func (s *OAuthStore) ClientAssertionJWTValid(ctx context.Context, jti string) error {
 	jti = strings.TrimSpace(jti)
 	if jti == "" {
 		return fosite.ErrNotFound
@@ -804,7 +825,7 @@ func (s *Store) ClientAssertionJWTValid(ctx context.Context, jti string) error {
 	return fosite.ErrJTIKnown
 }
 
-func (s *Store) SetClientAssertionJWT(ctx context.Context, jti string, exp time.Time) error {
+func (s *OAuthStore) SetClientAssertionJWT(ctx context.Context, jti string, exp time.Time) error {
 	jti = strings.TrimSpace(jti)
 	if jti == "" {
 		return fosite.ErrNotFound
@@ -833,7 +854,7 @@ func (s *Store) SetClientAssertionJWT(ctx context.Context, jti string, exp time.
 	return nil
 }
 
-func (s *Store) CreateAuthorizeCodeSession(ctx context.Context, code string, request fosite.Requester) error {
+func (s *OAuthStore) CreateAuthorizeCodeSession(ctx context.Context, code string, request fosite.Requester) error {
 	snap, err := snapshotRequester(request)
 	if err != nil {
 		return err
@@ -877,7 +898,7 @@ func (s *Store) CreateAuthorizeCodeSession(ctx context.Context, code string, req
 	return err
 }
 
-func (s *Store) GetAuthorizeCodeSession(ctx context.Context, code string, session fosite.Session) (fosite.Requester, error) {
+func (s *OAuthStore) GetAuthorizeCodeSession(ctx context.Context, code string, session fosite.Session) (fosite.Requester, error) {
 	var (
 		requestRaw []byte
 		active     bool
@@ -908,7 +929,7 @@ func (s *Store) GetAuthorizeCodeSession(ctx context.Context, code string, sessio
 	return req, nil
 }
 
-func (s *Store) InvalidateAuthorizeCodeSession(ctx context.Context, code string) error {
+func (s *OAuthStore) InvalidateAuthorizeCodeSession(ctx context.Context, code string) error {
 	res, err := s.db.ExecContext(ctx,
 		`UPDATE oauth_authorization_code
 		    SET active = FALSE,
@@ -929,7 +950,7 @@ func (s *Store) InvalidateAuthorizeCodeSession(ctx context.Context, code string)
 	return nil
 }
 
-func (s *Store) CreatePKCERequestSession(ctx context.Context, signature string, requester fosite.Requester) error {
+func (s *OAuthStore) CreatePKCERequestSession(ctx context.Context, signature string, requester fosite.Requester) error {
 	snap, err := snapshotRequester(requester)
 	if err != nil {
 		return err
@@ -949,7 +970,7 @@ func (s *Store) CreatePKCERequestSession(ctx context.Context, signature string, 
 	return err
 }
 
-func (s *Store) GetPKCERequestSession(ctx context.Context, signature string, session fosite.Session) (fosite.Requester, error) {
+func (s *OAuthStore) GetPKCERequestSession(ctx context.Context, signature string, session fosite.Session) (fosite.Requester, error) {
 	var requestRaw []byte
 	err := s.db.QueryRowContext(ctx,
 		`SELECT request_json FROM oauth_pkce_request WHERE signature = $1`,
@@ -968,12 +989,12 @@ func (s *Store) GetPKCERequestSession(ctx context.Context, signature string, ses
 	return s.requesterFromSnapshot(ctx, snap, true)
 }
 
-func (s *Store) DeletePKCERequestSession(ctx context.Context, signature string) error {
+func (s *OAuthStore) DeletePKCERequestSession(ctx context.Context, signature string) error {
 	_, err := s.db.ExecContext(ctx, `DELETE FROM oauth_pkce_request WHERE signature = $1`, signature)
 	return err
 }
 
-func (s *Store) CreateAccessTokenSession(ctx context.Context, signature string, requester fosite.Requester) error {
+func (s *OAuthStore) CreateAccessTokenSession(ctx context.Context, signature string, requester fosite.Requester) error {
 	snap, err := snapshotRequester(requester)
 	if err != nil {
 		return err
@@ -1015,7 +1036,7 @@ func (s *Store) CreateAccessTokenSession(ctx context.Context, signature string, 
 	return err
 }
 
-func (s *Store) GetAccessTokenSession(ctx context.Context, signature string, session fosite.Session) (fosite.Requester, error) {
+func (s *OAuthStore) GetAccessTokenSession(ctx context.Context, signature string, session fosite.Session) (fosite.Requester, error) {
 	var requestRaw []byte
 	err := s.db.QueryRowContext(ctx,
 		`SELECT request_json
@@ -1037,7 +1058,7 @@ func (s *Store) GetAccessTokenSession(ctx context.Context, signature string, ses
 	return s.requesterFromSnapshot(ctx, snap, true)
 }
 
-func (s *Store) DeleteAccessTokenSession(ctx context.Context, signature string) error {
+func (s *OAuthStore) DeleteAccessTokenSession(ctx context.Context, signature string) error {
 	_, err := s.db.ExecContext(ctx,
 		`UPDATE oauth_access_token
 		    SET revoked_at = COALESCE(revoked_at, now())
@@ -1047,7 +1068,7 @@ func (s *Store) DeleteAccessTokenSession(ctx context.Context, signature string) 
 	return err
 }
 
-func (s *Store) CreateRefreshTokenSession(ctx context.Context, signature string, accessSignature string, requester fosite.Requester) error {
+func (s *OAuthStore) CreateRefreshTokenSession(ctx context.Context, signature string, accessSignature string, requester fosite.Requester) error {
 	snap, err := snapshotRequester(requester)
 	if err != nil {
 		return err
@@ -1100,7 +1121,7 @@ func (s *Store) CreateRefreshTokenSession(ctx context.Context, signature string,
 	return err
 }
 
-func (s *Store) GetRefreshTokenSession(ctx context.Context, signature string, session fosite.Session) (fosite.Requester, error) {
+func (s *OAuthStore) GetRefreshTokenSession(ctx context.Context, signature string, session fosite.Session) (fosite.Requester, error) {
 	var (
 		requestRaw []byte
 		active     bool
@@ -1133,7 +1154,7 @@ func (s *Store) GetRefreshTokenSession(ctx context.Context, signature string, se
 	return req, nil
 }
 
-func (s *Store) DeleteRefreshTokenSession(ctx context.Context, signature string) error {
+func (s *OAuthStore) DeleteRefreshTokenSession(ctx context.Context, signature string) error {
 	_, err := s.db.ExecContext(ctx,
 		`UPDATE oauth_refresh_token
 		    SET active = FALSE,
@@ -1145,7 +1166,7 @@ func (s *Store) DeleteRefreshTokenSession(ctx context.Context, signature string)
 	return err
 }
 
-func (s *Store) RotateRefreshToken(ctx context.Context, requestID string, refreshTokenSignature string) error {
+func (s *OAuthStore) RotateRefreshToken(ctx context.Context, requestID string, refreshTokenSignature string) error {
 	return withTx(s.db, ctx, func(tx *sql.Tx) error {
 		var (
 			active   bool
@@ -1207,7 +1228,7 @@ func (s *Store) RotateRefreshToken(ctx context.Context, requestID string, refres
 	})
 }
 
-func (s *Store) RevokeRefreshToken(ctx context.Context, requestID string) error {
+func (s *OAuthStore) RevokeRefreshToken(ctx context.Context, requestID string) error {
 	_, err := s.db.ExecContext(ctx,
 		`UPDATE oauth_refresh_token
 		    SET active = FALSE,
@@ -1219,7 +1240,7 @@ func (s *Store) RevokeRefreshToken(ctx context.Context, requestID string) error 
 	return err
 }
 
-func (s *Store) RevokeAccessToken(ctx context.Context, requestID string) error {
+func (s *OAuthStore) RevokeAccessToken(ctx context.Context, requestID string) error {
 	_, err := s.db.ExecContext(ctx,
 		`UPDATE oauth_access_token
 		    SET revoked_at = COALESCE(revoked_at, now())
@@ -1229,7 +1250,7 @@ func (s *Store) RevokeAccessToken(ctx context.Context, requestID string) error {
 	return err
 }
 
-func (s *Store) UpsertOAuthConsentGrant(ctx context.Context, clientID string, userID int64, requestedScopes, grantedScopes []string) (OAuthConsentGrantRecord, error) {
+func (s *OAuthStore) UpsertOAuthConsentGrant(ctx context.Context, clientID string, userID int64, requestedScopes, grantedScopes []string) (OAuthConsentGrantRecord, error) {
 	clientID = strings.TrimSpace(clientID)
 	if clientID == "" {
 		return OAuthConsentGrantRecord{}, fmt.Errorf("%w: client id is required", ErrValidation)
@@ -1285,7 +1306,7 @@ func (s *Store) UpsertOAuthConsentGrant(ctx context.Context, clientID string, us
 	return OAuthConsentGrantRecord{}, errors.New("oauth consent grant not found after insert")
 }
 
-func (s *Store) ListOAuthConsentGrantsByUser(ctx context.Context, userID int64) ([]OAuthConsentGrantRecord, error) {
+func (s *OAuthStore) ListOAuthConsentGrantsByUser(ctx context.Context, userID int64) ([]OAuthConsentGrantRecord, error) {
 	rows, err := s.db.QueryContext(ctx,
 		`SELECT g.grant_id,
 		        g.client_id,
@@ -1348,7 +1369,7 @@ func (s *Store) ListOAuthConsentGrantsByUser(ctx context.Context, userID int64) 
 	return out, nil
 }
 
-func (s *Store) GetLatestActiveOAuthConsentGrant(ctx context.Context, userID int64, clientID string) (OAuthConsentGrantRecord, bool, error) {
+func (s *OAuthStore) GetLatestActiveOAuthConsentGrant(ctx context.Context, userID int64, clientID string) (OAuthConsentGrantRecord, bool, error) {
 	clientID = strings.TrimSpace(clientID)
 	if userID <= 0 || clientID == "" {
 		return OAuthConsentGrantRecord{}, false, nil
@@ -1403,7 +1424,7 @@ func (s *Store) GetLatestActiveOAuthConsentGrant(ctx context.Context, userID int
 	return rec, true, nil
 }
 
-func (s *Store) RevokeOAuthConsentGrant(ctx context.Context, userID int64, grantID string) error {
+func (s *OAuthStore) RevokeOAuthConsentGrant(ctx context.Context, userID int64, grantID string) error {
 	grantID = strings.TrimSpace(grantID)
 	if grantID == "" {
 		return fmt.Errorf("%w: grant id is required", ErrValidation)
@@ -1459,123 +1480,33 @@ func (s *Store) RevokeOAuthConsentGrant(ctx context.Context, userID int64, grant
 	})
 }
 
-func isSubset(subset []string, superset []string) bool {
-	if len(subset) == 0 {
-		return true
+func (s *OAuthStore) GetOAuthUserProfile(ctx context.Context, userID int64) (OAuthUserProfile, bool, error) {
+	if userID <= 0 {
+		return OAuthUserProfile{}, false, nil
 	}
-	m := map[string]struct{}{}
-	for _, item := range superset {
-		m[item] = struct{}{}
-	}
-	for _, item := range subset {
-		if _, ok := m[item]; !ok {
-			return false
+	var profile OAuthUserProfile
+	err := s.db.QueryRowContext(ctx,
+		`SELECT u.id, u.username, i.actor_id, i.main_key_id
+		   FROM users u
+		   JOIN user_actor_identity i ON i.user_id = u.id
+		  WHERE u.id = $1`,
+		userID,
+	).Scan(&profile.UserID, &profile.Username, &profile.ActorID, &profile.MainKeyID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return OAuthUserProfile{}, false, nil
 		}
+		return OAuthUserProfile{}, false, err
 	}
-	return true
+	return profile, true, nil
 }
 
-func (s *Store) ListTickets(ctx context.Context) ([]Ticket, error) {
-	rows, err := s.db.QueryContext(ctx,
-		`SELECT t.id,
-		        t.internal_id::text,
-		        t.slug,
-		        t.primary_key,
-		        tr.slug,
-		        r.slug,
-		        COALESCE(t.body->>'summary', ''),
-		        COALESCE(t.body->>'content', ''),
-		        COALESCE(t.body->>'published', ''),
-		        t.created_at,
-		        COALESCE(t.priority, 0)
-		   FROM ff_ticket t
-		   JOIN ff_ticket_tracker tr ON tr.internal_id = t.tracker_internal_id
-		   JOIN ff_repository r ON r.internal_id = t.repository_internal_id
-		  ORDER BY t.created_at DESC, t.id DESC`,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	out := []Ticket{}
-	for rows.Next() {
-		var t Ticket
-		if err := rows.Scan(
-			&t.ID,
-			&t.InternalID,
-			&t.Slug,
-			&t.ActorID,
-			&t.TrackerSlug,
-			&t.RepositorySlug,
-			&t.Summary,
-			&t.Content,
-			&t.Published,
-			&t.CreatedAt,
-			&t.Priority,
-		); err != nil {
-			return nil, err
-		}
-		out = append(out, t)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (s *Store) ListTicketsForTracker(ctx context.Context, trackerSlug string) ([]Ticket, error) {
-	trackerSlug = strings.TrimSpace(trackerSlug)
-	if trackerSlug == "" {
-		return []Ticket{}, nil
-	}
-	rows, err := s.db.QueryContext(ctx,
-		`SELECT t.id,
-		        t.internal_id::text,
-		        t.slug,
-		        t.primary_key,
-		        tr.slug,
-		        r.slug,
-		        COALESCE(t.body->>'summary', ''),
-		        COALESCE(t.body->>'content', ''),
-		        COALESCE(t.body->>'published', ''),
-		        t.created_at,
-		        COALESCE(t.priority, 0)
-		   FROM ff_ticket t
-		   JOIN ff_ticket_tracker tr ON tr.internal_id = t.tracker_internal_id
-		   JOIN ff_repository r ON r.internal_id = t.repository_internal_id
-		  WHERE tr.slug = $1
-		  ORDER BY t.created_at DESC, t.id DESC`,
-		trackerSlug,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	out := []Ticket{}
-	for rows.Next() {
-		var t Ticket
-		if err := rows.Scan(
-			&t.ID,
-			&t.InternalID,
-			&t.Slug,
-			&t.ActorID,
-			&t.TrackerSlug,
-			&t.RepositorySlug,
-			&t.Summary,
-			&t.Content,
-			&t.Published,
-			&t.CreatedAt,
-			&t.Priority,
-		); err != nil {
-			return nil, err
-		}
-		out = append(out, t)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return out, nil
-}
+var (
+	_ fosite.ClientManager          = (*OAuthStore)(nil)
+	_ oauth2.CoreStorage            = (*OAuthStore)(nil)
+	_ oauth2.TokenRevocationStorage = (*OAuthStore)(nil)
+	_ pkce.PKCERequestStorage       = (*OAuthStore)(nil)
+)
 
 func (s *Store) ListTicketsForUser(ctx context.Context, userID int64) ([]Ticket, error) {
 	if userID <= 0 {
@@ -1637,7 +1568,7 @@ func (s *Store) ListAssignedTicketsForUser(ctx context.Context, userID int64, op
 		return nil, err
 	}
 
-	rows, err := s.db.QueryContext(ctx,
+	rows, err := s.UserStore.db.QueryContext(ctx,
 		`SELECT t.id,
 		        t.primary_key,
 		        tr.slug,
@@ -1727,239 +1658,6 @@ func (s *Store) ListAssignedTicketsForUser(ctx context.Context, userID int64, op
 	return tickets, nil
 }
 
-func (s *Store) GetLocalRepositoryObjectBySlug(ctx context.Context, repoSlug string) (LocalObjectRecord, bool, error) {
-	repoSlug = strings.TrimSpace(repoSlug)
-	if repoSlug == "" {
-		return LocalObjectRecord{}, false, nil
-	}
-
-	var record LocalObjectRecord
-	var trackerActorID string
-	err := s.db.QueryRowContext(ctx,
-		`SELECT r.primary_key,
-		        r.body,
-		        COALESCE(t.primary_key, '')
-		   FROM ff_repository r
-		   LEFT JOIN ff_ticket_tracker t ON t.internal_id = r.ticket_tracker_internal_id
-		  WHERE r.is_local = TRUE AND r.slug = $1`,
-		repoSlug,
-	).Scan(&record.PrimaryKey, &record.BodyJSON, &trackerActorID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return LocalObjectRecord{}, false, nil
-		}
-		return LocalObjectRecord{}, false, err
-	}
-
-	body, err := parseBody(record.BodyJSON)
-	if err != nil {
-		return LocalObjectRecord{}, false, err
-	}
-	if strings.TrimSpace(trackerActorID) == "" {
-		delete(body, "ticketsTrackedBy")
-	} else {
-		body["ticketsTrackedBy"] = trackerActorID
-	}
-	record.BodyJSON, err = json.Marshal(body)
-	if err != nil {
-		return LocalObjectRecord{}, false, err
-	}
-
-	return record, true, nil
-}
-
-func (s *Store) GetLocalTicketTrackerObjectBySlug(ctx context.Context, trackerSlug string) (LocalObjectRecord, bool, error) {
-	trackerSlug = strings.TrimSpace(trackerSlug)
-	if trackerSlug == "" {
-		return LocalObjectRecord{}, false, nil
-	}
-
-	var (
-		record     LocalObjectRecord
-		internalID string
-	)
-	err := s.db.QueryRowContext(ctx,
-		`SELECT internal_id::text, primary_key, body
-		   FROM ff_ticket_tracker
-		  WHERE is_local = TRUE AND slug = $1`,
-		trackerSlug,
-	).Scan(&internalID, &record.PrimaryKey, &record.BodyJSON)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return LocalObjectRecord{}, false, nil
-		}
-		return LocalObjectRecord{}, false, err
-	}
-
-	rows, err := s.db.QueryContext(ctx,
-		`SELECT primary_key
-		   FROM ff_repository
-		  WHERE is_local = TRUE
-		    AND ticket_tracker_internal_id = $1::uuid
-		  ORDER BY slug`,
-		internalID,
-	)
-	if err != nil {
-		return LocalObjectRecord{}, false, err
-	}
-	defer rows.Close()
-
-	trackedRepoActorIDs := []string{}
-	for rows.Next() {
-		var actorID string
-		if err := rows.Scan(&actorID); err != nil {
-			return LocalObjectRecord{}, false, err
-		}
-		trackedRepoActorIDs = append(trackedRepoActorIDs, actorID)
-	}
-	if err := rows.Err(); err != nil {
-		return LocalObjectRecord{}, false, err
-	}
-
-	body, err := parseBody(record.BodyJSON)
-	if err != nil {
-		return LocalObjectRecord{}, false, err
-	}
-	body["tracksTicketsFor"] = trackedRepoActorIDs
-	record.BodyJSON, err = json.Marshal(body)
-	if err != nil {
-		return LocalObjectRecord{}, false, err
-	}
-
-	return record, true, nil
-}
-
-func (s *Store) GetLocalTicketObjectBySlug(ctx context.Context, trackerSlug, ticketSlug string) (LocalTicketObjectRecord, bool, error) {
-	trackerSlug = strings.TrimSpace(trackerSlug)
-	ticketSlug = strings.TrimSpace(ticketSlug)
-	if trackerSlug == "" || ticketSlug == "" {
-		return LocalTicketObjectRecord{}, false, nil
-	}
-
-	var (
-		record           LocalTicketObjectRecord
-		ticketInternalID string
-		priority         int
-	)
-	err := s.db.QueryRowContext(ctx,
-		`SELECT t.internal_id::text,
-		        t.primary_key,
-		        t.body,
-		        tr.slug,
-		        t.slug,
-		        r.slug,
-		        COALESCE(t.priority, 0)
-		   FROM ff_ticket t
-		   JOIN ff_ticket_tracker tr ON tr.internal_id = t.tracker_internal_id
-		   JOIN ff_repository r ON r.internal_id = t.repository_internal_id
-		  WHERE t.is_local = TRUE
-		    AND tr.slug = $1
-		    AND t.slug = $2`,
-		trackerSlug,
-		ticketSlug,
-	).Scan(
-		&ticketInternalID,
-		&record.PrimaryKey,
-		&record.BodyJSON,
-		&record.TrackerSlug,
-		&record.TicketSlug,
-		&record.RepositorySlug,
-		&priority,
-	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return LocalTicketObjectRecord{}, false, nil
-		}
-		return LocalTicketObjectRecord{}, false, err
-	}
-
-	assigneeRows, err := s.db.QueryContext(ctx,
-		`SELECT i.actor_id
-		   FROM ff_ticket_assignee a
-		   JOIN user_actor_identity i ON i.user_id = a.user_id
-		  WHERE a.ticket_internal_id = $1::uuid
-		  ORDER BY i.actor_id`,
-		ticketInternalID,
-	)
-	if err != nil {
-		return LocalTicketObjectRecord{}, false, err
-	}
-	defer assigneeRows.Close()
-
-	assignedTo := []string{}
-	for assigneeRows.Next() {
-		var actorID string
-		if err := assigneeRows.Scan(&actorID); err != nil {
-			return LocalTicketObjectRecord{}, false, err
-		}
-		assignedTo = append(assignedTo, actorID)
-	}
-	if err := assigneeRows.Err(); err != nil {
-		return LocalTicketObjectRecord{}, false, err
-	}
-
-	body, err := parseBody(record.BodyJSON)
-	if err != nil {
-		return LocalTicketObjectRecord{}, false, err
-	}
-	body["priority"] = priority
-	if len(assignedTo) == 0 {
-		delete(body, "assignedTo")
-	} else {
-		body["assignedTo"] = assignedTo
-	}
-	record.BodyJSON, err = json.Marshal(body)
-	if err != nil {
-		return LocalTicketObjectRecord{}, false, err
-	}
-
-	return record, true, nil
-}
-
-func (s *Store) GetLocalTicketCommentObjectBySlug(ctx context.Context, trackerSlug, ticketSlug, commentSlug string) (LocalTicketCommentObjectRecord, bool, error) {
-	trackerSlug = strings.TrimSpace(trackerSlug)
-	ticketSlug = strings.TrimSpace(ticketSlug)
-	commentSlug = strings.TrimSpace(commentSlug)
-	if trackerSlug == "" || ticketSlug == "" || commentSlug == "" {
-		return LocalTicketCommentObjectRecord{}, false, nil
-	}
-
-	var record LocalTicketCommentObjectRecord
-	err := s.db.QueryRowContext(ctx,
-		`SELECT c.note_primary_key,
-		        n.body,
-		        tr.slug,
-		        t.slug,
-		        c.slug,
-		        r.slug
-		   FROM ff_ticket_comment c
-		   JOIN as_note n ON n.primary_key = c.note_primary_key
-		   JOIN ff_ticket t ON t.internal_id = c.ticket_internal_id
-		   JOIN ff_ticket_tracker tr ON tr.internal_id = t.tracker_internal_id
-		   JOIN ff_repository r ON r.internal_id = c.repository_internal_id
-		  WHERE tr.slug = $1
-		    AND t.slug = $2
-		    AND c.slug = $3`,
-		trackerSlug,
-		ticketSlug,
-		commentSlug,
-	).Scan(
-		&record.PrimaryKey,
-		&record.BodyJSON,
-		&record.TrackerSlug,
-		&record.TicketSlug,
-		&record.CommentSlug,
-		&record.RepositorySlug,
-	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return LocalTicketCommentObjectRecord{}, false, nil
-		}
-		return LocalTicketCommentObjectRecord{}, false, err
-	}
-	return record, true, nil
-}
-
 func (s *Store) ListTicketCommentsForTicket(ctx context.Context, userID int64, trackerSlug, ticketSlug string) ([]TicketComment, error) {
 	trackerSlug = strings.TrimSpace(trackerSlug)
 	ticketSlug = strings.TrimSpace(ticketSlug)
@@ -1982,7 +1680,7 @@ func (s *Store) ListTicketCommentsForTicket(ctx context.Context, userID int64, t
 		return nil, fmt.Errorf("%w: repository access denied", ErrValidation)
 	}
 
-	rows, err := s.db.QueryContext(ctx,
+	rows, err := s.UserStore.db.QueryContext(ctx,
 		`SELECT c.id,
 		        c.internal_id::text,
 		        c.slug,
@@ -2068,31 +1766,3 @@ func (s *Store) CanAccessTicket(ctx context.Context, userID int64, trackerSlug, 
 	}
 	return s.CanAccessRepository(ctx, record.RepositorySlug, userID)
 }
-
-func (s *Store) GetOAuthUserProfile(ctx context.Context, userID int64) (OAuthUserProfile, bool, error) {
-	if userID <= 0 {
-		return OAuthUserProfile{}, false, nil
-	}
-	var profile OAuthUserProfile
-	err := s.db.QueryRowContext(ctx,
-		`SELECT u.id, u.username, i.actor_id, i.main_key_id
-		   FROM users u
-		   JOIN user_actor_identity i ON i.user_id = u.id
-		  WHERE u.id = $1`,
-		userID,
-	).Scan(&profile.UserID, &profile.Username, &profile.ActorID, &profile.MainKeyID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return OAuthUserProfile{}, false, nil
-		}
-		return OAuthUserProfile{}, false, err
-	}
-	return profile, true, nil
-}
-
-var (
-	_ fosite.ClientManager          = (*Store)(nil)
-	_ oauth2.CoreStorage            = (*Store)(nil)
-	_ oauth2.TokenRevocationStorage = (*Store)(nil)
-	_ pkce.PKCERequestStorage       = (*Store)(nil)
-)
