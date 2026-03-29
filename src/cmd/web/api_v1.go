@@ -24,10 +24,6 @@ import (
 )
 
 func (app *application) apiV1Profile(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -51,10 +47,6 @@ func (app *application) apiV1Profile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) apiV1RepoList(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	repos, err := app.store.ListRepositories(r.Context())
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "internal error")
@@ -64,10 +56,6 @@ func (app *application) apiV1RepoList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) apiV1RepoDetail(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	repo, found, err := app.store.GetRepositoryBySlug(r.Context(), strings.TrimSpace(r.PathValue("repo")))
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "internal error")
@@ -81,10 +69,6 @@ func (app *application) apiV1RepoDetail(w http.ResponseWriter, r *http.Request) 
 }
 
 func (app *application) apiV1TicketTrackerList(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	trackers, err := app.store.ListTicketTrackers(r.Context())
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "internal error")
@@ -94,10 +78,6 @@ func (app *application) apiV1TicketTrackerList(w http.ResponseWriter, r *http.Re
 }
 
 func (app *application) apiV1TicketTrackerCreate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -124,10 +104,6 @@ func (app *application) apiV1TicketTrackerCreate(w http.ResponseWriter, r *http.
 }
 
 func (app *application) apiV1TicketTrackerDetail(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	tracker, found, err := app.store.GetTicketTrackerBySlug(r.Context(), strings.TrimSpace(r.PathValue("tracker")))
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "internal error")
@@ -141,10 +117,6 @@ func (app *application) apiV1TicketTrackerDetail(w http.ResponseWriter, r *http.
 }
 
 func (app *application) apiV1RepoTicketTrackerAssign(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -198,10 +170,6 @@ func (app *application) apiV1RepoTicketTrackerAssign(w http.ResponseWriter, r *h
 }
 
 func (app *application) apiV1TicketList(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -217,10 +185,6 @@ func (app *application) apiV1TicketList(w http.ResponseWriter, r *http.Request) 
 }
 
 func (app *application) apiV1TicketAssignedList(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -251,10 +215,6 @@ func (app *application) apiV1TicketAssignedList(w http.ResponseWriter, r *http.R
 }
 
 func (app *application) apiV1TicketCreate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -288,10 +248,6 @@ func (app *application) apiV1TicketCreate(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) apiV1TicketUpdateCreate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -339,10 +295,6 @@ func (app *application) apiV1TicketUpdateCreate(w http.ResponseWriter, r *http.R
 }
 
 func (app *application) apiV1TicketCommentUpdateCreate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -403,10 +355,6 @@ type apiV1ObjectVersion struct {
 }
 
 func (app *application) apiV1TicketVersionList(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -458,10 +406,6 @@ func (app *application) apiV1TicketVersionList(w http.ResponseWriter, r *http.Re
 }
 
 func (app *application) apiV1TicketCommentVersionList(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -515,10 +459,6 @@ func (app *application) apiV1TicketCommentVersionList(w http.ResponseWriter, r *
 }
 
 func (app *application) apiV1TicketCommentList(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -559,10 +499,6 @@ func (app *application) apiV1TicketCommentList(w http.ResponseWriter, r *http.Re
 }
 
 func (app *application) apiV1TicketCommentCreate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -645,10 +581,6 @@ func parseOptionalBoolQuery(raw, field string) (bool, error) {
 }
 
 func (app *application) apiV1TicketAssigneeList(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -685,10 +617,6 @@ func (app *application) apiV1TicketAssigneeList(w http.ResponseWriter, r *http.R
 }
 
 func (app *application) apiV1TicketAssigneeUpdate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -765,10 +693,6 @@ type apiV1Notification struct {
 }
 
 func (app *application) apiV1NotificationList(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -829,10 +753,6 @@ func (app *application) apiV1NotificationList(w http.ResponseWriter, r *http.Req
 }
 
 func (app *application) apiV1NotificationClear(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -846,10 +766,6 @@ func (app *application) apiV1NotificationClear(w http.ResponseWriter, r *http.Re
 }
 
 func (app *application) apiV1NotificationReset(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -863,10 +779,6 @@ func (app *application) apiV1NotificationReset(w http.ResponseWriter, r *http.Re
 }
 
 func (app *application) apiV1NotificationUpdate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -901,10 +813,6 @@ func (app *application) apiV1NotificationUpdate(w http.ResponseWriter, r *http.R
 }
 
 func (app *application) apiV1RepoMemberList(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -940,10 +848,6 @@ func (app *application) apiV1RepoMemberList(w http.ResponseWriter, r *http.Reque
 }
 
 func (app *application) apiV1RepoMemberUpdate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
 	if !ok {
 		writeBearerUnauthorized(w)
@@ -1011,10 +915,6 @@ func (app *application) apiV1RepoMemberUpdate(w http.ResponseWriter, r *http.Req
 }
 
 func (app *application) apiV1ObjectCount(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
 	counts, err := app.store.ListObjectTypeCounts(r.Context())
 	if err != nil {
 		writeJSONError(w, http.StatusInternalServerError, "internal error")

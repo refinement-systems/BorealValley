@@ -73,11 +73,6 @@ var dataTicketListTmpl = parseWithLayout(assets.HtmlTicketList)
 var dataNotificationListTmpl = parseWithLayout(assets.HtmlNotificationList)
 
 func (app *application) dataList(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
 	repositories, err := app.store.ListRepositories(r.Context())
 	if err != nil {
 		renderError(w, http.StatusInternalServerError, "internal error")
@@ -88,11 +83,6 @@ func (app *application) dataList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) dataRepo(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
 	app.renderRepoPage(w, r, "")
 }
 
@@ -217,20 +207,10 @@ func (app *application) dataTicketTrackerList(w http.ResponseWriter, r *http.Req
 }
 
 func (app *application) dataTicketTrackerDetail(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
 	app.renderTicketTrackerDetailPage(w, r, strings.TrimSpace(r.PathValue("tracker")), "")
 }
 
 func (app *application) dataTicketTrackerTicket(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
 	trackerSlug := strings.TrimSpace(r.PathValue("tracker"))
 	if trackerSlug == "" {
 		renderNotFound(w)
@@ -281,11 +261,6 @@ func (app *application) dataTicketTrackerTicket(w http.ResponseWriter, r *http.R
 }
 
 func (app *application) dataTicketList(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
 		renderError(w, http.StatusUnauthorized, "authentication error")
@@ -302,11 +277,6 @@ func (app *application) dataTicketList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) dataNotificationList(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
 		renderError(w, http.StatusUnauthorized, "authentication error")
@@ -341,11 +311,6 @@ func (app *application) dataNotificationList(w http.ResponseWriter, r *http.Requ
 }
 
 func (app *application) dataNotificationClear(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
 		renderError(w, http.StatusUnauthorized, "authentication error")
@@ -359,11 +324,6 @@ func (app *application) dataNotificationClear(w http.ResponseWriter, r *http.Req
 }
 
 func (app *application) dataNotificationReset(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
 		renderError(w, http.StatusUnauthorized, "authentication error")
@@ -377,11 +337,6 @@ func (app *application) dataNotificationReset(w http.ResponseWriter, r *http.Req
 }
 
 func (app *application) dataNotificationUpdate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
 	userID, ok := sessionUserIDFromContext(app, r)
 	if !ok {
 		renderError(w, http.StatusUnauthorized, "authentication error")
@@ -548,11 +503,6 @@ func (app *application) ticketTrackerFromPathValue(ctx context.Context, slug str
 }
 
 func (app *application) dataRepoMember(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
 	repoSlug := strings.TrimSpace(r.PathValue("repo"))
 	if repoSlug == "" {
 		renderNotFound(w)
@@ -603,11 +553,6 @@ func (app *application) dataRepoMember(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) dataTicketComment(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
 	trackerSlug := strings.TrimSpace(r.PathValue("tracker"))
 	ticketSlug := strings.TrimSpace(r.PathValue("ticket"))
 	if trackerSlug == "" || ticketSlug == "" {
@@ -652,11 +597,6 @@ func (app *application) dataTicketComment(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) dataTicketAssignee(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		renderError(w, http.StatusMethodNotAllowed, "method not allowed")
-		return
-	}
-
 	trackerSlug := strings.TrimSpace(r.PathValue("tracker"))
 	ticketSlug := strings.TrimSpace(r.PathValue("ticket"))
 	if trackerSlug == "" || ticketSlug == "" {
