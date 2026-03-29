@@ -93,10 +93,8 @@ func runLMStudioTicketLoop(ctx context.Context, lmstudioURL, model, workspace, t
 
 	messages := []llmMessage{
 		{
-			Role: "system",
-			Content: "You are a coding assistant operating one ticket at a time. " +
-				"Use tools to inspect/edit workspace files before answering. " +
-				"When tool calls are needed, return tool calls only.",
+			Role:    "system",
+			Content: buildSystemPrompt(collabMode),
 		},
 		{
 			Role:    "user",
