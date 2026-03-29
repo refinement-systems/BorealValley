@@ -1,7 +1,7 @@
 // Permission to use, copy, modify, and/or distribute this software for
 // any purpose with or without fee is hereby granted.
 //
-// THE SOFTWARE IS PROVIDED “AS IS” AND THE AUTHOR DISCLAIMS ALL
+// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
 // WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
 // OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE
 // FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY
@@ -68,37 +68,61 @@ func runAgentOnce(cfg runConfig) error {
 		cfg.MaxIter = 3
 	}
 
-	httpClient := defaultHTTPClient()
-	if state.Token.ExpiresAt.Before(time.Now().UTC().Add(1 * time.Minute)) {
-		meta, err := discoverOAuthMetadata(context.Background(), httpClient, state.ServerURL)
-		if err != nil {
-			return err
-		}
-		newToken, err := refreshAccessToken(context.Background(), httpClient, meta.TokenEndpoint, state.ClientID, state.ClientSecret, state.Token)
-		if err != nil {
-			return err
-		}
-		state.Token = newToken
-		profile, err := fetchProfile(context.Background(), httpClient, state.ServerURL, state.Token.AccessToken)
-		if err != nil {
-			return err
-		}
-		state.Profile = profile
-		if err := saveAgentState(cfg.StatePath, state); err != nil {
-			return err
-		}
-	}
-
-	client := newAPIClient(state.ServerURL, state.Token.AccessToken)
-	tickets, err := client.getAssignedTickets(context.Background(), 1)
+	state, err = ensureFreshToken(cfg.StatePath, state)
 	if err != nil {
 		return err
 	}
-	if len(tickets) == 0 {
+
+	client := newAPIClient(state.ServerURL, state.Token.AccessToken)
+	ticket, ok, err := acquireNextTicket(client)
+	if err != nil {
+		return err
+	}
+	if !ok {
 		fmt.Println("no assigned completion-pending tickets")
 		return nil
 	}
-	ticket := tickets[0]
+
+	return processTicket(client, cfg, state, ticket)
+}
+
+func ensureFreshToken(statePath string, state agentState) (agentState, error) {
+	if !state.Token.ExpiresAt.Before(time.Now().UTC().Add(1 * time.Minute)) {
+		return state, nil
+	}
+	httpClient := defaultHTTPClient()
+	meta, err := discoverOAuthMetadata(context.Background(), httpClient, state.ServerURL)
+	if err != nil {
+		return agentState{}, err
+	}
+	newToken, err := refreshAccessToken(context.Background(), httpClient, meta.TokenEndpoint, state.ClientID, state.ClientSecret, state.Token)
+	if err != nil {
+		return agentState{}, err
+	}
+	state.Token = newToken
+	profile, err := fetchProfile(context.Background(), httpClient, state.ServerURL, state.Token.AccessToken)
+	if err != nil {
+		return agentState{}, err
+	}
+	state.Profile = profile
+	if err := saveAgentState(statePath, state); err != nil {
+		return agentState{}, err
+	}
+	return state, nil
+}
+
+func acquireNextTicket(client *apiClient) (common.AssignedTicket, bool, error) {
+	tickets, err := client.getAssignedTickets(context.Background(), 1)
+	if err != nil {
+		return common.AssignedTicket{}, false, err
+	}
+	if len(tickets) == 0 {
+		return common.AssignedTicket{}, false, nil
+	}
+	return tickets[0], true, nil
+}
+
+func processTicket(client *apiClient, cfg runConfig, state agentState, ticket common.AssignedTicket) error {
 	slog.Info("processing assigned ticket", "tracker", ticket.TrackerSlug, "ticket", ticket.TicketSlug)
 
 	ackMsg := fmt.Sprintf("Agent acknowledged ticket at %s.", time.Now().UTC().Format(time.RFC3339Nano))
