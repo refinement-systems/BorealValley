@@ -165,17 +165,6 @@ func runLMStudioTicketLoop(ctx context.Context, lmstudioURL, model, workspace, t
 					ToolCallID: tc.ID,
 				})
 			}
-		case "", "stop":
-			answer := strings.TrimSpace(choice.Message.Content)
-			if answer == "" {
-				answer = strings.TrimSpace(lastContent)
-			}
-			if answer != "" && cbs.OnAssistant != nil {
-				if err := cbs.OnAssistant(answer); err != nil {
-					return "", err
-				}
-			}
-			return answer, nil
 		default:
 			answer := strings.TrimSpace(choice.Message.Content)
 			if answer == "" {

@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
 
 ### Changed
+- collapse duplicate switch arms in runLMStudioTicketLoop (#60)
 - remove dead fallback DB query in renderRepoPageBySlug (#62)
 - remove dead fallback DB query in renderRepoPageBySlug (#69)
 - Architecture QA review report (#47)
