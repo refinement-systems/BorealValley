@@ -350,95 +350,154 @@ func fakeHashWork(password string) {
 	_ = argon2.IDKey([]byte(password), salt, defaultParams.time, defaultParams.memory, defaultParams.threads, defaultParams.keyLen)
 }
 
-func buildLocalRepositoryObject(actorID, name string) map[string]any {
-	return map[string]any{
-		"@context":   []string{"https://www.w3.org/ns/activitystreams", "https://forgefed.org/ns"},
-		"id":         actorID,
-		"type":       "Repository",
-		"name":       name,
-		"inbox":      actorID + "/inbox",
-		"outbox":     actorID + "/outbox",
-		"mainBranch": actorID + "/branches/main",
+type apMediaSource struct {
+	MediaType string `json:"mediaType"`
+	Content   string `json:"content"`
+}
+
+type apRepositoryObject struct {
+	Context    []string `json:"@context"`
+	ID         string   `json:"id"`
+	Type       string   `json:"type"`
+	Name       string   `json:"name"`
+	Inbox      string   `json:"inbox"`
+	Outbox     string   `json:"outbox"`
+	MainBranch string   `json:"mainBranch"`
+}
+
+type apTicketTrackerObject struct {
+	Context []string `json:"@context"`
+	ID      string   `json:"id"`
+	Type    string   `json:"type"`
+	Name    string   `json:"name"`
+	Inbox   string   `json:"inbox"`
+	Outbox  string   `json:"outbox"`
+	Summary string   `json:"summary,omitempty"`
+}
+
+type apTicketObject struct {
+	Context      []string      `json:"@context"`
+	ID           string        `json:"id"`
+	Type         string        `json:"type"`
+	TicketContext string        `json:"context"`
+	Target       string        `json:"target"`
+	AttributedTo string        `json:"attributedTo"`
+	Summary      string        `json:"summary"`
+	Content      string        `json:"content"`
+	MediaType    string        `json:"mediaType"`
+	Source       apMediaSource `json:"source"`
+	Published    string        `json:"published"`
+	IsResolved   bool          `json:"isResolved"`
+	Followers    string        `json:"followers"`
+	Replies      string        `json:"replies"`
+	Team         string        `json:"team"`
+	Dependencies string        `json:"dependencies"`
+	Dependants   string        `json:"dependants"`
+}
+
+type apNoteObject struct {
+	Context          []string      `json:"@context"`
+	ID               string        `json:"id"`
+	Type             string        `json:"type"`
+	NoteContext      string        `json:"context"`
+	InReplyTo        string        `json:"inReplyTo"`
+	AttributedTo     string        `json:"attributedTo"`
+	To               []string      `json:"to"`
+	Content          string        `json:"content"`
+	MediaType        string        `json:"mediaType"`
+	Source           apMediaSource `json:"source"`
+	Published        string        `json:"published"`
+	AgentCommentKind string        `json:"borealValleyAgentCommentKind,omitempty"`
+}
+
+type apUpdateObject struct {
+	Context   []string `json:"@context"`
+	ID        string   `json:"id"`
+	Type      string   `json:"type"`
+	Actor     string   `json:"actor"`
+	Object    string   `json:"object"`
+	Content   string   `json:"content"`
+	MediaType string   `json:"mediaType"`
+	Published string   `json:"published"`
+}
+
+func buildLocalRepositoryObject(actorID, name string) apRepositoryObject {
+	return apRepositoryObject{
+		Context:    []string{"https://www.w3.org/ns/activitystreams", "https://forgefed.org/ns"},
+		ID:         actorID,
+		Type:       "Repository",
+		Name:       name,
+		Inbox:      actorID + "/inbox",
+		Outbox:     actorID + "/outbox",
+		MainBranch: actorID + "/branches/main",
 	}
 }
 
-func buildLocalTicketTrackerObject(actorID, name, summary string) map[string]any {
-	obj := map[string]any{
-		"@context": []string{"https://www.w3.org/ns/activitystreams", "https://forgefed.org/ns"},
-		"id":       actorID,
-		"type":     "TicketTracker",
-		"name":     name,
-		"inbox":    actorID + "/inbox",
-		"outbox":   actorID + "/outbox",
-	}
-	if summary != "" {
-		obj["summary"] = summary
-	}
-	return obj
-}
-
-func buildLocalTicketObject(actorID, trackerActorID, repoActorID, authorActorID, summary, content string, published time.Time) map[string]any {
-	return map[string]any{
-		"@context":     []string{"https://www.w3.org/ns/activitystreams", "https://forgefed.org/ns"},
-		"id":           actorID,
-		"type":         "Ticket",
-		"context":      trackerActorID,
-		"target":       repoActorID,
-		"attributedTo": authorActorID,
-		"summary":      summary,
-		"content":      content,
-		"mediaType":    "text/plain",
-		"source": map[string]any{
-			"mediaType": "text/plain",
-			"content":   content,
-		},
-		"published":    published.Format(time.RFC3339Nano),
-		"isResolved":   false,
-		"followers":    actorID + "/followers",
-		"replies":      actorID + "/replies",
-		"team":         actorID + "/team",
-		"dependencies": actorID + "/dependencies",
-		"dependants":   actorID + "/dependants",
+func buildLocalTicketTrackerObject(actorID, name, summary string) apTicketTrackerObject {
+	return apTicketTrackerObject{
+		Context: []string{"https://www.w3.org/ns/activitystreams", "https://forgefed.org/ns"},
+		ID:      actorID,
+		Type:    "TicketTracker",
+		Name:    name,
+		Inbox:   actorID + "/inbox",
+		Outbox:  actorID + "/outbox",
+		Summary: summary,
 	}
 }
 
-func buildLocalTicketCommentObject(actorID, ticketActorID, inReplyToActorID, authorActorID, recipientActorID, content, agentCommentKind string, published time.Time) map[string]any {
-	obj := map[string]any{
-		"@context":     []string{"https://www.w3.org/ns/activitystreams", "https://forgefed.org/ns"},
-		"id":           actorID,
-		"type":         "Note",
-		"context":      ticketActorID,
-		"inReplyTo":    inReplyToActorID,
-		"attributedTo": authorActorID,
-		"to":           []string{recipientActorID},
-		"content":      content,
-		"mediaType":    "text/plain",
-		"source": map[string]any{
-			"mediaType": "text/plain",
-			"content":   content,
-		},
-		"published": published.Format(time.RFC3339Nano),
-	}
-	if agentCommentKind != "" {
-		obj[AgentCommentKindField] = agentCommentKind
-	}
-	return obj
-}
-
-func buildLocalUpdateObject(actorID, authorActorID, objectActorID, content string, published time.Time) map[string]any {
-	return map[string]any{
-		"@context":  []string{"https://www.w3.org/ns/activitystreams", "https://forgefed.org/ns"},
-		"id":        actorID,
-		"type":      "Update",
-		"actor":     authorActorID,
-		"object":    objectActorID,
-		"content":   content,
-		"mediaType": "text/plain",
-		"published": published.Format(time.RFC3339Nano),
+func buildLocalTicketObject(actorID, trackerActorID, repoActorID, authorActorID, summary, content string, published time.Time) apTicketObject {
+	return apTicketObject{
+		Context:       []string{"https://www.w3.org/ns/activitystreams", "https://forgefed.org/ns"},
+		ID:            actorID,
+		Type:          "Ticket",
+		TicketContext: trackerActorID,
+		Target:        repoActorID,
+		AttributedTo:  authorActorID,
+		Summary:       summary,
+		Content:       content,
+		MediaType:     "text/plain",
+		Source:        apMediaSource{MediaType: "text/plain", Content: content},
+		Published:     published.Format(time.RFC3339Nano),
+		IsResolved:    false,
+		Followers:     actorID + "/followers",
+		Replies:       actorID + "/replies",
+		Team:          actorID + "/team",
+		Dependencies:  actorID + "/dependencies",
+		Dependants:    actorID + "/dependants",
 	}
 }
 
-func upsertLocalRepositoryTx(ctx context.Context, tx *sql.Tx, actorID string, body map[string]any, internalID uuid.UUID, slug, fsPath string) error {
+func buildLocalTicketCommentObject(actorID, ticketActorID, inReplyToActorID, authorActorID, recipientActorID, content, agentCommentKind string, published time.Time) apNoteObject {
+	return apNoteObject{
+		Context:          []string{"https://www.w3.org/ns/activitystreams", "https://forgefed.org/ns"},
+		ID:               actorID,
+		Type:             "Note",
+		NoteContext:      ticketActorID,
+		InReplyTo:        inReplyToActorID,
+		AttributedTo:     authorActorID,
+		To:               []string{recipientActorID},
+		Content:          content,
+		MediaType:        "text/plain",
+		Source:           apMediaSource{MediaType: "text/plain", Content: content},
+		Published:        published.Format(time.RFC3339Nano),
+		AgentCommentKind: agentCommentKind,
+	}
+}
+
+func buildLocalUpdateObject(actorID, authorActorID, objectActorID, content string, published time.Time) apUpdateObject {
+	return apUpdateObject{
+		Context:   []string{"https://www.w3.org/ns/activitystreams", "https://forgefed.org/ns"},
+		ID:        actorID,
+		Type:      "Update",
+		Actor:     authorActorID,
+		Object:    objectActorID,
+		Content:   content,
+		MediaType: "text/plain",
+		Published: published.Format(time.RFC3339Nano),
+	}
+}
+
+func upsertLocalRepositoryTx(ctx context.Context, tx *sql.Tx, actorID string, body any, internalID uuid.UUID, slug, fsPath string) error {
 	raw, err := json.Marshal(body)
 	if err != nil {
 		return err

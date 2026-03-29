@@ -31,8 +31,8 @@ func TestBuildLocalTicketCommentObjectAgentCommentKind(t *testing.T) {
 		AgentCommentKindAck,
 		published,
 	)
-	if got := stringFromAny(withKind[AgentCommentKindField]); got != AgentCommentKindAck {
-		t.Fatalf("expected agent comment kind %q, got %q", AgentCommentKindAck, got)
+	if withKind.AgentCommentKind != AgentCommentKindAck {
+		t.Fatalf("expected agent comment kind %q, got %q", AgentCommentKindAck, withKind.AgentCommentKind)
 	}
 
 	withoutKind := buildLocalTicketCommentObject(
@@ -45,7 +45,7 @@ func TestBuildLocalTicketCommentObjectAgentCommentKind(t *testing.T) {
 		"",
 		published,
 	)
-	if _, ok := withoutKind[AgentCommentKindField]; ok {
+	if withoutKind.AgentCommentKind != "" {
 		t.Fatalf("did not expect %q for plain comment", AgentCommentKindField)
 	}
 }

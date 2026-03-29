@@ -224,7 +224,7 @@ func allowedTable(name string) bool {
 	return allowedTableSet[name]
 }
 
-func upsertObjectTx(ctx context.Context, tx *sql.Tx, id, objectType string, rawObject map[string]any) (string, error) {
+func upsertObjectTx(ctx context.Context, tx *sql.Tx, id, objectType string, rawObject any) (string, error) {
 	rawJSON, err := json.Marshal(rawObject)
 	if err != nil {
 		return "", err
