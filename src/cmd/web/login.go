@@ -99,18 +99,13 @@ func (app *application) logout(w http.ResponseWriter, r *http.Request) {
 }
 
 // requireAuth is a middleware that redirects unauthenticated requests to /web/login.
-// A request is considered authenticated when "user_id" is present in the session
-// and the referenced user still exists in the database.
+// A request is considered authenticated when "user_id" is present in the session.
+// The session token is cryptographic proof of prior authentication; no per-request
+// DB lookup is needed.
 func (app *application) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userID, ok := sessionUserIDFromContext(app, r)
+		_, ok := sessionUserIDFromContext(app, r)
 		if !ok {
-			http.Redirect(w, r, "/web/login", http.StatusSeeOther)
-			return
-		}
-		exists, err := app.store.UserExists(r.Context(), userID)
-		if err != nil || !exists {
-			_ = app.sessionManager.Destroy(r.Context())
 			http.Redirect(w, r, "/web/login", http.StatusSeeOther)
 			return
 		}

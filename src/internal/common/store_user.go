@@ -78,21 +78,6 @@ func (s *UserStore) CreateUserWithAdmin(ctx context.Context, username, password 
 	return tx.Commit()
 }
 
-func (s *UserStore) UserExists(ctx context.Context, userID int64) (bool, error) {
-	if userID <= 0 {
-		return false, nil
-	}
-	var exists bool
-	err := s.db.QueryRowContext(ctx,
-		`SELECT EXISTS(SELECT 1 FROM users WHERE id = $1)`,
-		userID,
-	).Scan(&exists)
-	if err != nil {
-		return false, err
-	}
-	return exists, nil
-}
-
 func (s *UserStore) DeleteUser(ctx context.Context, username string) error {
 	username = strings.TrimSpace(username)
 	if username == "" {

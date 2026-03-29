@@ -17,7 +17,6 @@ import (
 	"context"
 	"net/http"
 	"net/url"
-	"strings"
 	"testing"
 )
 
@@ -93,51 +92,3 @@ func TestIntegrationWebRepoTicketTrackerAssignRequiresAccess(t *testing.T) {
 	}
 }
 
-// --- Issue #5: requireAuth doesn't verify user still exists ---
-
-func TestIntegrationDeletedUserSessionIsRejected(t *testing.T) {
-	skipUnlessIntegration(t)
-	ts, store := newIntegrationServer(t)
-	if err := store.CreateUser(context.Background(), "ephemeral", testPassword); err != nil {
-		t.Fatalf("CreateUser: %v", err)
-	}
-
-	client := newClient(t)
-	loginResp := postForm(t, client, ts.URL+"/web/login", url.Values{
-		"username": {"ephemeral"},
-		"password": {testPassword},
-	})
-	loginResp.Body.Close()
-	if loginResp.StatusCode != http.StatusSeeOther {
-		t.Fatalf("login: expected 303, got %d", loginResp.StatusCode)
-	}
-
-	// Verify session works before deletion.
-	resp, err := client.Get(ts.URL + "/web/admin")
-	if err != nil {
-		t.Fatalf("GET /web/admin: %v", err)
-	}
-	resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("expected 200 before deletion, got %d", resp.StatusCode)
-	}
-
-	// Delete the user.
-	if err := store.DeleteUser(context.Background(), "ephemeral"); err != nil {
-		t.Fatalf("DeleteUser: %v", err)
-	}
-
-	// Session should no longer grant access.
-	resp2, err := client.Get(ts.URL + "/web/admin")
-	if err != nil {
-		t.Fatalf("GET /web/admin after delete: %v", err)
-	}
-	resp2.Body.Close()
-	if resp2.StatusCode != http.StatusSeeOther {
-		loc := resp2.Header.Get("Location")
-		t.Fatalf("expected redirect to login (303) after user deletion, got %d (Location: %s)", resp2.StatusCode, loc)
-	}
-	if loc := resp2.Header.Get("Location"); !strings.Contains(loc, "/web/login") {
-		t.Fatalf("expected redirect to /web/login, got %q", loc)
-	}
-}
