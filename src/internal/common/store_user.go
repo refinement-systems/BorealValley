@@ -26,6 +26,28 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
+type argon2Params struct {
+	time    uint32
+	memory  uint32
+	threads uint8
+	keyLen  uint32
+	saltLen int
+}
+
+var defaultParams = argon2Params{
+	time:    1,
+	memory:  64 * 1024,
+	threads: 4,
+	keyLen:  32,
+	saltLen: 16,
+}
+
+func fakeHashWork(password string) {
+	salt := make([]byte, defaultParams.saltLen)
+	_, _ = rand.Read(salt)
+	_ = argon2.IDKey([]byte(password), salt, defaultParams.time, defaultParams.memory, defaultParams.threads, defaultParams.keyLen)
+}
+
 // UserStore owns all user management and authentication queries.
 type UserStore struct {
 	db      *sql.DB
