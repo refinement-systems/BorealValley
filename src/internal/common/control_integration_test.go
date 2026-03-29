@@ -1065,6 +1065,36 @@ func TestIntegrationTicketAndCommentUpdateVersionHistory(t *testing.T) {
 	}
 }
 
+func TestEnsureUserActorIdentityBackfillBatchesIntoSingleTransaction(t *testing.T) {
+	store, _, _ := setupControlIntegration(t)
+	ctx := context.Background()
+
+	// Create two users so their actor identities exist, then delete those
+	// identities to simulate the pre-backfill state.
+	_, u1 := createAndVerifyIntegrationUser(t, store, "backfill-a", false)
+	_, u2 := createAndVerifyIntegrationUser(t, store, "backfill-b", false)
+
+	if _, err := store.db.ExecContext(ctx,
+		`DELETE FROM user_actor_identity
+		  WHERE user_id IN (SELECT id FROM users WHERE username = ANY($1))`,
+		[]string{u1, u2},
+	); err != nil {
+		t.Fatalf("delete actor identities: %v", err)
+	}
+
+	if err := store.ensureUserActorIdentityBackfill(ctx); err != nil {
+		t.Fatalf("ensureUserActorIdentityBackfill: %v", err)
+	}
+
+	for _, username := range []string{u1, u2} {
+		if _, found, err := store.GetUserActorByUsername(ctx, username); err != nil {
+			t.Fatalf("GetUserActorByUsername(%s): %v", username, err)
+		} else if !found {
+			t.Fatalf("actor identity not provisioned for %s", username)
+		}
+	}
+}
+
 func contentFromBodyJSON(t *testing.T, raw []byte) string {
 	t.Helper()
 	body := map[string]any{}

@@ -273,14 +273,16 @@ func (s *UserStore) ensureUserActorIdentityBackfill(ctx context.Context) error {
 		return err
 	}
 
-	for _, u := range missing {
+	if len(missing) > 0 {
 		tx, err := s.db.BeginTx(ctx, nil)
 		if err != nil {
 			return err
 		}
-		if err := provisionUserActorTx(ctx, tx, u.id, u.username, s.baseURL); err != nil {
-			tx.Rollback()
-			return err
+		defer tx.Rollback()
+		for _, u := range missing {
+			if err := provisionUserActorTx(ctx, tx, u.id, u.username, s.baseURL); err != nil {
+				return err
+			}
 		}
 		if err := tx.Commit(); err != nil {
 			return err

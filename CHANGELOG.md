@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
 
 ### Changed
+- batch actor-identity backfill into single transaction (#61)
 - split control.go into domain-bounded files (SRP violation) (#59)
 - remove unreachable method checks from method-prefixed routes (#65)
 - define typed structs for ActivityPub objects (replace map[string]any) (#64)
