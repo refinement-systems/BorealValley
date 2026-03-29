@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
 
 ### Changed
+- separate data-gathering from rendering in renderTicketTrackerDetailPageWithSelection (#68)
 - move homeTmpl/loginTmpl package globals into application struct (#66)
 - extract composable units from runAgentOnce (SRP violation) (#58)
 - batch actor-identity backfill into single transaction (#61)

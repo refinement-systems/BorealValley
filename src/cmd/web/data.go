@@ -439,32 +439,23 @@ func (app *application) renderTicketTrackerDetailPage(w http.ResponseWriter, r *
 	app.renderTicketTrackerDetailPageWithSelection(w, r, trackerSlug, strings.TrimSpace(r.URL.Query().Get("repo")), errMsg)
 }
 
-func (app *application) renderTicketTrackerDetailPageWithSelection(w http.ResponseWriter, r *http.Request, trackerSlug string, selectedRepoSlug string, errMsg string) {
-	tracker, found, err := app.ticketTrackerFromPathValue(r.Context(), trackerSlug)
+func (app *application) fetchTicketTrackerDetailData(ctx context.Context, trackerSlug, selectedRepoSlug, createdTicketSlug string, userID int64) (dataTicketTrackerDetailData, bool, error) {
+	tracker, found, err := app.ticketTrackerFromPathValue(ctx, trackerSlug)
 	if err != nil {
-		renderError(w, http.StatusInternalServerError, "internal error")
-		return
+		return dataTicketTrackerDetailData{}, false, err
 	}
 	if !found {
-		renderNotFound(w)
-		return
+		return dataTicketTrackerDetailData{}, false, nil
 	}
 
-	repositories, err := app.store.ListRepositoriesForTracker(r.Context(), tracker.Slug)
+	repositories, err := app.store.ListRepositoriesForTracker(ctx, tracker.Slug)
 	if err != nil {
-		renderError(w, http.StatusInternalServerError, "internal error")
-		return
-	}
-	userID, ok := sessionUserIDFromContext(app, r)
-	if !ok {
-		renderError(w, http.StatusUnauthorized, "authentication error")
-		return
+		return dataTicketTrackerDetailData{}, true, err
 	}
 
-	tickets, err := app.store.ListTicketsForTrackerForUser(r.Context(), tracker.Slug, userID)
+	tickets, err := app.store.ListTicketsForTrackerForUser(ctx, tracker.Slug, userID)
 	if err != nil {
-		renderError(w, http.StatusInternalServerError, "internal error")
-		return
+		return dataTicketTrackerDetailData{}, true, err
 	}
 
 	selectedRepoSlug = strings.TrimSpace(selectedRepoSlug)
@@ -472,7 +463,7 @@ func (app *application) renderTicketTrackerDetailPageWithSelection(w http.Respon
 		selectedRepoSlug = repositories[0].Slug
 	}
 
-	createdTicketSlug := strings.TrimSpace(r.URL.Query().Get("created-ticket"))
+	createdTicketSlug = strings.TrimSpace(createdTicketSlug)
 	var createdTicketSummary string
 	if createdTicketSlug != "" {
 		for _, t := range tickets {
@@ -483,15 +474,37 @@ func (app *application) renderTicketTrackerDetailPageWithSelection(w http.Respon
 		}
 	}
 
-	renderTemplate(w, dataTicketTrackerDetailTmpl, dataTicketTrackerDetailData{
+	return dataTicketTrackerDetailData{
 		Tracker:              tracker,
 		Tickets:              tickets,
 		TrackedRepositories:  repositories,
 		SelectedRepoSlug:     selectedRepoSlug,
 		CreatedTicketSlug:    createdTicketSlug,
 		CreatedTicketSummary: createdTicketSummary,
-		Err:                  errMsg,
-	})
+	}, true, nil
+}
+
+func (app *application) renderTicketTrackerDetailPageWithSelection(w http.ResponseWriter, r *http.Request, trackerSlug string, selectedRepoSlug string, errMsg string) {
+	userID, ok := sessionUserIDFromContext(app, r)
+	if !ok {
+		renderError(w, http.StatusUnauthorized, "authentication error")
+		return
+	}
+
+	createdTicketSlug := strings.TrimSpace(r.URL.Query().Get("created-ticket"))
+
+	data, found, err := app.fetchTicketTrackerDetailData(r.Context(), trackerSlug, selectedRepoSlug, createdTicketSlug, userID)
+	if err != nil {
+		renderError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	if !found {
+		renderNotFound(w)
+		return
+	}
+
+	data.Err = errMsg
+	renderTemplate(w, dataTicketTrackerDetailTmpl, data)
 }
 
 func (app *application) repositoryFromPathValue(ctx context.Context, slug string) (common.Repository, bool, error) {
