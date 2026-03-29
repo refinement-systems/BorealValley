@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
 
 ### Changed
+- Standardize error response format between web and API endpoints (#55)
 - Document or quote SQL table names in ListObjectTypeCounts (#53)
 - Eliminate N+1 query pattern in ListNotificationsForUser (#50)
 - Move CSRF logic from main.go to cross-site-request-forgery.go (#54)

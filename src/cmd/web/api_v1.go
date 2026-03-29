@@ -25,7 +25,7 @@ import (
 
 func (app *application) apiV1Profile(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -35,11 +35,11 @@ func (app *application) apiV1Profile(w http.ResponseWriter, r *http.Request) {
 	}
 	profile, found, err := app.store.GetOAuthUserProfile(r.Context(), principal.UserID)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
-		http.Error(w, "not found", http.StatusNotFound)
+		writeJSONError(w, http.StatusNotFound, "not found")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{
@@ -52,12 +52,12 @@ func (app *application) apiV1Profile(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) apiV1RepoList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	repos, err := app.store.ListRepositories(r.Context())
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"repo": mapRepositories(app.repoPathMapper, repos)})
@@ -65,12 +65,12 @@ func (app *application) apiV1RepoList(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) apiV1RepoDetail(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	repo, found, err := app.store.GetRepositoryBySlug(r.Context(), strings.TrimSpace(r.PathValue("repo")))
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
@@ -82,12 +82,12 @@ func (app *application) apiV1RepoDetail(w http.ResponseWriter, r *http.Request) 
 
 func (app *application) apiV1TicketTrackerList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	trackers, err := app.store.ListTicketTrackers(r.Context())
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ticket_tracker": trackers})
@@ -95,7 +95,7 @@ func (app *application) apiV1TicketTrackerList(w http.ResponseWriter, r *http.Re
 
 func (app *application) apiV1TicketTrackerCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -108,16 +108,16 @@ func (app *application) apiV1TicketTrackerCreate(w http.ResponseWriter, r *http.
 		Summary string `json:"summary"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "bad json", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "bad json")
 		return
 	}
 	tracker, err := app.store.CreateTicketTracker(r.Context(), principal.UserID, body.Name, body.Summary)
 	if err != nil {
 		if errors.Is(err, common.ErrValidation) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusCreated, tracker)
@@ -125,12 +125,12 @@ func (app *application) apiV1TicketTrackerCreate(w http.ResponseWriter, r *http.
 
 func (app *application) apiV1TicketTrackerDetail(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	tracker, found, err := app.store.GetTicketTrackerBySlug(r.Context(), strings.TrimSpace(r.PathValue("tracker")))
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
@@ -142,7 +142,7 @@ func (app *application) apiV1TicketTrackerDetail(w http.ResponseWriter, r *http.
 
 func (app *application) apiV1RepoTicketTrackerAssign(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -157,11 +157,11 @@ func (app *application) apiV1RepoTicketTrackerAssign(w http.ResponseWriter, r *h
 	}
 	canAccess, err := app.store.CanAccessRepository(r.Context(), repoSlug, principal.UserID)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !canAccess {
-		http.Error(w, "permission error", http.StatusForbidden)
+		writeJSONError(w, http.StatusForbidden, "permission error")
 		return
 	}
 	var body struct {
@@ -169,7 +169,7 @@ func (app *application) apiV1RepoTicketTrackerAssign(w http.ResponseWriter, r *h
 		Tracker string `json:"tracker"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "bad json", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "bad json")
 		return
 	}
 	action := strings.TrimSpace(body.Action)
@@ -183,15 +183,15 @@ func (app *application) apiV1RepoTicketTrackerAssign(w http.ResponseWriter, r *h
 	case "unassign":
 		err = app.store.UnassignTicketTrackerFromRepository(r.Context(), repoSlug)
 	default:
-		http.Error(w, "invalid action", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "invalid action")
 		return
 	}
 	if err != nil {
 		if errors.Is(err, common.ErrValidation) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"status": "ok"})
@@ -199,7 +199,7 @@ func (app *application) apiV1RepoTicketTrackerAssign(w http.ResponseWriter, r *h
 
 func (app *application) apiV1TicketList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -210,7 +210,7 @@ func (app *application) apiV1TicketList(w http.ResponseWriter, r *http.Request) 
 	trackerSlug := strings.TrimSpace(r.PathValue("tracker"))
 	tickets, err := app.store.ListTicketsForTrackerForUser(r.Context(), trackerSlug, principal.UserID)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ticket": tickets})
@@ -218,7 +218,7 @@ func (app *application) apiV1TicketList(w http.ResponseWriter, r *http.Request) 
 
 func (app *application) apiV1TicketAssignedList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -229,12 +229,12 @@ func (app *application) apiV1TicketAssignedList(w http.ResponseWriter, r *http.R
 
 	unrespondedOnly, err := parseOptionalBoolQuery(r.URL.Query().Get("unresponded"), "unresponded")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	agentCompletionPendingOnly, err := parseOptionalBoolQuery(r.URL.Query().Get("agent_completion_pending"), "agent_completion_pending")
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	limit := parseLimitQuery(r.URL.Query().Get("limit"), 20)
@@ -244,7 +244,7 @@ func (app *application) apiV1TicketAssignedList(w http.ResponseWriter, r *http.R
 		AgentCompletionPendingOnly: agentCompletionPendingOnly,
 	})
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ticket": tickets})
@@ -252,7 +252,7 @@ func (app *application) apiV1TicketAssignedList(w http.ResponseWriter, r *http.R
 
 func (app *application) apiV1TicketCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -272,16 +272,16 @@ func (app *application) apiV1TicketCreate(w http.ResponseWriter, r *http.Request
 		Priority   int    `json:"priority"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "bad json", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "bad json")
 		return
 	}
 	ticket, err := app.store.CreateTicketWithPriority(r.Context(), principal.UserID, trackerSlug, body.Repository, body.Summary, body.Content, body.Priority)
 	if err != nil {
 		if errors.Is(err, common.ErrValidation) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusCreated, ticket)
@@ -289,7 +289,7 @@ func (app *application) apiV1TicketCreate(w http.ResponseWriter, r *http.Request
 
 func (app *application) apiV1TicketUpdateCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -302,7 +302,7 @@ func (app *application) apiV1TicketUpdateCreate(w http.ResponseWriter, r *http.R
 	ticketSlug := strings.TrimSpace(r.PathValue("ticket"))
 	record, found, err := app.store.GetLocalTicketObjectBySlug(r.Context(), trackerSlug, ticketSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
@@ -311,11 +311,11 @@ func (app *application) apiV1TicketUpdateCreate(w http.ResponseWriter, r *http.R
 	}
 	canAccess, err := app.store.CanAccessRepository(r.Context(), record.RepositorySlug, principal.UserID)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !canAccess {
-		http.Error(w, "permission error", http.StatusForbidden)
+		writeJSONError(w, http.StatusForbidden, "permission error")
 		return
 	}
 
@@ -323,16 +323,16 @@ func (app *application) apiV1TicketUpdateCreate(w http.ResponseWriter, r *http.R
 		Content string `json:"content"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "bad json", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "bad json")
 		return
 	}
 	update, err := app.store.CreateTicketUpdate(r.Context(), principal.UserID, trackerSlug, ticketSlug, body.Content)
 	if err != nil {
 		if errors.Is(err, common.ErrValidation) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusCreated, update)
@@ -340,7 +340,7 @@ func (app *application) apiV1TicketUpdateCreate(w http.ResponseWriter, r *http.R
 
 func (app *application) apiV1TicketCommentUpdateCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -355,7 +355,7 @@ func (app *application) apiV1TicketCommentUpdateCreate(w http.ResponseWriter, r 
 
 	record, found, err := app.store.GetLocalTicketCommentObjectBySlug(r.Context(), trackerSlug, ticketSlug, commentSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
@@ -364,11 +364,11 @@ func (app *application) apiV1TicketCommentUpdateCreate(w http.ResponseWriter, r 
 	}
 	canAccess, err := app.store.CanAccessTicket(r.Context(), principal.UserID, trackerSlug, ticketSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !canAccess {
-		http.Error(w, "permission error", http.StatusForbidden)
+		writeJSONError(w, http.StatusForbidden, "permission error")
 		return
 	}
 	_ = record
@@ -377,16 +377,16 @@ func (app *application) apiV1TicketCommentUpdateCreate(w http.ResponseWriter, r 
 		Content string `json:"content"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "bad json", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "bad json")
 		return
 	}
 	update, err := app.store.CreateTicketCommentUpdate(r.Context(), principal.UserID, trackerSlug, ticketSlug, commentSlug, body.Content)
 	if err != nil {
 		if errors.Is(err, common.ErrValidation) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusCreated, update)
@@ -404,7 +404,7 @@ type apiV1ObjectVersion struct {
 
 func (app *application) apiV1TicketVersionList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -416,7 +416,7 @@ func (app *application) apiV1TicketVersionList(w http.ResponseWriter, r *http.Re
 	ticketSlug := strings.TrimSpace(r.PathValue("ticket"))
 	record, found, err := app.store.GetLocalTicketObjectBySlug(r.Context(), trackerSlug, ticketSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
@@ -425,21 +425,21 @@ func (app *application) apiV1TicketVersionList(w http.ResponseWriter, r *http.Re
 	}
 	canAccess, err := app.store.CanAccessRepository(r.Context(), record.RepositorySlug, principal.UserID)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !canAccess {
-		http.Error(w, "permission error", http.StatusForbidden)
+		writeJSONError(w, http.StatusForbidden, "permission error")
 		return
 	}
 	limit := parseLimitQuery(r.URL.Query().Get("limit"), 20)
 	versions, err := app.store.ListTicketVersions(r.Context(), principal.UserID, trackerSlug, ticketSlug, limit)
 	if err != nil {
 		if errors.Is(err, common.ErrValidation) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	out := make([]apiV1ObjectVersion, 0, len(versions))
@@ -459,7 +459,7 @@ func (app *application) apiV1TicketVersionList(w http.ResponseWriter, r *http.Re
 
 func (app *application) apiV1TicketCommentVersionList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -472,7 +472,7 @@ func (app *application) apiV1TicketCommentVersionList(w http.ResponseWriter, r *
 	commentSlug := strings.TrimSpace(r.PathValue("comment"))
 	record, found, err := app.store.GetLocalTicketCommentObjectBySlug(r.Context(), trackerSlug, ticketSlug, commentSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
@@ -481,11 +481,11 @@ func (app *application) apiV1TicketCommentVersionList(w http.ResponseWriter, r *
 	}
 	canAccess, err := app.store.CanAccessTicket(r.Context(), principal.UserID, trackerSlug, ticketSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !canAccess {
-		http.Error(w, "permission error", http.StatusForbidden)
+		writeJSONError(w, http.StatusForbidden, "permission error")
 		return
 	}
 	_ = record
@@ -493,10 +493,10 @@ func (app *application) apiV1TicketCommentVersionList(w http.ResponseWriter, r *
 	versions, err := app.store.ListTicketCommentVersions(r.Context(), principal.UserID, trackerSlug, ticketSlug, commentSlug, limit)
 	if err != nil {
 		if errors.Is(err, common.ErrValidation) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	out := make([]apiV1ObjectVersion, 0, len(versions))
@@ -516,7 +516,7 @@ func (app *application) apiV1TicketCommentVersionList(w http.ResponseWriter, r *
 
 func (app *application) apiV1TicketCommentList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -529,7 +529,7 @@ func (app *application) apiV1TicketCommentList(w http.ResponseWriter, r *http.Re
 	ticketSlug := strings.TrimSpace(r.PathValue("ticket"))
 	record, found, err := app.store.GetLocalTicketObjectBySlug(r.Context(), trackerSlug, ticketSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
@@ -538,21 +538,21 @@ func (app *application) apiV1TicketCommentList(w http.ResponseWriter, r *http.Re
 	}
 	canAccess, err := app.store.CanAccessRepository(r.Context(), record.RepositorySlug, principal.UserID)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !canAccess {
-		http.Error(w, "permission error", http.StatusForbidden)
+		writeJSONError(w, http.StatusForbidden, "permission error")
 		return
 	}
 
 	comments, err := app.store.ListTicketCommentsForTicket(r.Context(), principal.UserID, trackerSlug, ticketSlug)
 	if err != nil {
 		if errors.Is(err, common.ErrValidation) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"comment": comments})
@@ -560,7 +560,7 @@ func (app *application) apiV1TicketCommentList(w http.ResponseWriter, r *http.Re
 
 func (app *application) apiV1TicketCommentCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -573,7 +573,7 @@ func (app *application) apiV1TicketCommentCreate(w http.ResponseWriter, r *http.
 	ticketSlug := strings.TrimSpace(r.PathValue("ticket"))
 	record, found, err := app.store.GetLocalTicketObjectBySlug(r.Context(), trackerSlug, ticketSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
@@ -582,11 +582,11 @@ func (app *application) apiV1TicketCommentCreate(w http.ResponseWriter, r *http.
 	}
 	canAccess, err := app.store.CanAccessRepository(r.Context(), record.RepositorySlug, principal.UserID)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !canAccess {
-		http.Error(w, "permission error", http.StatusForbidden)
+		writeJSONError(w, http.StatusForbidden, "permission error")
 		return
 	}
 
@@ -596,7 +596,7 @@ func (app *application) apiV1TicketCommentCreate(w http.ResponseWriter, r *http.
 		AgentCommentKind string `json:"agent_comment_kind"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "bad json", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "bad json")
 		return
 	}
 
@@ -623,10 +623,10 @@ func (app *application) apiV1TicketCommentCreate(w http.ResponseWriter, r *http.
 	}
 	if err != nil {
 		if errors.Is(err, common.ErrValidation) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusCreated, comment)
@@ -646,7 +646,7 @@ func parseOptionalBoolQuery(raw, field string) (bool, error) {
 
 func (app *application) apiV1TicketAssigneeList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -659,7 +659,7 @@ func (app *application) apiV1TicketAssigneeList(w http.ResponseWriter, r *http.R
 	ticketSlug := strings.TrimSpace(r.PathValue("ticket"))
 	record, found, err := app.store.GetLocalTicketObjectBySlug(r.Context(), trackerSlug, ticketSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
@@ -668,17 +668,17 @@ func (app *application) apiV1TicketAssigneeList(w http.ResponseWriter, r *http.R
 	}
 	canAccess, err := app.store.CanAccessRepository(r.Context(), record.RepositorySlug, principal.UserID)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !canAccess {
-		http.Error(w, "permission error", http.StatusForbidden)
+		writeJSONError(w, http.StatusForbidden, "permission error")
 		return
 	}
 
 	assignees, err := app.store.ListTicketAssigneesForTicket(r.Context(), trackerSlug, ticketSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"assignee": assignees})
@@ -686,7 +686,7 @@ func (app *application) apiV1TicketAssigneeList(w http.ResponseWriter, r *http.R
 
 func (app *application) apiV1TicketAssigneeUpdate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -699,7 +699,7 @@ func (app *application) apiV1TicketAssigneeUpdate(w http.ResponseWriter, r *http
 	ticketSlug := strings.TrimSpace(r.PathValue("ticket"))
 	record, found, err := app.store.GetLocalTicketObjectBySlug(r.Context(), trackerSlug, ticketSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
@@ -708,11 +708,11 @@ func (app *application) apiV1TicketAssigneeUpdate(w http.ResponseWriter, r *http
 	}
 	canAccess, err := app.store.CanAccessRepository(r.Context(), record.RepositorySlug, principal.UserID)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !canAccess {
-		http.Error(w, "permission error", http.StatusForbidden)
+		writeJSONError(w, http.StatusForbidden, "permission error")
 		return
 	}
 
@@ -721,7 +721,7 @@ func (app *application) apiV1TicketAssigneeUpdate(w http.ResponseWriter, r *http
 		Username string `json:"username"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "bad json", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "bad json")
 		return
 	}
 	if err := app.store.UpdateTicketAssigneeByUsername(
@@ -733,10 +733,10 @@ func (app *application) apiV1TicketAssigneeUpdate(w http.ResponseWriter, r *http
 		body.Username,
 	); err != nil {
 		if errors.Is(err, common.ErrValidation) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"status": "ok"})
@@ -766,7 +766,7 @@ type apiV1Notification struct {
 
 func (app *application) apiV1NotificationList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -777,12 +777,12 @@ func (app *application) apiV1NotificationList(w http.ResponseWriter, r *http.Req
 
 	minID, err := parseOptionalPositiveInt64(r.URL.Query().Get("min_id"))
 	if err != nil {
-		http.Error(w, "invalid min_id", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "invalid min_id")
 		return
 	}
 	maxID, err := parseOptionalPositiveInt64(r.URL.Query().Get("max_id"))
 	if err != nil {
-		http.Error(w, "invalid max_id", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "invalid max_id")
 		return
 	}
 	limit := parseLimitQuery(r.URL.Query().Get("limit"), 20)
@@ -792,7 +792,7 @@ func (app *application) apiV1NotificationList(w http.ResponseWriter, r *http.Req
 		Limit: limit,
 	})
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -830,7 +830,7 @@ func (app *application) apiV1NotificationList(w http.ResponseWriter, r *http.Req
 
 func (app *application) apiV1NotificationClear(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -839,7 +839,7 @@ func (app *application) apiV1NotificationClear(w http.ResponseWriter, r *http.Re
 		return
 	}
 	if err := app.store.SetAllNotificationsUnread(r.Context(), principal.UserID, false); err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"status": "ok"})
@@ -847,7 +847,7 @@ func (app *application) apiV1NotificationClear(w http.ResponseWriter, r *http.Re
 
 func (app *application) apiV1NotificationReset(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -856,7 +856,7 @@ func (app *application) apiV1NotificationReset(w http.ResponseWriter, r *http.Re
 		return
 	}
 	if err := app.store.SetAllNotificationsUnread(r.Context(), principal.UserID, true); err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"status": "ok"})
@@ -864,7 +864,7 @@ func (app *application) apiV1NotificationReset(w http.ResponseWriter, r *http.Re
 
 func (app *application) apiV1NotificationUpdate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -882,19 +882,19 @@ func (app *application) apiV1NotificationUpdate(w http.ResponseWriter, r *http.R
 		Unread *bool `json:"unread"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "bad json", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "bad json")
 		return
 	}
 	if body.Unread == nil {
-		http.Error(w, "unread is required", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "unread is required")
 		return
 	}
 	if err := app.store.SetNotificationUnread(r.Context(), principal.UserID, notificationID, *body.Unread); err != nil {
 		if errors.Is(err, common.ErrValidation) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"status": "ok"})
@@ -902,7 +902,7 @@ func (app *application) apiV1NotificationUpdate(w http.ResponseWriter, r *http.R
 
 func (app *application) apiV1RepoMemberList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -912,18 +912,18 @@ func (app *application) apiV1RepoMemberList(w http.ResponseWriter, r *http.Reque
 	}
 	isAdmin, err := app.store.IsUserAdmin(r.Context(), principal.UserID)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !isAdmin {
-		http.Error(w, "permission error", http.StatusForbidden)
+		writeJSONError(w, http.StatusForbidden, "permission error")
 		return
 	}
 
 	repoSlug := strings.TrimSpace(r.PathValue("repo"))
 	_, found, err := app.store.GetRepositoryBySlug(r.Context(), repoSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
@@ -933,7 +933,7 @@ func (app *application) apiV1RepoMemberList(w http.ResponseWriter, r *http.Reque
 
 	member, err := app.store.ListRepositoryMembers(r.Context(), repoSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"member": member})
@@ -941,7 +941,7 @@ func (app *application) apiV1RepoMemberList(w http.ResponseWriter, r *http.Reque
 
 func (app *application) apiV1RepoMemberUpdate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	principal, ok := oauthPrincipalFromContext(r.Context())
@@ -951,18 +951,18 @@ func (app *application) apiV1RepoMemberUpdate(w http.ResponseWriter, r *http.Req
 	}
 	isAdmin, err := app.store.IsUserAdmin(r.Context(), principal.UserID)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !isAdmin {
-		http.Error(w, "permission error", http.StatusForbidden)
+		writeJSONError(w, http.StatusForbidden, "permission error")
 		return
 	}
 
 	repoSlug := strings.TrimSpace(r.PathValue("repo"))
 	_, found, err := app.store.GetRepositoryBySlug(r.Context(), repoSlug)
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	if !found {
@@ -975,14 +975,14 @@ func (app *application) apiV1RepoMemberUpdate(w http.ResponseWriter, r *http.Req
 		Username string `json:"username"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "bad json", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "bad json")
 		return
 	}
 
 	action := strings.TrimSpace(body.Action)
 	username := strings.TrimSpace(body.Username)
 	if username == "" {
-		http.Error(w, "username is required", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "username is required")
 		return
 	}
 	if action == "" {
@@ -995,15 +995,15 @@ func (app *application) apiV1RepoMemberUpdate(w http.ResponseWriter, r *http.Req
 	case "remove":
 		err = app.store.RemoveRepositoryMemberByUsername(r.Context(), repoSlug, username)
 	default:
-		http.Error(w, "invalid action", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "invalid action")
 		return
 	}
 	if err != nil {
 		if errors.Is(err, common.ErrValidation) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			writeJSONError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -1012,12 +1012,12 @@ func (app *application) apiV1RepoMemberUpdate(w http.ResponseWriter, r *http.Req
 
 func (app *application) apiV1ObjectCount(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 	counts, err := app.store.ListObjectTypeCounts(r.Context())
 	if err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"object_count": counts})
@@ -1027,4 +1027,28 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(value)
+}
+
+func writeJSONError(w http.ResponseWriter, status int, message string) {
+	code := jsonErrorCode(status)
+	writeJSON(w, status, map[string]any{"code": code, "message": message})
+}
+
+func jsonErrorCode(status int) string {
+	switch status {
+	case http.StatusBadRequest:
+		return "bad_request"
+	case http.StatusUnauthorized:
+		return "unauthorized"
+	case http.StatusForbidden:
+		return "forbidden"
+	case http.StatusNotFound:
+		return "not_found"
+	case http.StatusMethodNotAllowed:
+		return "method_not_allowed"
+	case http.StatusInternalServerError:
+		return "internal_error"
+	default:
+		return "error"
+	}
 }
