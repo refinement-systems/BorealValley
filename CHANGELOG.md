@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Security
+- fix SQL string interpolation in ListObjectTypeCounts (#57)
+- fix SQL string interpolation in ListNotificationsForUser (#56)
 - Add timeout and file limits to agent SearchText (#52)
 - LOW: Template Execute error results silently discarded (#8)
 - LOW: SQL queries using fmt.Sprintf for table names - fragile pattern (#7)
@@ -25,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix ticket links to use relative paths and show summaries instead of UUIDs (#32)
 
 ### Changed
+- Architecture QA review report (#47)
 - Extract domain-bounded sub-stores from Store god object (#49)
 - Standardize error response format between web and API endpoints (#55)
 - Document or quote SQL table names in ListObjectTypeCounts (#53)

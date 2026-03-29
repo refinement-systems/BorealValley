@@ -37,13 +37,10 @@ func (s *NotificationStore) ListNotificationsForUser(ctx context.Context, userID
 	targetCount := limit + 1
 
 	isForward := options.MinID > 0
-	orderDirection := "DESC"
-	if isForward {
-		orderDirection = "ASC"
-	}
 
-	query := fmt.Sprintf(
-		`SELECT n.id,
+	var query string
+	if isForward {
+		query = `SELECT n.id,
 		        n.kind,
 		        n.unread,
 		        n.created_at,
@@ -73,10 +70,42 @@ func (s *NotificationStore) ListNotificationsForUser(ctx context.Context, userID
 		               AND r.is_local = TRUE
 		        )
 		    )
-		  ORDER BY n.id %s
-		  LIMIT $4`,
-		orderDirection,
-	)
+		  ORDER BY n.id ASC
+		  LIMIT $4`
+	} else {
+		query = `SELECT n.id,
+		        n.kind,
+		        n.unread,
+		        n.created_at,
+		        t.primary_key,
+		        t.slug,
+		        tr.slug,
+		        r.slug,
+		        COALESCE(u.id, 0),
+		        COALESCE(u.username, ''),
+		        COALESCE(i.actor_id, '')
+		   FROM notification n
+		   JOIN ff_ticket t ON t.internal_id = n.ticket_internal_id
+		   JOIN ff_ticket_tracker tr ON tr.internal_id = t.tracker_internal_id
+		   JOIN ff_repository r ON r.internal_id = n.repository_internal_id
+		   LEFT JOIN users u ON u.id = n.assigned_by_user_id
+		   LEFT JOIN user_actor_identity i ON i.user_id = u.id
+		  WHERE n.user_id = $1
+		    AND ($2::bigint <= 0 OR n.id > $2)
+		    AND ($3::bigint <= 0 OR n.id < $3)
+		    AND (
+		        EXISTS(SELECT 1 FROM users WHERE id = $1 AND is_admin = TRUE)
+		        OR EXISTS(
+		            SELECT 1
+		              FROM ff_repository_member m
+		             WHERE m.repository_internal_id = r.internal_id
+		               AND m.user_id = $1
+		               AND r.is_local = TRUE
+		        )
+		    )
+		  ORDER BY n.id DESC
+		  LIMIT $4`
+	}
 	rows, err := s.db.QueryContext(ctx, query, userID, options.MinID, options.MaxID, targetCount)
 	if err != nil {
 		return nil, false, err

@@ -209,6 +209,17 @@ var tableToTypeName = func() map[string]string {
 	return m
 }()
 
+// objectTableCountQueries maps each allowed table to its static COUNT query,
+// computed once at init from the hardcoded objectTables slice so that
+// ListObjectTypeCounts never constructs SQL at runtime.
+var objectTableCountQueries = func() map[string]string {
+	m := make(map[string]string, len(objectTables))
+	for _, t := range objectTables {
+		m[t] = `SELECT COUNT(*) FROM "` + t + `"`
+	}
+	return m
+}()
+
 func allowedTable(name string) bool {
 	return allowedTableSet[name]
 }

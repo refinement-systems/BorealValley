@@ -328,13 +328,11 @@ func (s *Store) ListTicketCommentVersions(ctx context.Context, userID int64, tra
 func (s *Store) ListObjectTypeCounts(ctx context.Context) ([]ObjectTypeCount, error) {
 	counts := make([]ObjectTypeCount, 0, len(objectTables))
 	for _, table := range objectTables {
-		// objectTables is a hardcoded allowlist; allowedTable enforces that invariant.
-		// The identifier is also quoted defensively against any future changes.
-		if !allowedTable(table) {
+		query, ok := objectTableCountQueries[table]
+		if !ok {
 			return nil, fmt.Errorf("disallowed table name: %q", table)
 		}
 		var count int64
-		query := fmt.Sprintf(`SELECT COUNT(*) FROM "%s"`, table)
 		if err := s.UserStore.db.QueryRowContext(ctx, query).Scan(&count); err != nil {
 			return nil, err
 		}
