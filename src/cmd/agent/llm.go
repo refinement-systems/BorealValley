@@ -23,10 +23,13 @@ import (
 	commonagent "github.com/refinement-systems/BorealValley/src/internal/common/agent"
 )
 
+type ToolApprovalFunc func(toolName string, args map[string]string) (approved bool, reason string)
+
 type loopCallbacks struct {
-	OnToolCall   func(name, args string) error
-	OnToolResult func(name, result string) error
-	OnAssistant  func(text string) error
+	OnToolCall      func(name, args string) error
+	OnToolResult    func(name, result string) error
+	OnAssistant     func(text string) error
+	ApproveToolCall ToolApprovalFunc
 }
 
 type llmMessage struct {
@@ -153,7 +156,20 @@ func runLMStudioTicketLoop(ctx context.Context, lmstudioURL, model, workspace, t
 						return "", err
 					}
 				}
-				toolResult := executeToolCall(ctx, workspace, tc)
+				toolResult := ""
+				blocked := false
+				if cbs.ApproveToolCall != nil {
+					var args map[string]string
+					if jsonErr := json.Unmarshal([]byte(tc.Function.Arguments), &args); jsonErr == nil {
+						if approved, reason := cbs.ApproveToolCall(tc.Function.Name, args); !approved {
+							toolResult = fmt.Sprintf(`{"error":"tool_blocked","reason":%q}`, reason)
+							blocked = true
+						}
+					}
+				}
+				if !blocked {
+					toolResult = executeToolCall(ctx, workspace, tc)
+				}
 				if cbs.OnToolResult != nil {
 					if err := cbs.OnToolResult(tc.Function.Name, toolResult); err != nil {
 						return "", err
