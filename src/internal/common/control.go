@@ -1099,10 +1099,6 @@ func (s *Store) ListNotificationsForUser(ctx context.Context, userID int64, opti
 		limit = 100
 	}
 	targetCount := limit + 1
-	queryLimit := targetCount * 5
-	if queryLimit > 1000 {
-		queryLimit = 1000
-	}
 
 	isForward := options.MinID > 0
 	orderDirection := "DESC"
@@ -1131,11 +1127,21 @@ func (s *Store) ListNotificationsForUser(ctx context.Context, userID int64, opti
 		  WHERE n.user_id = $1
 		    AND ($2::bigint <= 0 OR n.id > $2)
 		    AND ($3::bigint <= 0 OR n.id < $3)
+		    AND (
+		        EXISTS(SELECT 1 FROM users WHERE id = $1 AND is_admin = TRUE)
+		        OR EXISTS(
+		            SELECT 1
+		              FROM ff_repository_member m
+		             WHERE m.repository_internal_id = r.internal_id
+		               AND m.user_id = $1
+		               AND r.is_local = TRUE
+		        )
+		    )
 		  ORDER BY n.id %s
 		  LIMIT $4`,
 		orderDirection,
 	)
-	rows, err := s.db.QueryContext(ctx, query, userID, options.MinID, options.MaxID, queryLimit)
+	rows, err := s.db.QueryContext(ctx, query, userID, options.MinID, options.MaxID, targetCount)
 	if err != nil {
 		return nil, false, err
 	}
@@ -1159,17 +1165,7 @@ func (s *Store) ListNotificationsForUser(ctx context.Context, userID int64, opti
 		); err != nil {
 			return nil, false, err
 		}
-		canAccess, err := s.CanAccessRepository(ctx, n.RepositorySlug, userID)
-		if err != nil {
-			return nil, false, err
-		}
-		if !canAccess {
-			continue
-		}
 		notifications = append(notifications, n)
-		if len(notifications) >= targetCount {
-			break
-		}
 	}
 	if err := rows.Err(); err != nil {
 		return nil, false, err
