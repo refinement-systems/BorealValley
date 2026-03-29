@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - HIGH: Open redirect via backslash in return_to (FIXED) (#3)
 
 ### Added
+- agent: add collaboration mode type and state tracking (plan/default) (#71)
 - agent: add tool mutability classification (read-only vs mutating) (#70)
 
 ### Fixed

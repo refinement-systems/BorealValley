@@ -28,6 +28,7 @@ type runConfig struct {
 	Mode        string
 	Model       string
 	LMStudioURL string
+	CollabMode  string
 }
 
 func runAgentOnce(cfg runConfig) error {
@@ -174,7 +175,11 @@ func processTicket(client *apiClient, cfg runConfig, state agentState, ticket co
 		},
 	}
 
-	answer, err := runLMStudioTicketLoop(context.Background(), state.LMStudioURL, state.Model, workspace.Path, envelope, cfg.MaxIter, callbacks)
+	collabMode, err := resolveCollaborationMode(cfg.CollabMode)
+	if err != nil {
+		return fmt.Errorf("resolve collab mode: %w", err)
+	}
+	answer, err := runLMStudioTicketLoop(context.Background(), state.LMStudioURL, state.Model, workspace.Path, envelope, cfg.MaxIter, collabMode, callbacks)
 	if err != nil {
 		_ = client.createTicketCommentUpdate(context.Background(), ticket.TrackerSlug, ticket.TicketSlug, ackComment.Slug, "agent_error: "+err.Error())
 		return err

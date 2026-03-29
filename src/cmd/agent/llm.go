@@ -74,7 +74,7 @@ type llmChatResponse struct {
 	Choices []llmChatChoice `json:"choices"`
 }
 
-func runLMStudioTicketLoop(ctx context.Context, lmstudioURL, model, workspace, ticketEnvelope string, maxIter int, cbs loopCallbacks) (string, error) {
+func runLMStudioTicketLoop(ctx context.Context, lmstudioURL, model, workspace, ticketEnvelope string, maxIter int, collabMode CollaborationMode, cbs loopCallbacks) (string, error) {
 	if strings.TrimSpace(lmstudioURL) == "" {
 		return "", fmt.Errorf("lmstudio url required")
 	}

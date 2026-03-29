@@ -113,6 +113,7 @@ func runCmd(args []string) {
 	workspace := fs.String("workspace", "", "workspace path for tool sandbox")
 	maxIter := fs.Int("max-iter", 3, "max model round-trips")
 	mode := fs.String("mode", "", "override mode (lmstudio or test-counter)")
+	collabMode := fs.String("collab-mode", "", "collaboration mode: default or plan")
 	model := fs.String("model", "", "override model name")
 	lmstudioURL := fs.String("lmstudio-url", "", "override LM Studio base URL")
 	verbosity := fs.Int("verbosity", 3, "log verbosity")
@@ -157,6 +158,7 @@ func runCmd(args []string) {
 		Workspace:   workspacePath,
 		MaxIter:     *maxIter,
 		Mode:        *mode,
+		CollabMode:  *collabMode,
 		Model:       *model,
 		LMStudioURL: *lmstudioURL,
 	}
@@ -193,6 +195,7 @@ func runUsage() {
 	fmt.Fprintln(os.Stderr, "  --workspace PATH")
 	fmt.Fprintln(os.Stderr, "  --max-iter N (default 3)")
 	fmt.Fprintln(os.Stderr, "  --mode MODE")
+	fmt.Fprintln(os.Stderr, "  --collab-mode MODE (default or plan)")
 	fmt.Fprintln(os.Stderr, "  --model NAME")
 	fmt.Fprintln(os.Stderr, "  --lmstudio-url URL")
 	fmt.Fprintln(os.Stderr, "  --verbosity N")
