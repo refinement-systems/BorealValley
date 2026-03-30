@@ -925,3 +925,167 @@ func TestPlanModeBlocksWriteFile(t *testing.T) {
 		t.Fatalf("write_file should have been blocked; file exists at %s", outPath)
 	}
 }
+
+func TestRunAgentOncePlanModeBlocksMutatingToolsAndParsesPlans(t *testing.T) {
+	workspaceRoot := t.TempDir()
+	const (
+		readPath     = "notes/input.txt"
+		readContents = "hello from fixture\n"
+		writePath    = "out.txt"
+		planBody     = "1. Inspect existing files\n2. Add capstone integration test"
+	)
+	stubTicketWorkspaceLifecycle(t, map[string]string{readPath: readContents})
+
+	bv := &fakeBVServer{
+		assigned: []common.AssignedTicket{{
+			ActorID:        "https://example.test/ticket-tracker/tracker-1/ticket/TCK-1",
+			TrackerSlug:    "tracker-1",
+			TicketSlug:     "TCK-1",
+			RepositorySlug: "repo-1",
+			Summary:        "plan task",
+			Content:        "analyse the code",
+			CreatedAt:      time.Now().UTC().Add(-time.Hour),
+			Priority:       5,
+		}},
+		tokenResponse:  oauthTokenResponse{AccessToken: "new-access", RefreshToken: "new-refresh", ExpiresIn: 3600},
+		profilePayload: profileState{UserID: 1, Username: "agent", ActorID: "https://example.test/users/agent", MainKeyID: "https://example.test/users/agent#main-key"},
+	}
+	bvServer := newHTTPServer(t, http.HandlerFunc(bv.handler))
+
+	var (
+		reqMu        sync.Mutex
+		requestCount int
+		firstReq     llmChatRequest
+		secondReq    llmChatRequest
+	)
+	lm := newHTTPServer(t, http.HandlerFunc(fakeLMStudioServer{
+		handler: func(r *http.Request) (int, any) {
+			var req llmChatRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				return http.StatusBadRequest, map[string]any{"error": err.Error()}
+			}
+
+			reqMu.Lock()
+			defer reqMu.Unlock()
+			requestCount++
+			switch requestCount {
+			case 1:
+				firstReq = req
+				return http.StatusOK, map[string]any{
+					"choices": []map[string]any{{
+						"message": map[string]any{
+							"role": "assistant",
+							"tool_calls": []map[string]any{
+								{
+									"id":   "call-read",
+									"type": "function",
+									"function": map[string]any{
+										"name":      "read_file",
+										"arguments": fmt.Sprintf(`{"path":%q}`, readPath),
+									},
+								},
+								{
+									"id":   "call-write",
+									"type": "function",
+									"function": map[string]any{
+										"name":      "write_file",
+										"arguments": fmt.Sprintf(`{"path":%q,"content":"blocked output"}`, writePath),
+									},
+								},
+							},
+						},
+						"finish_reason": "tool_calls",
+					}},
+				}
+			case 2:
+				secondReq = req
+				return http.StatusOK, stopResponse("Here is the plan:\n<proposed_plan>\n" + planBody + "\n</proposed_plan>")
+			default:
+				return http.StatusInternalServerError, map[string]any{"error": "unexpected extra request"}
+			}
+		},
+	}.serveHTTP))
+
+	statePath := writeAgentStateFile(t, agentState{
+		ServerURL:    bvServer.URL,
+		ClientID:     "client",
+		ClientSecret: "secret",
+		RedirectURI:  "http://127.0.0.1:8787/callback",
+		Model:        "m",
+		LMStudioURL:  lm.URL,
+		Token: oauthTokenState{
+			AccessToken:  "access",
+			RefreshToken: "refresh",
+			ExpiresAt:    time.Now().UTC().Add(30 * time.Minute),
+		},
+		Profile: profileState{UserID: 1, Username: "agent", ActorID: "https://example.test/users/agent", MainKeyID: "https://example.test/users/agent#main-key"},
+	})
+
+	if err := runAgentOnce(runConfig{StatePath: statePath, Workspace: workspaceRoot, MaxIter: 3, CollabMode: "plan"}); err != nil {
+		t.Fatalf("runAgentOnce: %v", err)
+	}
+
+	reqMu.Lock()
+	gotRequestCount := requestCount
+	gotFirstReq := firstReq
+	gotSecondReq := secondReq
+	reqMu.Unlock()
+
+	if gotRequestCount != 2 {
+		t.Fatalf("expected 2 LLM requests, got %d", gotRequestCount)
+	}
+	if len(gotFirstReq.Messages) == 0 {
+		t.Fatalf("expected system prompt in first request, got no messages")
+	}
+	systemMsg := gotFirstReq.Messages[0]
+	if systemMsg.Role != "system" {
+		t.Fatalf("expected first message to be system, got %q", systemMsg.Role)
+	}
+	if !strings.Contains(systemMsg.Content, "plan mode") {
+		t.Fatalf("expected plan mode instructions in system prompt, got %q", systemMsg.Content)
+	}
+	if !strings.Contains(systemMsg.Content, "<proposed_plan>") {
+		t.Fatalf("expected proposed_plan tags in system prompt, got %q", systemMsg.Content)
+	}
+
+	toolResults := map[string]string{}
+	for _, msg := range gotSecondReq.Messages {
+		if msg.Role == "tool" {
+			toolResults[msg.ToolCallID] = msg.Content
+		}
+	}
+	if len(toolResults) != 2 {
+		t.Fatalf("expected 2 tool results in second request, got %v", toolResults)
+	}
+	if got := toolResults["call-read"]; got != readContents {
+		t.Fatalf("unexpected read_file tool result: got %q want %q", got, readContents)
+	}
+	if got := toolResults["call-write"]; !strings.Contains(got, "tool_blocked") {
+		t.Fatalf("expected blocked write_file tool result, got %q", got)
+	}
+
+	bv.mu.Lock()
+	defer bv.mu.Unlock()
+	if len(bv.comments) != 2 {
+		t.Fatalf("expected acknowledgement and completion comments, got %d", len(bv.comments))
+	}
+	if bv.comments[0].AgentCommentKind != common.AgentCommentKindAck {
+		t.Fatalf("unexpected acknowledgement kind: %q", bv.comments[0].AgentCommentKind)
+	}
+	if bv.comments[1].AgentCommentKind != common.AgentCommentKindCompletion {
+		t.Fatalf("unexpected completion kind: %q", bv.comments[1].AgentCommentKind)
+	}
+	ackSlug := bv.comments[0].Slug
+	updates := joinCommentUpdateContents(bv.updates, ackSlug)
+	if !strings.Contains(updates, "proposed_plan:\n"+planBody) {
+		t.Fatalf("expected parsed proposed_plan update, got:\n%s", updates)
+	}
+	if strings.Contains(updates, "proposed_plan:\n<proposed_plan>") {
+		t.Fatalf("expected inner plan body in proposed_plan update, got:\n%s", updates)
+	}
+
+	outPath := filepath.Join(workspaceRoot, "repo-1", "TCK-1", writePath)
+	if _, err := os.Stat(outPath); !os.IsNotExist(err) {
+		t.Fatalf("write_file should have been blocked; file exists at %s", outPath)
+	}
+}
