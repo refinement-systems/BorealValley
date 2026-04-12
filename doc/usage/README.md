@@ -9,7 +9,6 @@ This directory contains operator-focused guides for running BorealValley feature
 To reopen the standard local development environment with the existing Docker-backed state, run:
 
 ```bash
-cd /Users/mjm/repo/BorealValley
 just dev-docker-up ~/repo/bvroot
 ```
 

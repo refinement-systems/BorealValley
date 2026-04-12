@@ -7,7 +7,6 @@ This guide covers the practical workflow for running `BorealValley-agent` agains
 For the repository's standard local Docker setup, bring back the existing server and database with:
 
 ```bash
-cd /Users/mjm/repo/BorealValley
 just dev-docker-up ~/repo/bvroot
 ```
 

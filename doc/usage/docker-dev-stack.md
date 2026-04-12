@@ -7,7 +7,6 @@ This guide covers the standard BorealValley local Docker development setup and, 
 If the standard local dev stack was already created, the normal command to bring it back is:
 
 ```bash
-cd /Users/mjm/repo/BorealValley
 just dev-docker-up ~/repo/bvroot
 ```
 
@@ -66,7 +65,6 @@ For the full agent setup flow, including OAuth app creation examples for an alre
 Stop the stack without deleting state:
 
 ```bash
-cd /Users/mjm/repo/BorealValley
 just dev-docker-down ~/repo/bvroot
 ```
 
@@ -85,7 +83,6 @@ Follow web logs:
 Reset the stack to a fresh PostgreSQL database:
 
 ```bash
-cd /Users/mjm/repo/BorealValley
 just dev-docker-reset ~/repo/bvroot
 ```
 
@@ -96,7 +93,6 @@ just dev-docker-reset ~/repo/bvroot
 If you want the same BorealValley root and PostgreSQL state but want the web process to run directly on the host instead of in Docker, use the same root path and DSN:
 
 ```bash
-cd /Users/mjm/repo/BorealValley
 export BV_PG_DSN='postgres://app:app_pw@127.0.0.1:5432/app_db?sslmode=disable'
 go run ./src/cmd/web serve --root ~/repo/bvroot --env dev
 ```

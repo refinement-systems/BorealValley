@@ -7,7 +7,7 @@ The repository publishes a dedicated `borealvalley-pijul` image so the app image
 - Package image: `ghcr.io/refinement-systems/borealvalley-pijul:debian12`
 - Exact package image: `ghcr.io/refinement-systems/borealvalley-pijul:1.0.0-beta.11-debian12`
 - Registry cache: `ghcr.io/refinement-systems/borealvalley-cache:pijul`
-- Dockerfile: [tools/deploy/Dockerfile.pijul](/Users/mjm/repo/BorealValley/tools/deploy/Dockerfile.pijul)
+- Dockerfile: [tools/deploy/Dockerfile.pijul](tools/deploy/Dockerfile.pijul)
 
 The package image contains:
 
